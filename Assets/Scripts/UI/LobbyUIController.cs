@@ -8,6 +8,8 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private Button hostButton;
     [SerializeField] private Button inviteButton;
+    [SerializeField] private Button startGameButton;
+    [SerializeField] private Button leaveButton;
     [SerializeField] private Text statusText;
     [SerializeField] private GameObject connectionLostPanel;
     [SerializeField] private Button connectionLostOkButton;
@@ -18,9 +20,13 @@ public class LobbyUIController : MonoBehaviour
     {
         hostButton.onClick.AddListener(HandleHostClicked);
         inviteButton.onClick.AddListener(HandleInviteClicked);
+        startGameButton.onClick.AddListener(HandleStartGameClicked);
+        leaveButton.onClick.AddListener(HandleLeaveClicked);
         connectionLostOkButton.onClick.AddListener(HandleConnectionLostOkClicked);
 
         inviteButton.gameObject.SetActive(false);
+        startGameButton.gameObject.SetActive(false);
+        leaveButton.gameObject.SetActive(false);
         connectionLostPanel.SetActive(false);
     }
 
@@ -42,9 +48,14 @@ public class LobbyUIController : MonoBehaviour
 
         // RoleManager.Instance de kendi Awake'inde atanir, ayni sebeple burada abone oluyoruz.
         if (RoleManager.Instance != null)
+        {
             RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
+            RoleManager.Instance.IsRoundActive.OnValueChanged += HandleRoundActiveChanged;
+        }
         else
+        {
             Debug.LogError("[LobbyUIController] RoleManager.Instance bulunamadi.");
+        }
     }
 
     private void OnDestroy()
@@ -59,7 +70,10 @@ public class LobbyUIController : MonoBehaviour
         }
 
         if (RoleManager.Instance != null)
+        {
             RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
+            RoleManager.Instance.IsRoundActive.OnValueChanged -= HandleRoundActiveChanged;
+        }
     }
 
     private void HandleHostClicked()
@@ -74,9 +88,24 @@ public class LobbyUIController : MonoBehaviour
         SteamLobbyManager.Instance.OpenInviteOverlay();
     }
 
+    private void HandleStartGameClicked()
+    {
+        bool started = RoleManager.Instance != null && RoleManager.Instance.StartRound();
+        if (!started)
+            statusText.text = $"Baslatilamadi: en az {RoleManager.MaxPlayers} oyuncu gerekli.";
+    }
+
+    private void HandleLeaveClicked()
+    {
+        SteamLobbyManager.Instance.LeaveLobby();
+        ResetToInitialScreen();
+    }
+
     private void HandleLobbyCreated()
     {
         inviteButton.gameObject.SetActive(true);
+        startGameButton.gameObject.SetActive(true);
+        leaveButton.gameObject.SetActive(true);
         RefreshStatusText();
     }
 
@@ -97,16 +126,35 @@ public class LobbyUIController : MonoBehaviour
     {
         _localRole = role;
         hostButton.gameObject.SetActive(false);
+        leaveButton.gameObject.SetActive(true);
+        RefreshStatusText();
+    }
+
+    private void HandleRoundActiveChanged(bool previous, bool current)
+    {
+        if (current)
+        {
+            startGameButton.gameObject.SetActive(false);
+            inviteButton.gameObject.SetActive(false);
+        }
+
         RefreshStatusText();
     }
 
     private void RefreshStatusText()
     {
         bool isHost = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.IsHost;
+        bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
         string roleText = _localRole != PlayerRole.None ? $"Rolun: {_localRole}." : "Baglaniliyor...";
 
+        if (roundActive)
+        {
+            statusText.text = $"Round basladi! {roleText}";
+            return;
+        }
+
         statusText.text = isHost
-            ? $"Baglandi! {roleText} Arkadasini davet edebilirsin."
+            ? $"Baglandi! {roleText} Arkadasini davet edebilir, hazir olunca oyunu baslatabilirsin."
             : $"Baglandi! {roleText}";
     }
 
@@ -127,9 +175,16 @@ public class LobbyUIController : MonoBehaviour
     {
         connectionLostPanel.SetActive(false);
         lobbyPanel.SetActive(true);
+        ResetToInitialScreen();
+    }
+
+    private void ResetToInitialScreen()
+    {
         hostButton.gameObject.SetActive(true);
         hostButton.interactable = true;
         inviteButton.gameObject.SetActive(false);
+        startGameButton.gameObject.SetActive(false);
+        leaveButton.gameObject.SetActive(false);
         statusText.text = "";
         _localRole = PlayerRole.None;
     }

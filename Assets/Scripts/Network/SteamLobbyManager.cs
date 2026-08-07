@@ -241,6 +241,18 @@ public class SteamLobbyManager : MonoBehaviour
         if (IsHost || !_currentLobby.HasValue)
             return;
 
+        // Server (RoleManager.HandleConnectionApproval) baglantiyi acik bir sebeple
+        // (orn. "Lobi dolu.") reddetmis olabilir — bu durum gercek bir host kaybi
+        // degildir, genel "Sunucu Baglantisi Koptu" ekranini degil, ayirt edici bir
+        // hata mesaji gostermeliyiz.
+        string reason = NetworkManager.Singleton != null ? NetworkManager.Singleton.DisconnectReason : null;
+        if (!string.IsNullOrEmpty(reason))
+        {
+            LeaveLobby();
+            OnLobbyError?.Invoke(reason);
+            return;
+        }
+
         HandleHostLost();
     }
 

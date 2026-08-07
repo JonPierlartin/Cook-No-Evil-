@@ -10,12 +10,16 @@ public class RoleManager : NetworkBehaviour
 {
     public static RoleManager Instance { get; private set; }
 
+    public const int MaxPlayers = 3;
+    private const string LobbyFullReason = "Lobi dolu.";
+
     public event Action<PlayerRole> OnLocalRoleAssigned;
 
     // GEÇİCİ yer tutucu: gerçek round/oyun döngüsü yönetimi Bileşen 2'deki GameLoopManager'a
     // ait olacak. O gelene kadar rol kısıtlamalarının (VoIPController) ne zaman devreye
-    // girecegini belirlemek icin burada tutuluyor; 3. oyuncu (Kasiyer) katilinca otomatik
-    // true olur — su an icin "lobi dolunca round basliyor" davranisi.
+    // girecegini belirlemek icin burada tutuluyor. StartRound() host'un "Oyunu Baslat"
+    // butonuyla cagrilir; GameLoopManager gelince bu cagri oradaki gercek round-baslatma
+    // mantigina devredilecek.
     public readonly NetworkVariable<bool> IsRoundActive =
         new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -32,6 +36,23 @@ public class RoleManager : NetworkBehaviour
 
         Instance = this;
         _strategy = new SequentialRoleAssignmentStrategy();
+    }
+
+    private void Start()
+    {
+        // ConnectionApproval, StartHost()/StartServer() cagrilmadan ONCE etkinlestirilmis olmali
+        // (NetworkTransportManager'in transport'u Start()'ta ayarlamasiyla ayni zamanlama kurali).
+        // Client tarafinda bu ayarlarin bir etkisi olmuyor (NGO callback'i sadece server'da cagirir),
+        // o yuzden IsServer kontrolu olmadan tum instance'larda kuruyoruz.
+        var networkManager = NetworkManager.Singleton;
+        if (networkManager == null)
+        {
+            Debug.LogError("[RoleManager] NetworkManager.Singleton bulunamadi.");
+            return;
+        }
+
+        networkManager.NetworkConfig.ConnectionApproval = true;
+        networkManager.ConnectionApprovalCallback += HandleConnectionApproval;
     }
 
     public override void OnNetworkSpawn()
@@ -55,6 +76,29 @@ public class RoleManager : NetworkBehaviour
             NetworkManager.OnClientConnectedCallback -= HandleClientConnected;
     }
 
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.ConnectionApprovalCallback -= HandleConnectionApproval;
+    }
+
+    // Lobi zaten MaxPlayers'a ulasmissa yeni baglantiyi acik bir sebeple reddeder — SteamLobbyManager
+    // bunu NetworkManager.DisconnectReason uzerinden okuyup ayirt edici bir UI mesaji gosterir
+    // (genel "Sunucu Baglantisi Koptu" ekraniyla karistirmadan).
+    private void HandleConnectionApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+    {
+        response.CreatePlayerObject = false;
+
+        if (_assignedRoles.Count >= MaxPlayers)
+        {
+            response.Approved = false;
+            response.Reason = LobbyFullReason;
+            return;
+        }
+
+        response.Approved = true;
+    }
+
     private void HandleClientConnected(ulong clientId)
     {
         int joinOrderIndex = _assignedRoles.Count;
@@ -62,11 +106,27 @@ public class RoleManager : NetworkBehaviour
         _assignedRoles.Add(new ClientRoleEntry(clientId, role));
 
         Debug.Log($"[RoleManager] Client {clientId} -> {role}");
+    }
 
-        // 3 rolun tamami dolunca (Sef, Yamak, Kasiyer) round basliyor sayilir. GameLoopManager
-        // gelince bu tetikleyici oradaki gercek "round basla" mantigina devredilecek.
-        if (_assignedRoles.Count >= 3)
-            IsRoundActive.Value = true;
+    // Host'un "Oyunu Baslat" butonuyla cagirdigi, server-authoritative round baslatma.
+    // GameLoopManager (Bilesen 2) gelince bu metod oradaki gercek round-baslatma
+    // akisina (5 dk sayac, strike sistemi vb.) devredilecek.
+    public bool StartRound()
+    {
+        if (!IsServer)
+            return false;
+
+        if (IsRoundActive.Value)
+            return true;
+
+        if (_assignedRoles.Count < MaxPlayers)
+        {
+            Debug.LogWarning($"[RoleManager] Round baslatilamiyor, {_assignedRoles.Count}/{MaxPlayers} oyuncu var.");
+            return false;
+        }
+
+        IsRoundActive.Value = true;
+        return true;
     }
 
     private void HandleAssignedRolesChanged(NetworkListEvent<ClientRoleEntry> change)
