@@ -15,6 +15,10 @@
 steam_appid.txt
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+# Unity Editor Auto-Recovery yedekleri (crash/beklenmedik kapanma sonrasi
+# otomatik olusturulur, gercek proje icerigi degildir)
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
 *.log
 
 # MemoryCaptures can get excessive in size.

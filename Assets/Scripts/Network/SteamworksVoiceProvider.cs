@@ -15,6 +15,20 @@ public class SteamworksVoiceProvider : IVoiceProvider
     public void Initialize()
     {
         SteamUser.VoiceRecord = true;
+
+        // DecompressVoice, cikisi SteamUser.SampleRate'e gore uretir (varsayilan 48000).
+        // Bunu cikis cihazinin gercek AudioSettings.outputSampleRate'iyle eslemezsek,
+        // OnAudioFilterRead'e enjekte edilen orneklerin hizi cihazin oynatma hiziyla
+        // uyusmuyor — bu da "helyum" perde kaymasina ve arabellek alt-akisindan
+        // (underrun) kaynakli cizirtiya yol aciyor.
+        SyncDecodeSampleRateToOutput();
+    }
+
+    private static void SyncDecodeSampleRateToOutput()
+    {
+        int outputRate = AudioSettings.outputSampleRate;
+        uint clamped = (uint)Mathf.Clamp(outputRate, 11025, 48000);
+        SteamUser.SampleRate = clamped;
     }
 
     public void Shutdown()
