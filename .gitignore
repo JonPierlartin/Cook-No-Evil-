@@ -8,6 +8,11 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+# steam_appid.txt (geliştirme build çıktılarının yanına konur, gerçek Steam
+# AppID alınana kadar Spacewar test AppID'si (480) ile yerel/2-hesap testi
+# içindir) — /Builds/ zaten yok sayıldığı için bu satır sadece belgeleme
+# amaçlıdır, herhangi bir konumda steam_appid.txt asla commit edilmemeli.
+steam_appid.txt
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log

@@ -147,6 +147,22 @@ ekranı YOK.
   (tek Steam hesabıyla aynı makinede client bağlantısı test edilemiyor)
   burada da geçerli. Gerçek 2 oyuncuyla test edilirken hem client bağlantısı
   hem de davet-kabul-otomatik-bağlan akışı özellikle doğrulanmalı.
+- Yerel Multiplayer-Play-Mode-eşdeğeri test (2 ayrı process, Local UDP
+  transport, `SteamLobbyManager` bypass edilip `NetworkTransportManager` +
+  `NetworkManager` doğrudan tetiklenerek) BAŞARILI: host `Sef`, client
+  `Yamak` rolü aldı, hata yok.
+
+### steam_appid.txt (geçici — gerçek AppID alınana kadar)
+
+Henüz kayıtlı bir Steam AppID'miz yok; `FacepunchTransport`'un varsayılanı
+olan **480 (Spacewar, test için Valve'ın izin verdiği ortak AppID)**
+kullanılıyor. Geliştirme build'lerini Steam üzerinden başlatmadan (örn.
+arkadaşla 2 makine testi) çalıştırabilmek için derlenen `.exe` ile aynı
+klasöre içeriği `480` olan bir `steam_appid.txt` konur. Bu dosya **asla** git'e
+commit edilmez (`.gitignore`'da `steam_appid.txt` deseni var, ayrıca
+`/Builds/` zaten tamamen yok sayılıyor). Gerçek bir Steam AppID alındığında:
+(1) bu dosya silinir, (2) `FacepunchTransport` component'indeki `steamAppId`
+alanı gerçek ID ile güncellenir.
 
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
