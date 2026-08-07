@@ -12,6 +12,13 @@ public class RoleManager : NetworkBehaviour
 
     public event Action<PlayerRole> OnLocalRoleAssigned;
 
+    // GEÇİCİ yer tutucu: gerçek round/oyun döngüsü yönetimi Bileşen 2'deki GameLoopManager'a
+    // ait olacak. O gelene kadar rol kısıtlamalarının (VoIPController) ne zaman devreye
+    // girecegini belirlemek icin burada tutuluyor; 3. oyuncu (Kasiyer) katilinca otomatik
+    // true olur — su an icin "lobi dolunca round basliyor" davranisi.
+    public readonly NetworkVariable<bool> IsRoundActive =
+        new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private readonly NetworkList<ClientRoleEntry> _assignedRoles = new();
     private IRoleAssignmentStrategy _strategy;
 
@@ -55,6 +62,11 @@ public class RoleManager : NetworkBehaviour
         _assignedRoles.Add(new ClientRoleEntry(clientId, role));
 
         Debug.Log($"[RoleManager] Client {clientId} -> {role}");
+
+        // 3 rolun tamami dolunca (Sef, Yamak, Kasiyer) round basliyor sayilir. GameLoopManager
+        // gelince bu tetikleyici oradaki gercek "round basla" mantigina devredilecek.
+        if (_assignedRoles.Count >= 3)
+            IsRoundActive.Value = true;
     }
 
     private void HandleAssignedRolesChanged(NetworkListEvent<ClientRoleEntry> change)

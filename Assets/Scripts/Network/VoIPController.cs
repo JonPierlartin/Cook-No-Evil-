@@ -5,6 +5,8 @@ using UnityEngine;
 // IVoiceProvider ile calisan, AudioSource entegreli, rol tabanli sesli sohbet yonetimi.
 // GDD 2.2 / Red Line 2: Kasiyer'in mikrofonu server tarafindan susturulur, Yamak gelen
 // ses sohbetini Low-Pass filtreli duyar, Sef'in etkilesim/VoIP sesi Hyper-Spatial olur.
+// Bu kisitlamalar sadece round aktifken uygulanir (RoleManager.IsRoundActive) — lobide
+// herkes normal konusup duyabilir; koordinasyon icin.
 [RequireComponent(typeof(NetworkObject))]
 public class VoIPController : NetworkBehaviour
 {
@@ -14,6 +16,8 @@ public class VoIPController : NetworkBehaviour
     private IVoiceProvider _voiceProvider;
     private readonly Dictionary<ulong, VoiceStreamPlayer> _speakerPlayers = new();
     private PlayerRole _localRole = PlayerRole.None;
+
+    private static bool IsRoundActive => RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
 
     public override void OnNetworkSpawn()
     {
@@ -28,13 +32,19 @@ public class VoIPController : NetworkBehaviour
         _voiceProvider.Initialize();
 
         if (RoleManager.Instance != null)
+        {
             RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
+            RoleManager.Instance.IsRoundActive.OnValueChanged += HandleRoundActiveChanged;
+        }
     }
 
     public override void OnNetworkDespawn()
     {
         if (RoleManager.Instance != null)
+        {
             RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
+            RoleManager.Instance.IsRoundActive.OnValueChanged -= HandleRoundActiveChanged;
+        }
 
         _voiceProvider?.Shutdown();
         _voiceProvider = null;
@@ -54,11 +64,28 @@ public class VoIPController : NetworkBehaviour
     private void HandleLocalRoleAssigned(PlayerRole role)
     {
         _localRole = role;
+        UpdateLocalMuteState();
+    }
 
-        // Kasiyer'in mikrofonu susturulur. Lokal yakalamayi da kapatiyoruz; asil yetki
-        // asagidaki SendVoiceServerRpc icindeki server-side rol kontrolundedir (istemci
-        // taraf hileyle tekrar acsa bile server Kasiyer'in paketini asla relay etmez).
-        _voiceProvider?.SetLocalCaptureMuted(role == PlayerRole.Kasiyer);
+    private void HandleRoundActiveChanged(bool previous, bool current)
+    {
+        UpdateLocalMuteState();
+
+        // Round durumu degistiginde mevcut hoparlorlerin (zaten olusturulmus AudioSource'lar)
+        // filtrelerini de guncelliyoruz; yoksa round baslamadan once konusan biri icin
+        // olusturulmus hoparlor, round basladiktan sonra da kisitlamasiz kalirdi.
+        foreach (var player in _speakerPlayers.Values)
+            ApplyRoleBasedAudioSettings(player.Source);
+    }
+
+    private void UpdateLocalMuteState()
+    {
+        // Kasiyer'in mikrofonu SADECE round aktifken susturulur; lobide herkes normal
+        // konusabilir. Lokal yakalamayi da kapatiyoruz; asil yetki asagidaki
+        // SendVoiceServerRpc icindeki server-side kontroldedir (istemci taraf hileyle
+        // tekrar acsa bile server round aktifken Kasiyer'in paketini asla relay etmez).
+        bool shouldMute = _localRole == PlayerRole.Kasiyer && IsRoundActive;
+        _voiceProvider?.SetLocalCaptureMuted(shouldMute);
     }
 
     // GameSystems sunucu tarafindan (host) sahiplenilen sahne-ici bir NetworkObject;
@@ -69,7 +96,7 @@ public class VoIPController : NetworkBehaviour
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
 
-        if (RoleManager.Instance != null && RoleManager.Instance.GetRole(senderId) == PlayerRole.Kasiyer)
+        if (IsRoundActive && RoleManager.Instance != null && RoleManager.Instance.GetRole(senderId) == PlayerRole.Kasiyer)
             return;
 
         ReceiveVoiceClientRpc(senderId, compressedData);
@@ -107,6 +134,19 @@ public class VoIPController : NetworkBehaviour
 
     private void ApplyRoleBasedAudioSettings(AudioSource source)
     {
+        // Onceki round'dan kalmis olabilecek Low-Pass filtreyi temizle; round durumu ve/veya
+        // rol degismis olabilir, her cagrida sifirdan dogru kurulum yapiyoruz.
+        var existingLowPass = source.GetComponent<AudioLowPassFilter>();
+        if (existingLowPass != null)
+            Destroy(existingLowPass);
+
+        if (!IsRoundActive)
+        {
+            // Lobide (round aktif degilken) hic kimsenin sesi kisitlanmaz.
+            source.spatialBlend = 0.5f;
+            return;
+        }
+
         switch (_localRole)
         {
             case PlayerRole.Yamak:

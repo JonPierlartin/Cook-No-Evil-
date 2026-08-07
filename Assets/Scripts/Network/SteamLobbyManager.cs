@@ -26,7 +26,9 @@ public class SteamLobbyManager : MonoBehaviour
     private const string ConnectPrefix = "+connect_lobby ";
 
     private Lobby? _currentLobby;
-    private bool _joinInProgress;
+    // Host baslatma, lobiye katilma VEYA onceki ag oturumunun kapanmasi devam ederken
+    // yeni bir Host/Join denemesini engeller (bkz. LeaveLobby).
+    private bool _networkBusy;
 
     public bool IsInLobby => _currentLobby.HasValue;
     public bool IsHost { get; private set; }
@@ -84,8 +86,24 @@ public class SteamLobbyManager : MonoBehaviour
 
     public async void HostLobby()
     {
+        // Onceki oturumun kapanmasi hala devam ediyorsa (bkz. LeaveLobby) yeni bir host
+        // denemesi NetworkManager'in yarim kalmis eski durumuna carpip sonsuza kadar
+        // takilabilir; bu yuzden ayni korumayi burada da uyguluyoruz.
+        if (_networkBusy)
+        {
+            Debug.Log("[SteamLobbyManager] Host istegi yoksayildi, onceki ag oturumu hala kapaniyor.");
+            OnLobbyError?.Invoke("Onceki baglanti hala kapaniyor, birkac saniye sonra tekrar dene.");
+            return;
+        }
+
+        if (_currentLobby.HasValue)
+            return;
+
+        _networkBusy = true;
+
         if (!SteamClient.IsValid)
         {
+            _networkBusy = false;
             OnLobbyError?.Invoke("Steam istemcisi hazir degil.");
             return;
         }
@@ -95,6 +113,7 @@ public class SteamLobbyManager : MonoBehaviour
         var result = await SteamMatchmaking.CreateLobbyAsync(maxLobbyMembers);
         if (!result.HasValue)
         {
+            _networkBusy = false;
             OnLobbyError?.Invoke("Lobi olusturulamadi.");
             return;
         }
@@ -161,17 +180,21 @@ public class SteamLobbyManager : MonoBehaviour
         // tetikleyebiliyor (Steam davetin arkasinda hem lobi hem rich-presence "connect" mekanizmasini
         // kullanabiliyor). Koruma olmadan JoinLobbyAsync/StartClient iki kez calisir; ikinci calisma
         // "ag zaten baslatildi" hatasina ve baglantinin hic tamamlanmamasina yol aciyordu.
-        if (_joinInProgress || _currentLobby.HasValue)
+        if (_networkBusy)
         {
-            Debug.Log($"[SteamLobbyManager] Katilma istegi yoksayildi, zaten devam eden/tamamlanmis bir katilma var (lobbyId={lobbyId}).");
+            Debug.Log($"[SteamLobbyManager] Katilma istegi yoksayildi, onceki ag oturumu hala kapaniyor (lobbyId={lobbyId}).");
+            OnLobbyError?.Invoke("Onceki baglanti hala kapaniyor, birkac saniye sonra tekrar dene.");
             return;
         }
 
-        _joinInProgress = true;
+        if (_currentLobby.HasValue)
+            return;
+
+        _networkBusy = true;
 
         if (!SteamClient.IsValid)
         {
-            _joinInProgress = false;
+            _networkBusy = false;
             OnLobbyError?.Invoke("Steam istemcisi hazir degil.");
             return;
         }
@@ -179,7 +202,7 @@ public class SteamLobbyManager : MonoBehaviour
         var result = await SteamMatchmaking.JoinLobbyAsync(lobbyId);
         if (!result.HasValue)
         {
-            _joinInProgress = false;
+            _networkBusy = false;
             OnLobbyError?.Invoke("Lobiye katilinamadi.");
             return;
         }
@@ -191,7 +214,7 @@ public class SteamLobbyManager : MonoBehaviour
         {
             // Host kendi davetini/lobisini tekrar actiginda burasi tetiklenebilir; StartHost
             // zaten HostLobby() icinde cagrildigi icin burada tekrar baslatmiyoruz.
-            _joinInProgress = false;
+            _networkBusy = false;
             return;
         }
 
@@ -238,13 +261,35 @@ public class SteamLobbyManager : MonoBehaviour
 
     public void LeaveLobby()
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
-            NetworkManager.Singleton.Shutdown();
-
         _currentLobby?.Leave();
         _currentLobby = null;
         IsHost = false;
-        _joinInProgress = false;
         SteamFriends.ClearRichPresence();
+
+        var networkManager = NetworkManager.Singleton;
+        if (networkManager != null && (networkManager.IsListening || networkManager.ShutdownInProgress))
+        {
+            // Shutdown() ANLIK degildir — sadece bir bayrak set eder, gercek temizlik
+            // sonraki tick'lerde olur. Bunu beklemeden yeniden Host/Join'e izin verirsek,
+            // yeni deneme eski oturumun yarim kalmis durumuna carpip sonsuza kadar
+            // "Baglaniliyor..." ekraninda takilir. _networkBusy, tam kapanana kadar
+            // HostLobby/JoinLobby'yi engellemeye devam eder.
+            _networkBusy = true;
+            networkManager.Shutdown();
+            StartCoroutine(WaitForNetworkShutdown(networkManager));
+        }
+        else
+        {
+            _networkBusy = false;
+        }
+    }
+
+    private System.Collections.IEnumerator WaitForNetworkShutdown(NetworkManager networkManager)
+    {
+        while (networkManager != null && (networkManager.IsListening || networkManager.ShutdownInProgress))
+            yield return null;
+
+        _networkBusy = false;
+        Debug.Log("[SteamLobbyManager] Onceki ag oturumu tam olarak kapandi, yeniden baglanmaya hazir.");
     }
 }
