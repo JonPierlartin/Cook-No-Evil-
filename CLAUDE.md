@@ -120,6 +120,34 @@ geçme kararını kod yazmaya başlamadan ÖNCE kullanıcıya sor.
 - Cloud/secret scriptleri ayar dosyasını bulamazsa `NullReferenceException` fırlatmaz; konsola
   uyarı basıp oyunu normal akışında devam ettirir.
 
+## Bileşen 1 Durumu (bkz. proje geçmişi)
+
+`Assets/Scripts/Core` (TransportMode, PlayerRole, IRoleAssignmentStrategy,
+SequentialRoleAssignmentStrategy, IVoiceProvider) ve `Assets/Scripts/Network`
+(NetworkTransportManager, SteamLobbyManager, RoleManager, VoIPController,
+SteamworksVoiceProvider, MockVoiceProvider, VoiceStreamPlayer) ile
+`Assets/Scripts/UI/LobbyUIController` kuruldu. UI tamamen UGUI (Canvas/Button/Text);
+UI Toolkit KULLANILMADI. Lobiye katılma Steam'in kendi davet overlay'i üzerinden
+otomatik olur (`SteamFriends.OnGameLobbyJoinRequested`) — manuel lobi kodu girme
+ekranı YOK.
+
+- Yerelde (tek Steam hesabı, Play Mode) uçtan uca doğrulandı: `HostLobby()` →
+  Steam lobisi oluşturma → `NetworkManager.StartHost()` (Facepunch transport
+  üzerinden) → `RoleManager` ilk oyuncuya rol atıyor → `VoIPController`
+  network-spawn oluyor → UGUI (`InviteButton` görünür oluyor, status metni
+  güncelleniyor) — hepsi hatasız.
+- Test sırasında iki gerçek bug bulunup düzeltildi: (1) `ClientRoleEntry`
+  struct'ı NGO 2.13.1'in kaynak-üretici serileştirmesi için
+  `INetworkSerializeByMemcpy` işaretine ihtiyaç duyuyordu, (2)
+  `NetworkTransportManager` ve `LobbyUIController`, `NetworkManager.Singleton` /
+  `SteamLobbyManager.Instance`'a `Awake()` içinde erişiyordu — sıra garantisi
+  olmadığı için bu erişimler `Start()`'a ertelendi.
+- **Steam'in kendi davet akışıyla GERÇEK bir 2. oyuncunun katılması (2 farklı
+  Steam hesabıyla) HENÜZ test edilmedi** — Aşama 1'de tespit edilen aynı kısıt
+  (tek Steam hesabıyla aynı makinede client bağlantısı test edilemiyor)
+  burada da geçerli. Gerçek 2 oyuncuyla test edilirken hem client bağlantısı
+  hem de davet-kabul-otomatik-bağlan akışı özellikle doğrulanmalı.
+
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
 - **Bileşen 1 — Steam Network, Lobby & VoIP:** `NetworkTransportManager`, `SteamLobbyManager`,
