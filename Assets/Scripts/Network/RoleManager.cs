@@ -57,6 +57,20 @@ public class RoleManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (IsServer)
+        {
+            // RoleManager, GameSystems sahne-ici kalici bir obje uzerinde yasiyor —
+            // NetworkManager.Shutdown() bu component'i yok etmez, sadece network
+            // spawn/despawn dongusunu kapatir. Yani _assignedRoles/IsRoundActive gibi
+            // alanlar bir onceki oturumdan (host kimse) OLDUGU GIBI kalir. Server, her
+            // yeni StartHost() cagrisinda (bu OnNetworkSpawn, o cagrinin bir parcasi
+            // olarak, herhangi bir client baglanmadan ONCE calisir) bu durumu acikca
+            // sifirlamazsa, yeni lobide eski oyuncu sayisi/round durumu sizar — tam da
+            // bu bug'in sebebi buydu.
+            _assignedRoles.Clear();
+            IsRoundActive.Value = false;
+        }
+
         _assignedRoles.OnListChanged += HandleAssignedRolesChanged;
 
         if (IsServer)

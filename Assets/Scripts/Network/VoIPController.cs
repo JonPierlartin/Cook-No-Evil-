@@ -48,6 +48,21 @@ public class VoIPController : NetworkBehaviour
 
         _voiceProvider?.Shutdown();
         _voiceProvider = null;
+
+        // VoIPController da RoleManager gibi GameSystems (sahne-ici, kalici) uzerinde yasiyor —
+        // dinamik olarak olusturulan konusmaci AudioSource'lari (VoiceSpeaker_X) burada
+        // Destroy edilmezse bir sonraki oturuma sizar: hem eski GameObject'ler sahnede
+        // birikir hem deayni clientId yeniden kullanilirsa (StartHost sonrasi ayni makine
+        // her zaman clientId 0 olur) GetOrCreateSpeakerPlayer eski/yanlis rol icin
+        // kurulmus bir AudioSource'u geri dondurur.
+        foreach (var player in _speakerPlayers.Values)
+        {
+            if (player != null)
+                Destroy(player.gameObject);
+        }
+        _speakerPlayers.Clear();
+
+        _localRole = PlayerRole.None;
     }
 
     private void Update()
