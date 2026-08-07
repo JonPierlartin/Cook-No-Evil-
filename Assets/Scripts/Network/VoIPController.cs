@@ -61,7 +61,10 @@ public class VoIPController : NetworkBehaviour
         _voiceProvider?.SetLocalCaptureMuted(role == PlayerRole.Kasiyer);
     }
 
-    [ServerRpc]
+    // GameSystems sunucu tarafindan (host) sahiplenilen sahne-ici bir NetworkObject;
+    // her client kendi sesini gonderebilmeli, sadece "owner" degil — bu yuzden
+    // RequireOwnership = false gerekiyor (varsayilaninda "Only the owner can invoke..." hatasi verir).
+    [ServerRpc(RequireOwnership = false)]
     private void SendVoiceServerRpc(byte[] compressedData, ServerRpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;

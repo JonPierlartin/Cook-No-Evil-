@@ -151,6 +151,28 @@ ekranı YOK.
   transport, `SteamLobbyManager` bypass edilip `NetworkTransportManager` +
   `NetworkManager` doğrudan tetiklenerek) BAŞARILI: host `Sef`, client
   `Yamak` rolü aldı, hata yok.
+- **Gerçek 2 makine testinde 3 sorun bulundu (bkz. proje geçmişi):**
+  (1) Shift+Tab overlay'i açmıyor, (2) "Arkadaş Davet Et" hiçbir şey
+  yapmıyor, (3) Steam Arkadaşlar penceresinde "Oyuna Davet Et" seçeneği
+  çıkmıyor. Player.log incelendiğinde `SteamAPI_Init`'in BAŞARILI olduğu
+  doğrulandı (lobi oluşturma çağrısı gerçek bir lobi ID'si döndürdü) — sorun
+  SteamAPI bağlantısında değil. İki gerçek kod eksikliği bulunup düzeltildi:
+  `SteamMatchmaking.CreateLobbyAsync` varsayılan olarak GÖRÜNMEZ bir lobi
+  oluşturuyordu (`SetFriendsOnly()` hiç çağrılmıyordu), ve Rich Presence
+  `connect` anahtarı hiç yayınlanmıyordu — bu ikisi olmadan Steam Arkadaşlar
+  listesinin "Oyuna Davet Et"/"Katıl" akışı çalışmaz (overlay içi davet
+  akışından bağımsız bir mekanizma). `SteamLobbyManager.AdvertiseLobbyPresence`
+  ile düzeltildi. **Ayrı, kod dışı bir bulgu:** test edilen makinede oyun
+  doğrudan bir WinRAR geçici çıkarma klasöründen (`Rar$EXxxxx.tmp`)
+  çalıştırılmıştı — Steam overlay hook'u geçici/taşınabilir klasörlerden
+  çalıştırılan process'lere güvenilir şekilde inject olmuyor; bu, Shift+Tab
+  ve "Oyuna Davet Et"in çalışmamasının birincil nedeni olabilir. Yeniden
+  test edilirken zip önce kalıcı bir klasöre (Masaüstü/Belgeler) tam olarak
+  çıkarılıp WinRAR kapatıldıktan SONRA .exe çalıştırılmalı. Ayrıca proje
+  "Auto Graphics API" ile Windows'ta DX12'yi birincil API olarak seçiyor;
+  DX12 + Steam overlay geçmişte bilinen uyumluluk sorunları olan bir
+  kombinasyon — sorun WinRAR düzeltmesinden sonra da sürerse Player Settings'te
+  DX11'i birincil API yapmak bir sonraki deneme adımı olmalı.
 
 ### steam_appid.txt (geçici — gerçek AppID alınana kadar)
 

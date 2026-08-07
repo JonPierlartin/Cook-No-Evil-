@@ -20,7 +20,13 @@ public class SteamLobbyManager : MonoBehaviour
     [SerializeField] private NetworkTransportManager transportManager;
     [SerializeField] private int maxLobbyMembers = 3;
 
+    // Steam Friends listesindeki "Oyuna Davet Et" / "Katil" segmentinin calismasi icin
+    // Rich Presence "connect" anahtari bu formatta yayinlanir; ayni format
+    // HandleRichPresenceJoinRequested tarafindan geri okunur.
+    private const string ConnectPrefix = "+connect_lobby ";
+
     private Lobby? _currentLobby;
+    private bool _joinInProgress;
 
     public bool IsInLobby => _currentLobby.HasValue;
     public bool IsHost { get; private set; }
@@ -43,12 +49,14 @@ public class SteamLobbyManager : MonoBehaviour
     {
         SteamMatchmaking.OnLobbyMemberLeave += HandleLobbyMemberLeave;
         SteamFriends.OnGameLobbyJoinRequested += HandleGameLobbyJoinRequested;
+        SteamFriends.OnGameRichPresenceJoinRequested += HandleRichPresenceJoinRequested;
     }
 
     private void OnDisable()
     {
         SteamMatchmaking.OnLobbyMemberLeave -= HandleLobbyMemberLeave;
         SteamFriends.OnGameLobbyJoinRequested -= HandleGameLobbyJoinRequested;
+        SteamFriends.OnGameRichPresenceJoinRequested -= HandleRichPresenceJoinRequested;
     }
 
     private void Start()
@@ -94,9 +102,23 @@ public class SteamLobbyManager : MonoBehaviour
         _currentLobby = result.Value;
         IsHost = true;
 
+        // CreateLobbyAsync varsayilan olarak GORUNMEZ bir lobi olusturur; arkadaslar
+        // gorebilsin/davet edilebilsin diye acikca FriendsOnly yapiyoruz.
+        _currentLobby.Value.SetFriendsOnly();
+        AdvertiseLobbyPresence(_currentLobby.Value.Id);
+
         NetworkManager.Singleton.StartHost();
         Debug.Log($"[SteamLobbyManager] Lobi olusturuldu: {_currentLobby.Value.Id}");
         OnLobbyCreated?.Invoke();
+    }
+
+    // Steam Friends listesinde "Oyuna Davet Et" / "Katil" seceneklerinin gorunmesi VE
+    // arkadasin Steam UI'inden dogrudan katilabilmesi icin Rich Presence "connect"
+    // anahtari zorunludur — bu olmadan overlay disi davet/katilma akislari calismaz.
+    private void AdvertiseLobbyPresence(SteamId lobbyId)
+    {
+        SteamFriends.SetRichPresence("status", "Lobide bekliyor");
+        SteamFriends.SetRichPresence("connect", $"{ConnectPrefix}{lobbyId}");
     }
 
     // Host tarafinda: Steam overlay'inden arkadas davet penceresini acar.
@@ -119,10 +141,37 @@ public class SteamLobbyManager : MonoBehaviour
         JoinLobby(lobby.Id);
     }
 
+    // Arkadasin Steam Friends listesinden "Katil" dedigi, Rich Presence "connect"
+    // anahtari uzerinden gelen istek (overlay disi akis; bkz. AdvertiseLobbyPresence).
+    private void HandleRichPresenceJoinRequested(Friend friend, string connectString)
+    {
+        if (string.IsNullOrEmpty(connectString) || !connectString.StartsWith(ConnectPrefix))
+            return;
+
+        var idPart = connectString.Substring(ConnectPrefix.Length).Trim();
+        if (ulong.TryParse(idPart, out var lobbyId))
+            JoinLobby(lobbyId);
+        else
+            Debug.LogWarning($"[SteamLobbyManager] Gecersiz connect string: {connectString}");
+    }
+
     private async void JoinLobby(SteamId lobbyId)
     {
+        // Tek bir davet kabulu, hem OnGameLobbyJoinRequested hem OnGameRichPresenceJoinRequested'i
+        // tetikleyebiliyor (Steam davetin arkasinda hem lobi hem rich-presence "connect" mekanizmasini
+        // kullanabiliyor). Koruma olmadan JoinLobbyAsync/StartClient iki kez calisir; ikinci calisma
+        // "ag zaten baslatildi" hatasina ve baglantinin hic tamamlanmamasina yol aciyordu.
+        if (_joinInProgress || _currentLobby.HasValue)
+        {
+            Debug.Log($"[SteamLobbyManager] Katilma istegi yoksayildi, zaten devam eden/tamamlanmis bir katilma var (lobbyId={lobbyId}).");
+            return;
+        }
+
+        _joinInProgress = true;
+
         if (!SteamClient.IsValid)
         {
+            _joinInProgress = false;
             OnLobbyError?.Invoke("Steam istemcisi hazir degil.");
             return;
         }
@@ -130,6 +179,7 @@ public class SteamLobbyManager : MonoBehaviour
         var result = await SteamMatchmaking.JoinLobbyAsync(lobbyId);
         if (!result.HasValue)
         {
+            _joinInProgress = false;
             OnLobbyError?.Invoke("Lobiye katilinamadi.");
             return;
         }
@@ -141,9 +191,11 @@ public class SteamLobbyManager : MonoBehaviour
         {
             // Host kendi davetini/lobisini tekrar actiginda burasi tetiklenebilir; StartHost
             // zaten HostLobby() icinde cagrildigi icin burada tekrar baslatmiyoruz.
+            _joinInProgress = false;
             return;
         }
 
+        AdvertiseLobbyPresence(_currentLobby.Value.Id);
         transportManager.ConfigureTransport(TransportMode.Steam);
         transportManager.SetSteamHostTarget(_currentLobby.Value.Owner.Id);
         NetworkManager.Singleton.StartClient();
@@ -192,5 +244,7 @@ public class SteamLobbyManager : MonoBehaviour
         _currentLobby?.Leave();
         _currentLobby = null;
         IsHost = false;
+        _joinInProgress = false;
+        SteamFriends.ClearRichPresence();
     }
 }
