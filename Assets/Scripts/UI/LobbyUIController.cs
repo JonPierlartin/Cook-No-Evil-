@@ -1,10 +1,16 @@
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 using UnityEngine.UI;
 
 // UGUI (Canvas/Button/Text) tabanli lobi arayuzu. Manuel lobi kodu girme ekrani YOK:
 // katilma tamamen Steam'in kendi davet sistemi (overlay) uzerinden, otomatik olarak olur.
+// Butonlarin sabit metinleri sahnede LocalizeStringEvent component'leri uzerinden geliyor
+// (UIStrings tablosu); burada sadece DINAMIK (calisma zamaninda degisen) metinler
+// Unity Localization String Database uzerinden cozuluyor — bkz. Localize().
 public class LobbyUIController : MonoBehaviour
 {
+    private const string TableName = "UIStrings";
+
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private Button hostButton;
     [SerializeField] private Button inviteButton;
@@ -78,7 +84,7 @@ public class LobbyUIController : MonoBehaviour
 
     private void HandleHostClicked()
     {
-        statusText.text = "Lobi olusturuluyor...";
+        statusText.text = Localize("lobby.creating");
         hostButton.interactable = false;
         SteamLobbyManager.Instance.HostLobby();
     }
@@ -92,7 +98,7 @@ public class LobbyUIController : MonoBehaviour
     {
         bool started = RoleManager.Instance != null && RoleManager.Instance.StartRound();
         if (!started)
-            statusText.text = $"Baslatilamadi: en az {RoleManager.MaxPlayers} oyuncu gerekli.";
+            statusText.text = Localize("lobby.start_failed", RoleManager.MaxPlayers);
     }
 
     private void HandleLeaveClicked()
@@ -111,7 +117,7 @@ public class LobbyUIController : MonoBehaviour
 
     private void HandleLobbyJoined()
     {
-        statusText.text = "Host'a baglaniliyor...";
+        statusText.text = Localize("lobby.connecting_host");
         hostButton.gameObject.SetActive(false);
     }
 
@@ -145,22 +151,25 @@ public class LobbyUIController : MonoBehaviour
     {
         bool isHost = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.IsHost;
         bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
-        string roleText = _localRole != PlayerRole.None ? $"Rolun: {_localRole}." : "Baglaniliyor...";
+        string roleName = _localRole != PlayerRole.None ? LocalizeRole(_localRole) : Localize("lobby.connecting_generic");
 
         if (roundActive)
         {
-            statusText.text = $"Round basladi! {roleText}";
+            statusText.text = Localize("lobby.round_started", roleName);
             return;
         }
 
         statusText.text = isHost
-            ? $"Baglandi! {roleText} Arkadasini davet edebilir, hazir olunca oyunu baslatabilirsin."
-            : $"Baglandi! {roleText}";
+            ? Localize("lobby.connected_host", roleName)
+            : Localize("lobby.connected_client", roleName);
     }
 
-    private void HandleLobbyError(string message)
+    // SteamLobbyManager/RoleManager, gosterim metni yerine sabit bir HATA ANAHTARI
+    // gonderir (orn. "error.lobby_full") — boylece ag katmani UI'nin dilinden/metninden
+    // tamamen habersiz kalir, cevirisi burada, tek yerde yapilir.
+    private void HandleLobbyError(string errorKey)
     {
-        statusText.text = $"Hata: {message}";
+        statusText.text = Localize("lobby.error_prefix", Localize(errorKey));
         hostButton.interactable = true;
     }
 
@@ -187,5 +196,23 @@ public class LobbyUIController : MonoBehaviour
         leaveButton.gameObject.SetActive(false);
         statusText.text = "";
         _localRole = PlayerRole.None;
+    }
+
+    private static string LocalizeRole(PlayerRole role)
+    {
+        string key = role switch
+        {
+            PlayerRole.Sef => "role.sef",
+            PlayerRole.Yamak => "role.yamak",
+            PlayerRole.Kasiyer => "role.kasiyer",
+            _ => "role.none",
+        };
+
+        return Localize(key);
+    }
+
+    private static string Localize(string key, params object[] arguments)
+    {
+        return LocalizationSettings.StringDatabase.GetLocalizedString(TableName, key, null, FallbackBehavior.UseProjectSettings, arguments);
     }
 }

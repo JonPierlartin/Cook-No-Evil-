@@ -11,7 +11,11 @@ public class RoleManager : NetworkBehaviour
     public static RoleManager Instance { get; private set; }
 
     public const int MaxPlayers = 3;
-    private const string LobbyFullReason = "Lobi dolu.";
+
+    // Raw metin degil, UIStrings tablosundaki bir anahtar: NetworkManager.DisconnectReason
+    // ile agdan gectigi icin locale'den bagimsiz kalmali; ceviri SteamLobbyManager/
+    // LobbyUIController tarafinda yapilir.
+    private const string LobbyFullReasonKey = "error.lobby_full";
 
     public event Action<PlayerRole> OnLocalRoleAssigned;
 
@@ -133,7 +137,7 @@ public class RoleManager : NetworkBehaviour
         if (_assignedRoles.Count >= MaxPlayers)
         {
             response.Approved = false;
-            response.Reason = LobbyFullReason;
+            response.Reason = LobbyFullReasonKey;
             return;
         }
 

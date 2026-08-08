@@ -1,0 +1,121 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UIStrings_tr
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: tr
+  m_SharedData: {fileID: 11400000, guid: 4f4ba4ca443d7b24bb93cab5701ecfb1, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 1392140288
+    m_Localized: "Lobi olu\u015Fturuluyor..."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1450860544
+    m_Localized: "Host'a ba\u011Flan\u0131l\u0131yor..."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054848
+    m_Localized: "Ba\u011Flan\u0131l\u0131yor..."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054849
+    m_Localized: "Ba\u011Fland\u0131! Rol\xFCn: {0}. Arkada\u015F\u0131n\u0131 davet
+      edebilir, haz\u0131r olunca oyunu ba\u015Flatabilirsin."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054850
+    m_Localized: "Ba\u011Fland\u0131! Rol\xFCn: {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054851
+    m_Localized: "Round ba\u015Flad\u0131! Rol\xFCn: {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054852
+    m_Localized: "Ba\u015Flat\u0131lamad\u0131: en az {0} oyuncu gerekli."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054853
+    m_Localized: 'Hata: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054854
+    m_Localized: "\u015Eef"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054855
+    m_Localized: Yamak
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054856
+    m_Localized: Kasiyer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054857
+    m_Localized: "\u2014"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054858
+    m_Localized: "Steam istemcisi haz\u0131r de\u011Fil."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054859
+    m_Localized: "Lobi olu\u015Fturulamad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054860
+    m_Localized: "Davet g\xF6nderebilmek i\xE7in \xF6nce bir lobi olu\u015Fturmal\u0131s\u0131n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054861
+    m_Localized: "Lobiye kat\u0131l\u0131namad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054862
+    m_Localized: "\xD6nceki ba\u011Flant\u0131 h\xE2l\xE2 kapan\u0131yor, birka\xE7
+      saniye sonra tekrar dene."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054863
+    m_Localized: Lobi dolu.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054864
+    m_Localized: "Lobi Olu\u015Ftur (Host)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054865
+    m_Localized: "Arkada\u015F Davet Et"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054866
+    m_Localized: "Oyunu Ba\u015Flat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054867
+    m_Localized: "Lobiden \xC7\u0131k"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054868
+    m_Localized: Tamam
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1455054869
+    m_Localized: "Sunucu Ba\u011Flant\u0131s\u0131 Koptu"
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

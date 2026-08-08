@@ -92,7 +92,7 @@ public class SteamLobbyManager : MonoBehaviour
         if (_networkBusy)
         {
             Debug.Log("[SteamLobbyManager] Host istegi yoksayildi, onceki ag oturumu hala kapaniyor.");
-            OnLobbyError?.Invoke("Onceki baglanti hala kapaniyor, birkac saniye sonra tekrar dene.");
+            OnLobbyError?.Invoke("error.previous_session_closing");
             return;
         }
 
@@ -104,7 +104,7 @@ public class SteamLobbyManager : MonoBehaviour
         if (!SteamClient.IsValid)
         {
             _networkBusy = false;
-            OnLobbyError?.Invoke("Steam istemcisi hazir degil.");
+            OnLobbyError?.Invoke("error.steam_not_ready");
             return;
         }
 
@@ -114,7 +114,7 @@ public class SteamLobbyManager : MonoBehaviour
         if (!result.HasValue)
         {
             _networkBusy = false;
-            OnLobbyError?.Invoke("Lobi olusturulamadi.");
+            OnLobbyError?.Invoke("error.lobby_create_failed");
             return;
         }
 
@@ -145,7 +145,7 @@ public class SteamLobbyManager : MonoBehaviour
     {
         if (!_currentLobby.HasValue)
         {
-            OnLobbyError?.Invoke("Davet gonderebilmek icin once bir lobi olusturmalisiniz.");
+            OnLobbyError?.Invoke("error.invite_needs_lobby");
             return;
         }
 
@@ -183,7 +183,7 @@ public class SteamLobbyManager : MonoBehaviour
         if (_networkBusy)
         {
             Debug.Log($"[SteamLobbyManager] Katilma istegi yoksayildi, onceki ag oturumu hala kapaniyor (lobbyId={lobbyId}).");
-            OnLobbyError?.Invoke("Onceki baglanti hala kapaniyor, birkac saniye sonra tekrar dene.");
+            OnLobbyError?.Invoke("error.previous_session_closing");
             return;
         }
 
@@ -195,7 +195,7 @@ public class SteamLobbyManager : MonoBehaviour
         if (!SteamClient.IsValid)
         {
             _networkBusy = false;
-            OnLobbyError?.Invoke("Steam istemcisi hazir degil.");
+            OnLobbyError?.Invoke("error.steam_not_ready");
             return;
         }
 
@@ -203,7 +203,7 @@ public class SteamLobbyManager : MonoBehaviour
         if (!result.HasValue)
         {
             _networkBusy = false;
-            OnLobbyError?.Invoke("Lobiye katilinamadi.");
+            OnLobbyError?.Invoke("error.join_failed");
             return;
         }
 
