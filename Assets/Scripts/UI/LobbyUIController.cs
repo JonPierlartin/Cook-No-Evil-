@@ -20,8 +20,6 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private GameObject connectionLostPanel;
     [SerializeField] private Button connectionLostOkButton;
 
-    private PlayerRole _localRole = PlayerRole.None;
-
     private void Awake()
     {
         hostButton.onClick.AddListener(HandleHostClicked);
@@ -130,7 +128,6 @@ public class LobbyUIController : MonoBehaviour
     // ile birlikte (Bilesen 2) gelecek — su an icin sadece baglantinin basarili oldugunu gosteriyoruz.
     private void HandleLocalRoleAssigned(PlayerRole role)
     {
-        _localRole = role;
         hostButton.gameObject.SetActive(false);
         leaveButton.gameObject.SetActive(true);
         RefreshStatusText();
@@ -151,7 +148,13 @@ public class LobbyUIController : MonoBehaviour
     {
         bool isHost = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.IsHost;
         bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
-        string roleName = _localRole != PlayerRole.None ? LocalizeRole(_localRole) : Localize("lobby.connecting_generic");
+
+        // Onbellege alinmis bir alan yerine RoleManager'in NetworkList uzerinden senkronize
+        // ettigi GUNCEL rolu her seferinde yeniden okuyoruz. Boylece bu metod hangi event'ten
+        // tetiklenirse tetiklensin (rol atama VEYA round baslama), gosterilen rol adi hicbir
+        // zaman eski/senkronize-olmamis bir onbellek degerine bagli kalmaz.
+        var localRole = RoleManager.Instance != null ? RoleManager.Instance.LocalRole : PlayerRole.None;
+        string roleName = localRole != PlayerRole.None ? LocalizeRole(localRole) : Localize("lobby.connecting_generic");
 
         if (roundActive)
         {
@@ -195,7 +198,6 @@ public class LobbyUIController : MonoBehaviour
         startGameButton.gameObject.SetActive(false);
         leaveButton.gameObject.SetActive(false);
         statusText.text = "";
-        _localRole = PlayerRole.None;
     }
 
     private static string LocalizeRole(PlayerRole role)

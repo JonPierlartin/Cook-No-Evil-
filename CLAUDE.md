@@ -186,6 +186,36 @@ commit edilmez (`.gitignore`'da `steam_appid.txt` deseni var, ayrıca
 (1) bu dosya silinir, (2) `FacepunchTransport` component'indeki `steamAppId`
 alanı gerçek ID ile güncellenir.
 
+### Localization: Startup Locale Selector Zinciri
+
+`Assets/Settings/Localization Settings.asset` içindeki `m_StartupSelectors` sırası:
+`CommandLineLocaleSelector` (QA için `-language=xx`, zararsız/varsayılan) →
+`SystemLocaleSelector` → `SpecificLocaleSelector` (fallback, `tr`). Önceki halinde
+fallback yanlışlıkla `en` idi — bu koda karşılık gelen bir Locale asset'i (İngilizce
+tablo) hiç yoktu, yani Türkçe olmayan bir sistemde `SystemLocaleSelector` eşleşmezse
+zincir HİÇBİR locale'e düşemiyordu. `tr` olarak düzeltildi. Sonuç: bugün tek locale
+Türkçe olduğu için herkes Türkçe görür (sistem dili ne olursa olsun, çünkü
+`AvailableLocales` içinde başka locale yok — `SystemLocaleSelector` eşleşmeyince
+zincir Türkçe'ye düşer), ileride bir İngilizce `Locale` + String Table eklendiğinde
+kod DEĞİŞMEDEN İngilizce sistemli oyuncular otomatik İngilizce görmeye başlar.
+
+### Round Başlama Rol Adı Bugu — Araştırma Notu
+
+Kullanıcı "Round başladı! Rolün:" yazısının rol adını boş bıraktığını bildirdi.
+Gerçek local-UDP 2-process test (host + ayrı bir client process, hem normal
+zamanlamayla hem de client'in kendi rol ataması ile `IsRoundActive` bayrağının
+AYNI ANDA yarışacağı kasıtlı bir race testiyle) ile tekrar üretilemedi — her
+senaryoda rol adı doğru geldi. Yine de `LobbyUIController.RefreshStatusText()`,
+rol adını olay bazlı önbelleklenen bir `_localRole` alanından okumak yerine
+artık her çağrıda doğrudan `RoleManager.Instance.LocalRole`'den (NetworkList
+üzerinden senkronize edilen, server-authoritative kaynak) taze okuyacak şekilde
+değiştirildi — `_localRole` alanı tamamen kaldırıldı. Bu, teorik olarak mümkün
+olan her türlü önbellek bayatlama senaryosunu yapısal olarak ortadan kaldırıyor.
+**Gerçek 3 makine testinde bug hâlâ görülürse bir sonraki adım:** Steam Relay
+gecikmesi altında `RoleManager._assignedRoles` NetworkList senkronizasyonunun
+`IsRoundActive` NetworkVariable senkronizasyonuna göre gerçekten gecikip
+gecikmediğini ölçmek için geçici network-gecikme loglaması eklemek gerekecek.
+
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
 - **Bileşen 1 — Steam Network, Lobby & VoIP:** `NetworkTransportManager`, `SteamLobbyManager`,
