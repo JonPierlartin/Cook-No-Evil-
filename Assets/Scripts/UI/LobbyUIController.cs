@@ -142,6 +142,16 @@ public class LobbyUIController : MonoBehaviour
         }
 
         RefreshStatusText();
+
+        // TESHIS: gercek cok-makineli testte "Rolun:" adinin bos kalma raporunu local testte
+        // tekrar uretemedik. Bug hala gorulurse Player.log'daki bu satiri kontrol et — LocalRole
+        // None ise sorun RoleManager senkronizasyonunda, dolu ama statusText'te gorunmuyorsa
+        // sorun UI/Localization katmanindadir. Teshis netlesince bu log kaldirilmali.
+        if (current)
+        {
+            var role = RoleManager.Instance != null ? RoleManager.Instance.LocalRole : PlayerRole.None;
+            Debug.Log($"[LobbyUIController] Round baslama teshis: LocalRole={role} statusText=\"{statusText.text}\"");
+        }
     }
 
     private void RefreshStatusText()

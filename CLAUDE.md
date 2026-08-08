@@ -120,6 +120,62 @@ geçme kararını kod yazmaya başlamadan ÖNCE kullanıcıya sor.
 - Cloud/secret scriptleri ayar dosyasını bulamazsa `NullReferenceException` fırlatmaz; konsola
   uyarı basıp oyunu normal akışında devam ettirir.
 
+## Bileşen 1 Tamamlanma Raporu
+
+**Kurulanlar:** `NetworkTransportManager` (Steam SDR ↔ Local UDP geçişi), `SteamLobbyManager`
+(lobi kurma/katılma, Steam davet overlay + Rich Presence akışı, host-disconnect/lobi-ayrılma
+yönetimi), `RoleManager` (server-authoritative rol atama, bağlantı onayı, round başlatma),
+`VoIPController` (`IVoiceProvider` soyutlaması ile Production/Local Mock ses akışı, rol bazlı
+mute/filtre), tamamen UGUI tabanlı lobi arayüzü (`LobbyUIController`: Host/Davet/Oyunu Başlat/
+Lobiden Çık butonları, "Lobi dolu"/"Bağlantı koptu" ayrımı), ve Unity Localization entegrasyonu
+(`UIStrings` tablosu, tüm sabit ve dinamik UI metinleri bu sistem üzerinden).
+
+**Gerçek testlerde bulunup düzeltilen tüm hatalar:**
+- Facepunch transport köprü paketinin `main` HEAD'inde derleme hatası (CS1028) — belirli bir
+  commit'e sabitlendi.
+- `ClientRoleEntry` struct'ı NGO'nun kaynak-üretici serileştirmesi için `INetworkSerializeByMemcpy`
+  işaretine ihtiyaç duyuyordu.
+- `NetworkTransportManager`/`LobbyUIController`, singleton'lara (`NetworkManager.Singleton`,
+  `SteamLobbyManager.Instance`) sıra garantisi olmayan `Awake()` içinde erişiyordu — `Start()`'a
+  ertelendi.
+- Canvas varsayılan olarak WorldSpace render mode'da açılıyordu (Game view'da tamamen görünmez) —
+  ScreenSpaceOverlay'e sabitlendi; lobi UI elemanları üst üste biniyordu — VerticalLayoutGroup/
+  ContentSizeFitter ile düzenli yerleşim sağlandı.
+- `SteamMatchmaking.CreateLobbyAsync` varsayılan olarak GÖRÜNMEZ bir lobi oluşturuyordu
+  (`SetFriendsOnly()` çağrılmıyordu) ve Rich Presence `connect` anahtarı hiç yayınlanmıyordu —
+  ikisi de olmadan Steam Arkadaşlar listesinden davet/katılma çalışmıyordu.
+- Tek bir davet kabulü hem `OnGameLobbyJoinRequested` hem `OnGameRichPresenceJoinRequested`'i
+  tetikleyip `StartClient()`'ı iki kez çağırabiliyordu (bağlantı sonsuza dek "Bağlanılıyor..."da
+  takılıyordu) — `_networkBusy`/`_currentLobby` senkron guard'larıyla düzeltildi.
+- Ses `ServerRpc`'si varsayılan `RequireOwnership=true` yüzünden client'lardan gelen sesi
+  reddediyordu — `RequireOwnership=false` yapıldı.
+- `NetworkManager.Shutdown()` asenkron olduğu için lobiden ayrılıp hemen yeniden bağlanma, eski
+  oturumun yarım kalmış durumuna çarpıp "Bağlandı! Bağlanılıyor..." ekranında sonsuza kadar
+  takılıyordu — `WaitForNetworkShutdown` coroutine + `_networkBusy` bayrağıyla düzeltildi.
+- **`GameSystems` sahne-içi kalıcı objesi** (`RoleManager`, `VoIPController`) lobiler arası hayatta
+  kaldığı için: (1) `RoleManager._assignedRoles`/`IsRoundActive` bir önceki host oturumundan
+  sızıyor, yeni lobide rol sayacı/round durumu sıfırlanmıyordu (`OnNetworkSpawn`'da server
+  tarafından açıkça temizlendi); (2) `VoIPController._speakerPlayers` altında oluşturulan ses
+  objeleri bir önceki oturumdan öksüz kalıyordu (`OnNetworkDespawn`'da yok edildi).
+- `RoleManager`, ayrılan bir client'ın rol kaydını `_assignedRoles`'tan silmiyordu — kayıt
+  büyüyüp yeni katılan oyuncular `joinOrderIndex` sınırının dışına çıkarak `PlayerRole.None`
+  alabiliyordu (`HandleClientDisconnectedOnServer` eklendi).
+- Lobi doluyken 4. kişi bağlanmaya çalışınca genel "Sunucu Bağlantısı Koptu" mesajı gösteriliyordu
+  — ayrı, doğru bir "Lobi dolu" mesajı/anahtarı eklendi.
+- Localization fallback zinciri `en` locale'ine işaret ediyordu ama karşılığı olan bir Locale
+  asset'i (İngilizce tablo) hiç yoktu — Türkçe olmayan bir sistemde `SelectedLocale` null kalma
+  riski vardı; fallback `tr`'ye çekildi (bkz. aşağıdaki Localization notu).
+
+**Tek bilinen açık sorun:** Round başladığında "Round başladı! Rolün:" yazısının rol adını bazen
+boş bıraktığı bildirildi — sadece gerçek çok-makineli (Steam Relay) testte görüldü, gerçek
+2-process local-UDP testinde (normal zamanlama ve kasıtlı race senaryosu dahil) tekrar
+üretilemedi. `LobbyUIController.RefreshStatusText()` artık rol adını önbellek yerine her
+seferinde `RoleManager.Instance.LocalRole`'den taze okuyacak şekilde sertleştirildi ve teşhis
+için `HandleRoundActiveChanged` içine bir `Debug.Log` eklendi (`[LobbyUIController] Round
+baslama teshis: ...`). **Bir sonraki gerçek çok-makineli testte bu bug tekrar görülürse, ilgili
+oyuncunun Player.log dosyasındaki bu satıra bakılmalı** — `LocalRole=None` ise sorun RoleManager
+senkronizasyonunda, dolu ama ekranda görünmüyorsa sorun UI/Localization katmanındadır.
+
 ## Bileşen 1 Durumu (bkz. proje geçmişi)
 
 `Assets/Scripts/Core` (TransportMode, PlayerRole, IRoleAssignmentStrategy,
@@ -199,6 +255,10 @@ Türkçe olduğu için herkes Türkçe görür (sistem dili ne olursa olsun, ç�
 zincir Türkçe'ye düşer), ileride bir İngilizce `Locale` + String Table eklendiğinde
 kod DEĞİŞMEDEN İngilizce sistemli oyuncular otomatik İngilizce görmeye başlar.
 
+Şu an nihai fallback dili Türkçe'dir. İngilizce string table eklendiğinde, hangi dilin nihai
+fallback olacağına (Türkçe mi, İngilizce mi) karar verilmeli ve Startup Locale Selectors
+zinciri buna göre güncellenmeli.
+
 ### Round Başlama Rol Adı Bugu — Araştırma Notu
 
 Kullanıcı "Round başladı! Rolün:" yazısının rol adını boş bıraktığını bildirdi.
@@ -211,10 +271,15 @@ artık her çağrıda doğrudan `RoleManager.Instance.LocalRole`'den (NetworkLis
 üzerinden senkronize edilen, server-authoritative kaynak) taze okuyacak şekilde
 değiştirildi — `_localRole` alanı tamamen kaldırıldı. Bu, teorik olarak mümkün
 olan her türlü önbellek bayatlama senaryosunu yapısal olarak ortadan kaldırıyor.
-**Gerçek 3 makine testinde bug hâlâ görülürse bir sonraki adım:** Steam Relay
-gecikmesi altında `RoleManager._assignedRoles` NetworkList senkronizasyonunun
-`IsRoundActive` NetworkVariable senkronizasyonuna göre gerçekten gecikip
-gecikmediğini ölçmek için geçici network-gecikme loglaması eklemek gerekecek.
+Ayrıca `LobbyUIController.HandleRoundActiveChanged` içine teşhis amaçlı bir
+`Debug.Log` eklendi (round başladığı anda `LocalRole` ve oluşan `statusText`
+değerini basar). **Gerçek 3 makine testinde bug hâlâ görülürse bir sonraki
+adım:** ilgili oyuncunun Player.log dosyasında `[LobbyUIController] Round
+baslama teshis:` satırına bakılmalı — `LocalRole=None` ise sorun
+`RoleManager`/NetworkList senkronizasyonunda (Steam Relay gecikmesi altında
+`_assignedRoles`'un `IsRoundActive`'e göre gecikmesi ihtimali), değer doluyken
+ekranda görünmüyorsa sorun UI/Localization katmanındadır. Teşhis netleşince bu
+log kaldırılmalı.
 
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
@@ -258,3 +323,14 @@ kaynaklanır — veri gizleme İLE DEĞİL:
 ## Genel Kodlama Kuralı
 
 Yazılan tüm kodlar SOLID prensiplerine uygun olacak şekilde yazılır.
+
+## Genel Geliştirme Disiplini
+
+- Hiçbir script içinde over-engineering yapılmaz — ihtiyaç duyulmayan soyutlama, esneklik veya
+  gelecekte-lazım-olabilir kod yazılmaz.
+- Mümkün olduğunda hazır Unity Engine feature'ları kullanılır (Animator, Cinemachine, vb.) —
+  bunların elle yeniden yazılmış karşılıkları üretilmez.
+- Hiçbir problem için "play-around" (geçici, sorunun kök nedenini çözmeyen dolanma) yapılmaz;
+  yazılan kod ölçeklenebilir, modüler ve Editor üzerinden (Inspector'dan) kullanılabilir olur.
+- Veri/konfigürasyon saklamak için JSON yerine ScriptableObject kullanılır.
+- Vertical Slice kapsamı GDD'de tanımlanandan fazla genişletilmez.
