@@ -74,7 +74,10 @@ public class RoleManager : NetworkBehaviour
         _assignedRoles.OnListChanged += HandleAssignedRolesChanged;
 
         if (IsServer)
+        {
             NetworkManager.OnClientConnectedCallback += HandleClientConnected;
+            NetworkManager.OnClientDisconnectCallback += HandleClientDisconnectedOnServer;
+        }
 
         // Gec katilan client icin: liste zaten dolu geldiyse kendi rolumuzu hemen bildir.
         var existing = GetRole(NetworkManager.LocalClientId);
@@ -87,7 +90,31 @@ public class RoleManager : NetworkBehaviour
         _assignedRoles.OnListChanged -= HandleAssignedRolesChanged;
 
         if (IsServer && NetworkManager != null)
+        {
             NetworkManager.OnClientConnectedCallback -= HandleClientConnected;
+            NetworkManager.OnClientDisconnectCallback -= HandleClientDisconnectedOnServer;
+        }
+    }
+
+    // Bir client aynı (host'un yeniden host olmadigi, hala calisan) lobiden ayrilip
+    // tekrar baglanmaya calisirsa, eski kaydi burada silinmezse _assignedRoles surekli
+    // buyur: yeni baglanti MaxPlayers sinirina takilir VEYA joinOrderIndex araligin
+    // disina cikip PlayerRole.None alir (Bilesen 1 test raporundaki "Round basladi!
+    // Rolun:" bos gorunmesi bugu tam olarak buydu). NOT: bir oyuncu round SIRASINDA
+    // ayrilirsa rolu bosa cikar ama round'un kendisi ne olacak (durur mu, bekler mi)
+    // GDD'de tanimli degil — bu, GameLoopManager (Bilesen 2) ile birlikte netlestirilecek
+    // ayri bir tasarim karari, burada sadece sayim/atama tutarliligi duzeltiliyor.
+    private void HandleClientDisconnectedOnServer(ulong clientId)
+    {
+        for (int i = 0; i < _assignedRoles.Count; i++)
+        {
+            if (_assignedRoles[i].ClientId != clientId)
+                continue;
+
+            Debug.Log($"[RoleManager] Client {clientId} ayrildi, rol kaydi kaldirildi ({_assignedRoles[i].Role}).");
+            _assignedRoles.RemoveAt(i);
+            break;
+        }
     }
 
     private void OnDestroy()
