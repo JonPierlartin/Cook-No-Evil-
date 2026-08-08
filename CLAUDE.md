@@ -75,13 +75,12 @@ geçme kararını kod yazmaya başlamadan ÖNCE kullanıcıya sor.
   veya bu commit artık uygun değilse tekrar kontrol edilmeli.
 - Host tarafı (SteamClient.Init, NetworkManager.StartHost(), FacepunchTransport relay socket
   oluşturma) tek Steam hesabıyla doğrulandı ve BAŞARILI.
-- **Client tarafı (StartClient) HENÜZ tam doğrulanmadı.** Tek makinede/tek Steam hesabıyla test
-  edilirken `ArgumentException: Invalid Connection` alındı — bu, Facepunch.Steamworks'ün bilinen
-  bir platform kısıtı (aynı SteamID ile aynı makinede relay socket'e kendine bağlanma
-  desteklenmiyor, bkz. [Facepunch.Steamworks#692](https://github.com/Facepunch/Facepunch.Steamworks/issues/692)),
-  paket/NGO uyumsuzluğu değil. **Bileşen 1 tamamlanıp gerçek 2 oyuncuyla (2 FARKLI Steam
-  hesabıyla) test edilirken, client bağlantısının gerçekten uçtan uca çalıştığı özellikle
-  doğrulanmalı ve kullanıcıya raporlanmalıdır.**
+- **Client tarafı (StartClient) ÇÖZÜLDÜ — doğrulandı.** Tek makinede/tek Steam hesabıyla test
+  edilirken alınan `ArgumentException: Invalid Connection`, Facepunch.Steamworks'ün bilinen bir
+  platform kısıtından kaynaklanıyordu (aynı SteamID ile aynı makinede relay socket'e kendine
+  bağlanma desteklenmiyor, bkz. [Facepunch.Steamworks#692](https://github.com/Facepunch/Facepunch.Steamworks/issues/692)),
+  paket/NGO uyumsuzluğu değildi. 3 farklı gerçek Steam hesabıyla lobiye bağlanma testinde
+  client bağlantısı uçtan uca BAŞARILI şekilde doğrulandı.
 
 ## 2.2 Asimetrik Rol Dağılımı ve GDD Temelleri
 
@@ -198,11 +197,9 @@ ekranı YOK.
   `NetworkTransportManager` ve `LobbyUIController`, `NetworkManager.Singleton` /
   `SteamLobbyManager.Instance`'a `Awake()` içinde erişiyordu — sıra garantisi
   olmadığı için bu erişimler `Start()`'a ertelendi.
-- **Steam'in kendi davet akışıyla GERÇEK bir 2. oyuncunun katılması (2 farklı
-  Steam hesabıyla) HENÜZ test edilmedi** — Aşama 1'de tespit edilen aynı kısıt
-  (tek Steam hesabıyla aynı makinede client bağlantısı test edilemiyor)
-  burada da geçerli. Gerçek 2 oyuncuyla test edilirken hem client bağlantısı
-  hem de davet-kabul-otomatik-bağlan akışı özellikle doğrulanmalı.
+- **Steam'in kendi davet akışıyla GERÇEK oyuncuların katılması ÇÖZÜLDÜ — doğrulandı.**
+  3 farklı gerçek Steam hesabıyla lobiye bağlanma testi BAŞARILI: client bağlantısı
+  uçtan uca çalıştı.
 - Yerel Multiplayer-Play-Mode-eşdeğeri test (2 ayrı process, Local UDP
   transport, `SteamLobbyManager` bypass edilip `NetworkTransportManager` +
   `NetworkManager` doğrudan tetiklenerek) BAŞARILI: host `Sef`, client
