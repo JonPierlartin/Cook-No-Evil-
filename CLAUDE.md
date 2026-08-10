@@ -278,6 +278,153 @@ baslama teshis:` satırına bakılmalı — `LocalRole=None` ise sorun
 ekranda görünmüyorsa sorun UI/Localization katmanındadır. Teşhis netleşince bu
 log kaldırılmalı.
 
+## Player Controller Tamamlanma Raporu
+
+Bileşen 2 (İletişim ve Seviye Sistemleri: EmoteSystem, IntercomSystem, DumbwaiterSystem,
+GameLoopManager) kullanıcı tarafından onaylandı ama **kod yazılmadan beklemeye alındı** —
+plan `C:\Users\ersel\.claude\plans\goofy-floating-hippo.md` dosyasında saklı. Kullanıcı
+Bileşen 2'yi gerçek oynanışta test edebilmek için önce projede hiç bulunmayan bir Player
+Controller kurulmasını istedi. Bu bileşen GDD'nin hiçbir Bölümünde tanımlı değil —
+tamamen greenfield, ana mimari kararlar kullanıcıyla netleştirildi (bkz. plan dosyası):
+client-authoritative hareket (NGO `NetworkTransform`, owner-authoritative), generic
+4-slotlu `PlayerInventory` (tüm roller için tek envanter kavramı), ve bilinçli bir kapsam
+genişletmesi olarak gerçek tarif doğrulamalı `BurgerAssemblyStation` (Order/Customer/NPC
+sistemi KURULMADI, kapsam dışı kaldı).
+
+**Kurulanlar:**
+- `Assets/Scripts/Player/PlayerController.cs` — CharacterController ile WASD hareket (ok
+  tuşları `InputSystem_Actions.inputactions`'tan kaldırıldı), mouse-look (yaw gövde/pitch
+  kamera pivotu, clamp'li), sadece owner çalışır; spawn'da sahnenin statik `Main Camera`'sını
+  kapatıp kendi `Player Camera`'sını devreye sokar (sahne kamerası silinmedi, sadece
+  devre dışı bırakılıyor).
+- `Assets/Scripts/Player/PlayerInteractor.cs` — LMB (`Attack` action) ile raycast bazlı
+  hedef bulma (`Interactable` layer, slot 8) ve `HoldOrPressInteractable.BeginPress()`/
+  `EndPress()`'i tetikleyen genel yönlendirici; hangi eylemin gerçekleştiğine karışmaz.
+- `Assets/Scripts/Player/PlayerInventory.cs` — 4 slotluk generic envanter
+  (`NetworkList<int>`, -1=boş, değer `IngredientType.Id`), server-only
+  `ServerTryAddItem`/`ServerTryRemoveItem`/`ServerTryRemoveActiveItem`, owner-yazılabilir
+  `ActiveSlotIndex`.
+- `Assets/Scripts/Systems/HoldOrPressInteractable.cs` — headless (input-agnostic) etkileşim
+  primitive'i: `BeginPress()`/`EndPress()` + `Press`/`Hold` (Inspector'dan `holdDuration`
+  configli) davranışı. Unity InputSystem'in kendi "Hold" interaction'ına bağımlı değil.
+- `Assets/Scripts/Systems/BurgerAssemblyStation.cs` + `Assets/Scripts/Core/BurgerRecipe.cs`
+  (+ `IngredientRequirement` struct) — Şef'in masasında sıralı malzeme yerleştirme: ilk
+  yerleştirme kesinlikle `IngredientType.IsBread` olmalı, sonrası aktif tarifin (varyasyon/
+  hariç-tutma listesi dahil) izin verdiği malzemelerle sınırlı (sıra kuralı yok). Tarif
+  tamamlanınca `PlacedIngredients` otomatik sıfırlanır (test edilebilirlik için, kullanıcı
+  isteği — müşteri/sipariş sistemi gerektirmez). `activeRecipe` test için Inspector'dan
+  sabit seçilir, gerçek bir sipariş kaynağına bağlı değil.
+- `Assets/Scripts/Systems/EmoteSystem.cs` + `Assets/Scripts/UI/EmoteWheelUI.cs` — aslında
+  Bileşen 2 kapsamındaydı, `EmoteWheelUI`'nin E-basılı-tutma çarkı çalışabilsin diye bu
+  görevde inşa edildi (Bileşen 2'nin geri kalanı hâlâ parked). Sadece Kasiyer'de aktif;
+  E (`Interact` action, ham started/canceled okunuyor, `HoldOrPressInteractable`'dan
+  BAĞIMSIZ) basılı tutulunca çark açılır, mouse pozisyonu dilim seçer, bırakınca
+  `EmoteSystem.SelectEmoteServerRpc` çağrılır ve SADECE Yamak'a hedefli `ClientRpc` ile
+  iletilir (bu, Red Line 1'in veri-gizleme yasağını ihlal etmez — o kural cooking-state'e
+  özgü, bu sadece rol-bazlı bir mesajlaşma eylemi).
+- `Assets/Scripts/Network/PlayerSpawner.cs` — `RoleManager`'a eklenen yeni
+  `OnServerRoleAssigned` event'ini dinler (rol ataması KESİNLİKLE tamamlandıktan sonra
+  tetiklenir), `Player.prefab`'ı `Instantiate` + `SpawnAsPlayerObject` ile spawn eder
+  (`RoleManager.HandleConnectionApproval` hâlâ `CreatePlayerObject=false` — NGO'nun otomatik
+  spawn'i KULLANILMIYOR, rol bazlı spawn konumu seçilebilsin diye).
+- `Assets/Scripts/UI/HotbarUI.cs` — her zaman görünür 4-slotluk hotbar, local
+  `PlayerInventory`'yi spawn olduktan sonra lazy-resolve eder, 1-4 tuşlarıyla slot seçimi
+  (`InputSystem_Actions.inputactions`'a `HotbarSlot1..4` action'ları eklendi).
+- `Assets/Prefabs/Player.prefab` — ilk ve tek prefab (proje daha önce hiç prefab
+  içermiyordu). NGO'nun "Default Network Prefabs" otomatik-kayıt özelliği sayesinde
+  `Assets/DefaultNetworkPrefabs.asset`'e otomatik eklendi, elle kayıt gerekmedi.
+- `GameSystems` sahne objesine `PlayerSpawner` ve `EmoteSystem` eklendi (RoleManager/
+  VoIPController ile aynı kalıcı obje deseni). Yeni `GameplayCanvas` (Hotbar + Emote çarkı)
+  `LobbyCanvas`'tan ayrı tutuldu.
+
+**RoleManager.cs değişikliği (Bileşen 1'e dokunan tek dosya):** sadece ekleme —
+`public event Action<ulong, PlayerRole> OnServerRoleAssigned` eklendi,
+`HandleClientConnected`'ın sonunda invoke ediliyor. Mevcut davranış değişmedi. Kullanıcının
+isteği üzerine bu değişiklikten sonra Bileşen 1'in hassas geçmişi olan round-start/rejoin
+davranışı reflection ile simüle edilerek yeniden doğrulandı: disconnect sonrası
+`_assignedRoles` doğru temizleniyor (0'a düşüyor), rejoin sonrası tam olarak 1 kayıt ile
+tekrar doluyor (leak/duplikasyon yok), `OnServerRoleAssigned` tam olarak 1 kez tetikleniyor.
+
+**Gerçek testte bulunan ve düzeltilen hatalar:**
+- `manage_components` tool'u kısa isimle (`PlayerController`) tip bulamadı (muhtemelen bir
+  paket içindeki başka bir `PlayerController` adıyla çakışma) — `PlayerController,
+  Assembly-CSharp` şeklinde tam nitelenmiş isimle çözüldü.
+- İlk `Player.prefab` oluşturma denemesi yanlışlıkla BOŞ yeni bir GameObject'i prefab olarak
+  kaydetti (`manage_gameobject create` + `save_as_prefab` her zaman YENİ bir obje yaratıyor,
+  var olanı prefab'a çevirmiyor) — doğru obje `manage_prefabs create_from_gameobject` ile
+  (isimle hedefleyerek, instanceID ile değil — instanceID hedeflemesi bu araç setinde
+  güvenilir çalışmadı) düzeltildi.
+- `EmoteWheelUI`, round aktifken global imleç kilidiyle (`LobbyUIController`'ın round-start'ta
+  uyguladığı `Cursor.lockState = Locked`) çakışıyordu — çark, mutlak `Mouse.position`'a göre
+  dilim seçtiği için imleç kilitliyken hiçbir dilim seçilemiyordu. Düzeltme: `EmoteWheelUI`
+  artık E'ye basılınca (`HandleInteractStarted`) imleci geçici olarak serbest bırakıp
+  gösteriyor, E bırakılınca (`HandleInteractCanceled`) round hâlâ aktifse tekrar kilitleyip
+  gizliyor. Local Editor'de reflection ile doğrulandı (kapalı→açık→kapalı durumlarında
+  lock/visible state'leri beklendiği gibi değişti).
+
+**Test ortamı notu (kod hatası DEĞİL):** Tek Unity Editor içinde arka arkaya birden fazla
+`StartHost()`/`Stop Play Mode` döngüsü denenirken, NGO'nun Play Mode çıkışındaki bilinen
+`NetworkManager`/`NetworkObject` `OnDestroy()` sıralama hatası (upstream NGO paket sorunu,
+proje kodundan bağımsız) yerel UDP soketinin (port 7777) temiz kapanmasını engelledi;
+sonraki `StartHost()` denemeleri "address already in use" ile başarısız oldu. Bu SADECE
+aynı Editor oturumunda ardışık manuel test döngülerinde görülür — normal tek seferlik
+Play Mode kullanımını etkilemez. Diagnostik testler geçici olarak farklı bir port
+(`UnityTransport.SetConnectionData` ile 7778/7779) kullanılarak tamamlandı; kalıcı bir kod
+değişikliği yapılmadı.
+
+**Bilinçli, kod dışı bir boşluk (unutulmamalı):** `HoldOrPressInteractable` kasıtlı olarak
+headless/input-agnostic kuruldu (`BeginPress()`/`EndPress()`). `PlayerInteractor` bunu
+raycast ile tetikliyor — yani "oyuncu bir objeye yaklaşınca/bakınca otomatik vurgula" gibi
+bir prompt/highlight UI'ı YOK, sadece ham etkileşim çalışıyor. Ayrıca gerçek seviye
+geometrisi (odalar, Kasiyer/Yamak/Şef istasyonlarının 3D yerleşimi) hiç yok — `BurgerAssemblyStation`
+sahnede geçici bir Cube olarak duruyor. Bunlar bu görevin bilinçli kapsam dışı bıraktığı
+konular, GDD'nin hiçbir Bölümü de bunların sahibi değil.
+
+**Bileşen 2 üzerinde bu turda netleşen, ileride uygulanacak iki değişiklik** (plan
+dosyasında da işaretli): (1) `YamakCarryState` (3 durumlu enum) tasarımı TAMAMEN
+KALDIRILDI — Yamak'ın taşıdığı öğe artık generic `PlayerInventory`'nin bir slotu olarak
+modellenecek. (2) `ItemHandoffSlot` kendi üzerinde bir `HoldOrPressInteractable` (Press-type)
+taşıyacak şekilde genişletilecek, böylece `PlayerInteractor` onu diğer istasyonlarla aynı
+şekilde (LMB → `BeginPress`/`EndPress`) tetikleyebilecek.
+
+### Gerçek 3 Makineli Steam Testinde Bulunan Kritik Hata — Round Başlayınca Ekran Değişmiyordu
+
+Kullanıcı 3 gerçek oyuncuyla Steam üzerinden test etti: lobi ve VoIP hatasız çalıştı, ama
+"Oyunu Başlat"a basınca hiçbir oyuncu diğerini FPS görünümünde göremedi — ekranda görünürde
+hiçbir şey değişmedi. Host'un `Player.log` dosyası (`%USERPROFILE%\AppData\LocalLow\
+DefaultCompany\Cook No Evil!\Player.log`) incelendiğinde: 3 rol de doğru atanmıştı
+(`Client 0 -> Sef`, `Client 1 -> Yamak`, `Client 2 -> Kasiyer`), `IsRoundActive` gerçekten
+`true` olmuştu (`Round baslama teshis: LocalRole=Sef` satırı basılmıştı), hiçbir exception/
+hata YOKTU — yani ağ/rol/round-state katmanı sorunsuzdu. Round başladıktan hemen sonra diğer
+2 oyuncunun ayrıldığı da log'da görüldü (muhtemelen "hiçbir şey olmadığını" düşünüp oyundan
+çıktılar).
+
+**Kök neden:** `LobbyUIController.HandleRoundActiveChanged`, round başladığında SADECE
+`startGameButton`/`inviteButton`'ı gizliyor ve status text'i güncelliyordu — tam ekranı
+kaplayan `lobbyPanel`'i (ve altındaki 3D oyun görüntüsünü/`GameplayCanvas`'ı) hiç
+gizlemiyordu. Yani Player.prefab doğru spawn olup kamera doğru geçiş yapsa bile (bu da ayrıca
+doğrulandı, aşağıya bkz.), oyuncular her zaman tam ekran lobi arayüzüne bakmaya devam
+ediyordu — bu, mimari bir eksiklik değil, unutulmuş bir UI-geçiş adımıydı (Player Controller
+görevinde `GameplayCanvas` kuruldu ama round-start'a hiç bağlanmadı).
+
+**Düzeltme:** `HandleRoundActiveChanged` artık round aktif olunca `lobbyPanel`'i gizliyor,
+`GameplayCanvas`'ı (isimle bulunuyor — `LobbyCanvas`'tan ayrı bir sahne kökü olduğu için
+Inspector referansı yerine, tek seferlik bir çağrı, performans sorunu yaratmaz) açıyor ve
+fare imlecini kilitleyip gizliyor (`Cursor.lockState = Locked`, FPS kontrolü için gerekli —
+önceden hiç ayarlanmıyordu). `HandleHostDisconnected`'a da aynı geri-alma eklendi (host round
+sırasında koparsa `GameplayCanvas`/imleç kilidi takılı kalmasın diye).
+
+**Doğrulama:** Local Editor testinde `RoleManager.Instance.IsRoundActive.Value = true`
+manuel tetiklenerek doğrulandı: `lobbyPanel.active` `True→False`, `Cursor.lockState`
+`None→Locked` oldu. Ayrıca `PlayerSpawner.HandleServerRoleAssigned` ve
+`PlayerController.OnNetworkSpawn`'a (owner kamerası aktifleşince) birer teşhis `Debug.Log`
+eklendi — host'un `Player.log`'unda ikisi de doğru sırayla göründü
+(`[PlayerSpawner] Client 0 icin Player.prefab spawn edildi (rol=Sef).` ve
+`[PlayerController] Owner kamerasi aktif, sahne kamerasi kapatildi (clientId=0).`), yani
+spawn/kamera geçişi zaten sorunsuzdu — sorun SADECE UI katmanındaydı. **Not:** bu doğrulama
+sadece HOST'un (bu makinenin) Player.log'undan yapılabildi; diğer 2 oyuncunun makineleri bu
+oturumdan erişilemez durumda, onların log'ları ayrıca kontrol edilmedi.
+
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
 - **Bileşen 1 — Steam Network, Lobby & VoIP:** `NetworkTransportManager`, `SteamLobbyManager`,

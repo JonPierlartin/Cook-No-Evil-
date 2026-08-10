@@ -143,6 +143,14 @@ public class LobbyUIController : MonoBehaviour
 
         RefreshStatusText();
 
+        // Round basladiginda tam ekran lobi paneli (buton/status text) 3D oyun goruntusunu
+        // ve GameplayCanvas'i (Hotbar/Emote carki) tamamen kapatiyordu — oyuncular Player.prefab
+        // spawn olup kamerasi devreye girse bile ekranda hicbir degisiklik GORMUYORDU (gercek
+        // 3 makineli testte bulundu). lobbyPanel'i gizleyip GameplayCanvas'i acmak ve fare
+        // imlecini kilitlemek bu gecisi tamamliyor.
+        lobbyPanel.SetActive(!current);
+        SetGameplayCanvasVisible(current);
+
         // TESHIS: gercek cok-makineli testte "Rolun:" adinin bos kalma raporunu local testte
         // tekrar uretemedik. Bug hala gorulurse Player.log'daki bu satiri kontrol et — LocalRole
         // None ise sorun RoleManager senkronizasyonunda, dolu ama statusText'te gorunmuyorsa
@@ -152,6 +160,23 @@ public class LobbyUIController : MonoBehaviour
             var role = RoleManager.Instance != null ? RoleManager.Instance.LocalRole : PlayerRole.None;
             Debug.Log($"[LobbyUIController] Round baslama teshis: LocalRole={role} statusText=\"{statusText.text}\"");
         }
+    }
+
+    // GameplayCanvas, LobbyUIController'in yasadigi LobbyCanvas'tan ayri bir sahne
+    // objesi oldugu icin (Inspector referansi yerine) isimle bulunuyor — bu tek,
+    // durum-degisimi-basi bir cagri, performans sorunu yaratmaz. lobbyPanel'i
+    // KENDI YONETMEZ — her cagiran taraf kendi lobbyPanel durumuna karar verir
+    // (orn. host-disconnect'te lobbyPanel yerine connectionLostPanel gosterilir).
+    private void SetGameplayCanvasVisible(bool visible)
+    {
+        var gameplayCanvas = GameObject.Find("GameplayCanvas");
+        if (gameplayCanvas != null)
+            gameplayCanvas.SetActive(visible);
+        else
+            Debug.LogError("[LobbyUIController] GameplayCanvas sahnede bulunamadi.");
+
+        Cursor.lockState = visible ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !visible;
     }
 
     private void RefreshStatusText()
@@ -188,6 +213,10 @@ public class LobbyUIController : MonoBehaviour
 
     private void HandleHostDisconnected()
     {
+        // Host round SIRASINDA koparsa GameplayCanvas acik/imlec kilitli kalmis olabilir —
+        // "Sunucu Baglantisi Koptu" ekrani gorunur/tiklanabilir olsun diye geri alir.
+        SetGameplayCanvasVisible(false);
+
         statusText.text = "";
         connectionLostPanel.SetActive(true);
         lobbyPanel.SetActive(false);
