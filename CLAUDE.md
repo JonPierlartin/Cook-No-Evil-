@@ -515,3 +515,11 @@ Yazılan tüm kodlar SOLID prensiplerine uygun olacak şekilde yazılır.
   yazılan kod ölçeklenebilir, modüler ve Editor üzerinden (Inspector'dan) kullanılabilir olur.
 - Veri/konfigürasyon saklamak için JSON yerine ScriptableObject kullanılır.
 - Vertical Slice kapsamı GDD'de tanımlanandan fazla genişletilmez.
+- **Her aşama/bileşen/görev tamamlandığında (kullanıcı ayrıca istemese bile) otomatik olarak
+  bir Windows Development Build alınır** (`manage_build`: `target=StandaloneWindows64`,
+  `development=true`), `Builds/CookNoEvilDevBuildN/` altına (mevcut en yüksek N'den bir
+  fazlasıyla, örn. bir önceki `CookNoEvilDevBuild10` ise yeni build `CookNoEvilDevBuild11`)
+  kaydedilir, yanına içeriği `480` olan bir `steam_appid.txt` konur, sonra klasör aynı
+  isimle (`CookNoEvilDevBuildN.zip`) zip'lenir. `Builds/` zaten `.gitignore`'da olduğu için
+  bu commit'lere karışmaz. Bu adım unutulmaya müsait olduğu için buraya kalıcı kural olarak
+  yazıldı — atlanmamalı.
