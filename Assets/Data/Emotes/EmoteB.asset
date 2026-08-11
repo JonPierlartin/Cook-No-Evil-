@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: EmoteB
   m_EditorClassIdentifier: Assembly-CSharp::EmoteDefinition
   localizationKey: emote.b
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f21816c09db5d1a4fab634aa95eca725, type: 3}
