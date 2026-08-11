@@ -179,6 +179,22 @@ public class LobbyUIController : MonoBehaviour
         Cursor.visible = !visible;
     }
 
+    // Windows/Unity, pencere fokusu kaybedildiginde imlec kilidini/gizliligini
+    // OTOMATIK olarak iptal eder (isletim sistemi bunun disina cikilmasina izin
+    // vermez) — ama fokus GERI geldiginde bunu hicbir kod yeniden uygulamiyordu.
+    // Gercek 3 kisilik testte "bir oyuncuda E'ye basinca da imlec cikiyor" olarak
+    // bildirilen sorunun asil kok nedeni muhtemelen buydu (alt-tab/pencere disina
+    // tiklama), rol-bazli bir sizinti degil — bkz. CLAUDE.md.
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus)
+            return;
+
+        bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
+        Cursor.lockState = roundActive ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !roundActive;
+    }
+
     private void RefreshStatusText()
     {
         bool isHost = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.IsHost;

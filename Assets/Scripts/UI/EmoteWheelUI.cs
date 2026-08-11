@@ -75,6 +75,14 @@ public class EmoteWheelUI : MonoBehaviour
 
     private void HandleInteractStarted(InputAction.CallbackContext context)
     {
+        // Savunma amacli tekrar kontrol: HandleLocalRoleAssigned zaten Kasiyer-disi
+        // rollerde bu callback'i hic abone etmiyor, ama gercek 3-kisilik testte Yamak'ta
+        // da imlecin acildigi bildirildi — GUNCEL rolu burada da dogrulamak (onbellege
+        // guvenmek yerine, RoleManager'in gecmis round-baslama senkron sorunlarindaki
+        // ayni "canli oku" duzeltmesiyle tutarli) bu sinifi kokten kapatiyor.
+        if (RoleManager.Instance == null || RoleManager.Instance.LocalRole != PlayerRole.Kasiyer)
+            return;
+
         _wheelOpen = true;
         if (wheelRoot != null)
             wheelRoot.SetActive(true);
@@ -89,6 +97,9 @@ public class EmoteWheelUI : MonoBehaviour
 
     private void HandleInteractCanceled(InputAction.CallbackContext context)
     {
+        if (RoleManager.Instance == null || RoleManager.Instance.LocalRole != PlayerRole.Kasiyer)
+            return;
+
         _wheelOpen = false;
         if (wheelRoot != null)
             wheelRoot.SetActive(false);
@@ -102,7 +113,7 @@ public class EmoteWheelUI : MonoBehaviour
         // round'da gonderilebiliyor) imleci FPS kontrolu icin tekrar kilitle/gizle;
         // degilse (ör. bu sirada round bittiyse) acik/gorunur birak — LobbyUIController'daki
         // kuralla ayni.
-        bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
+        bool roundActive = RoleManager.Instance.IsRoundActive.Value;
         Cursor.lockState = roundActive ? CursorLockMode.Locked : CursorLockMode.None;
         Cursor.visible = !roundActive;
     }
@@ -123,8 +134,17 @@ public class EmoteWheelUI : MonoBehaviour
         if (angle < 0f)
             angle += 360f;
 
+        // Dilim ikonlari carkta 90 derece (yukari) merkezli baslayip saat yonunun
+        // tersine yerlestiriliyor (slot i -> 90 + i*sliceSize derece). Bunu hesaba
+        // katmadan (0 derece = sag) index hesaplamak her zaman komsu dilimi
+        // isaretliyordu (bulunan gercek hata: mouse'un uzerinde durdugu degil,
+        // yanindaki dilim parliyordu). Aciyi ayni offsetle kaydirip normalize ediyoruz.
         float sliceSize = 360f / slotIcons.Length;
-        int index = Mathf.RoundToInt(angle / sliceSize) % slotIcons.Length;
+        float adjustedAngle = angle - 90f;
+        if (adjustedAngle < 0f)
+            adjustedAngle += 360f;
+
+        int index = Mathf.RoundToInt(adjustedAngle / sliceSize) % slotIcons.Length;
         HighlightSlot(index);
     }
 

@@ -361,6 +361,33 @@ tekrar doluyor (leak/duplikasyon yok), `OnServerRoleAssigned` tam olarak 1 kez t
   gösteriyor, E bırakılınca (`HandleInteractCanceled`) round hâlâ aktifse tekrar kilitleyip
   gizliyor. Local Editor'de reflection ile doğrulandı (kapalı→açık→kapalı durumlarında
   lock/visible state'leri beklendiği gibi değişti).
+- Yine gerçek 3 kişilik testte iki ayrı hata daha bulundu:
+  **(1) "Yamak'ta da E'ye basınca imleç açılıyor" — kök neden ROL SIZINTISI DEĞİLDİ.**
+  `EmoteWheelUI.HandleLocalRoleAssigned`'daki abonelik-zamanlı Kasiyer kontrolü kod
+  incelemesinde YETERLİ bulundu — Kasiyer olmayan bir client'ta `_interactAction` hiç
+  set edilmiyor, yani `HandleInteractStarted`/`HandleInteractCanceled` teorik olarak hiç
+  tetiklenemiyor. Asıl kök neden büyük olasılıkla başka bir yerdeydi: Windows/Unity,
+  oyun penceresi fokusu kaybedildiğinde (alt-tab, pencere dışına tıklama) imleç kilidini/
+  gizliliğini İŞLETİM SİSTEMİ SEVİYESİNDE zorla iptal eder — ama fokus GERİ geldiğinde
+  bunu hiçbir kod yeniden uygulamıyordu. Bir oyuncu round sırasında pencere dışına
+  tıklayıp geri dönerse imleç açık kalırdı; bunun E tuşuyla aynı ana denk gelmesi
+  yanlış bir nedensellik izlenimi yaratmış olabilir. **Düzeltme:** `LobbyUIController`'a
+  `OnApplicationFocus(bool hasFocus)` eklendi — fokus geri gelince round aktifse imleç
+  tekrar kilitlenip gizleniyor. Local Editor'de simülasyonla doğrulandı: kilitli→(OS
+  zorla açar)→fokus geri gelince tekrar kilitli/gizli. Buna EK olarak, kod incelemesinde
+  kesin bir sızıntı kanıtlanamamış olsa da savunma amaçlı bir sağlamlaştırma da eklendi:
+  `EmoteWheelUI.HandleInteractStarted`/`HandleInteractCanceled` artık abonelik-zamanlı
+  önbelleğe güvenmek yerine GÜNCEL `RoleManager.Instance.LocalRole`'ü de kontrol ediyor
+  (RoleManager'ın geçmiş round-başlama senkron sorunlarında kullanılan "önbelleğe
+  güvenme, canlı oku" ilkesiyle tutarlı) — olası bir rol-senkron zamanlama farkına karşı
+  ek bir güvenlik katmanı, ama TEK BAŞINA kanıtlanmış bir kök-neden düzeltmesi değildir.
+  **(2)** Çarkta mouse'un üzerinde durduğu değil YANINDAKİ dilim parlıyordu — dilim
+  ikonları carkta 90° (yukarı) merkezli yerleştirilmişti ama açı→index hesaplaması 0°'yi
+  (sağ) merkez kabul ediyordu; açı hesaplamasına aynı 90° kaydırma eklenerek düzeltildi.
+  Local Editor'de doğrulandı (rol-kontrolü: Sef iken `HandleInteractStarted` artık
+  imleci hiç etkilemiyor; odak testi: yukarıda; açı düzeltmesi: 90/210/330° test açıları
+  artık doğru slot
+  index'ine (0/1/2) eşleniyor).
 
 **Test ortamı notu (kod hatası DEĞİL):** Tek Unity Editor içinde arka arkaya birden fazla
 `StartHost()`/`Stop Play Mode` döngüsü denenirken, NGO'nun Play Mode çıkışındaki bilinen
