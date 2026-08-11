@@ -19,6 +19,11 @@ public class RoleManager : NetworkBehaviour
 
     public event Action<PlayerRole> OnLocalRoleAssigned;
 
+    // Server-only hook: rol atamasi TAMAMLANDIKTAN sonra tetiklenir (PlayerSpawner
+    // bunu dinleyip player objesini spawn eder — event sirasi garantisi olmayan
+    // NetworkManager.OnClientConnectedCallback'e ayrica abone olmak yerine).
+    public event Action<ulong, PlayerRole> OnServerRoleAssigned;
+
     // GEÇİCİ yer tutucu: gerçek round/oyun döngüsü yönetimi Bileşen 2'deki GameLoopManager'a
     // ait olacak. O gelene kadar rol kısıtlamalarının (VoIPController) ne zaman devreye
     // girecegini belirlemek icin burada tutuluyor. StartRound() host'un "Oyunu Baslat"
@@ -151,6 +156,7 @@ public class RoleManager : NetworkBehaviour
         _assignedRoles.Add(new ClientRoleEntry(clientId, role));
 
         Debug.Log($"[RoleManager] Client {clientId} -> {role}");
+        OnServerRoleAssigned?.Invoke(clientId, role);
     }
 
     // Host'un "Oyunu Baslat" butonuyla cagirdigi, server-authoritative round baslatma.

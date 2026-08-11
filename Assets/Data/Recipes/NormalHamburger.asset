@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bba6f5d70300d54ebd532c34281aeea, type: 3}
+  m_Name: NormalHamburger
+  m_EditorClassIdentifier: Assembly-CSharp::BurgerRecipe
+  recipeName: Normal Hamburger
+  requiredIngredients:
+  - Type: {fileID: 11400000, guid: 107e12c39a0c3a248bae42745159c596, type: 2}
+    Quantity: 2
+  - Type: {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}
+    Quantity: 1
+  excludedIngredients: []

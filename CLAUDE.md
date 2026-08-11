@@ -407,6 +407,16 @@ geometrisi (odalar, Kasiyer/Yamak/Şef istasyonlarının 3D yerleşimi) hiç yok
 sahnede geçici bir Cube olarak duruyor. Bunlar bu görevin bilinçli kapsam dışı bıraktığı
 konular, GDD'nin hiçbir Bölümü de bunların sahibi değil.
 
+**Basit gri-kutu test seviyesi eklendi (final tasarım DEĞİL):** `TestLevel` sahne objesi
+altında `Floor` (20x20 Plane) ve 4 duvar (`Wall_North/South/East/West`, Cube) — sadece
+hareket/etkileşim gerçek zeminde test edilebilsin diye. `BurgerAssemblyStation` geçici
+`(3,1,0)` konumundan odanın içinde zemine oturan `(7, 0.5, 4)` konumuna taşındı. Oda
+`Interactable` layer'ı KULLANMIYOR (sadece istasyon objeleri bu layer'da olmalı, duvar/zemin
+değil). Oyuncu spawn noktaları (`PlayerSpawner`, X ekseninde rol×2 ofseti: Kasiyer=2,
+Yamak=4, Sef=6) oda sınırları (-10..10) içinde kalıyor, Local Editor testinde `CharacterController`
+zeminde doğru duruyor (düşmüyor). Gerçek oda/istasyon 3D yerleşimi hâlâ ayrı, kapsam dışı bir
+görev.
+
 **Bileşen 2 üzerinde bu turda netleşen, ileride uygulanacak iki değişiklik** (plan
 dosyasında da işaretli): (1) `YamakCarryState` (3 durumlu enum) tasarımı TAMAMEN
 KALDIRILDI — Yamak'ın taşıdığı öğe artık generic `PlayerInventory`'nin bir slotu olarak
