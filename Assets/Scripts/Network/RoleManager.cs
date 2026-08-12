@@ -149,10 +149,34 @@ public class RoleManager : NetworkBehaviour
         response.Approved = true;
     }
 
+    // BULUNAN HATA: joinOrderIndex dogrudan _assignedRoles.Count'tan turetiliyordu.
+    // Lobi fazinda (round baslamadan once) bir oyuncu ayrilip _assignedRoles'tan
+    // kaydi silinince (bkz. HandleClientDisconnectedOnServer) sayac geriye duserdi —
+    // ornegin Sef (index 0) ayrilirsa kalanlar Yamak+Kasiyer (count=2), sonra YENI
+    // bir oyuncu katilinca joinOrderIndex=2 -> JoinOrder[2]=Kasiyer atanirdi: artik
+    // IKI oyuncu Kasiyer olur ve Sef rolu HIC KIMSEYE atanmamis kalirdi (count yine
+    // MaxPlayers'a ulastigi icin StartRound() bunu fark etmeden gecerdi). Duzeltme:
+    // strateji arayuzu/JoinOrder DEGISTIRILMEDEN, sadece HALA BOS olan ilk role
+    // denk gelen index araniyor — boylece hem eski "index sinirin disina cikip
+    // PlayerRole.None kalma" bugu (bkz. HandleClientDisconnectedOnServer notu) HEM
+    // bu yeni "iki oyuncuya ayni rol" bugu ayni anda cozulmus oluyor.
     private void HandleClientConnected(ulong clientId)
     {
-        int joinOrderIndex = _assignedRoles.Count;
-        var role = _strategy.AssignRole(clientId, joinOrderIndex);
+        var takenRoles = new System.Collections.Generic.HashSet<PlayerRole>();
+        foreach (var entry in _assignedRoles)
+            takenRoles.Add(entry.Role);
+
+        var role = PlayerRole.None;
+        for (int i = 0; i < MaxPlayers; i++)
+        {
+            var candidate = _strategy.AssignRole(clientId, i);
+            if (candidate != PlayerRole.None && !takenRoles.Contains(candidate))
+            {
+                role = candidate;
+                break;
+            }
+        }
+
         _assignedRoles.Add(new ClientRoleEntry(clientId, role));
 
         Debug.Log($"[RoleManager] Client {clientId} -> {role}");
