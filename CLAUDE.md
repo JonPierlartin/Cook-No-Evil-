@@ -512,6 +512,92 @@ spawn/kamera geçişi zaten sorunsuzdu — sorun SADECE UI katmanındaydı. **No
 sadece HOST'un (bu makinenin) Player.log'undan yapılabildi; diğer 2 oyuncunun makineleri bu
 oturumdan erişilemez durumda, onların log'ları ayrıca kontrol edilmedi.
 
+## Rol Ataması, Emote Erişimi, Rich Presence ve LMB Etkileşimi — Dört Ayrı Araştırma
+
+**1) "2. katılan oyuncu ekranda Yamak yazıyor ama gerçekten Kasiyer mi atanmış?" sorusu:**
+Kod incelemesiyle netleştirildi — **hiçbir mismatch mümkün değil**, çünkü hem
+`LobbyUIController.RefreshStatusText()` hem `EmoteWheelUI`'nin rol kontrolleri hem de
+`EmoteSystem.SelectEmoteServerRpc`'nin sunucu tarafı doğrulaması AYNI tek kaynağı
+(`RoleManager.GetRole()`, `_assignedRoles` NetworkList üzerinden canlı okunuyor) kullanıyor —
+ekranda gösterilen rol adıyla sunucunun bildiği rol ASLA farklı olamaz. `EmoteWheelUI`'nin
+çark-açma mantığı da role göre çift katmanlı korumalı (abonelik anında VE her
+basma/bırakmada canlı `RoleManager.Instance.LocalRole` kontrolü) — "herkes E'ye basınca
+açılabiliyor" hipotezi de kod incelemesiyle ELENDİ. **Gerçek, doğrulanmış bir hata bulundu
+ama farklı bir yerde:** `RoleManager.HandleClientConnected`, `joinOrderIndex`'i doğrudan
+`_assignedRoles.Count`'tan türetiyordu. Lobi fazında (round başlamadan önce) bir oyuncu
+ayrılıp `_assignedRoles`'tan kaydı silinince (bkz. `HandleClientDisconnectedOnServer`) sayaç
+geriye düşüyordu — örn. Sef (index 0) ayrılırsa kalanlar Yamak+Kasiyer (count=2) olur, YENİ
+bir oyuncu katılınca `joinOrderIndex=2` → `JoinOrder[2]=Kasiyer` atanır: artık İKİ oyuncu
+Kasiyer olur ve Sef rolü HİÇ KİMSEYE atanmamış kalır (count yine `MaxPlayers`'a ulaştığı için
+`StartRound()` bunu fark etmeden geçerdi). **Düzeltme:** `IRoleAssignmentStrategy` arayüzü
+VE `SequentialRoleAssignmentStrategy` DEĞİŞTİRİLMEDEN (mimari aynı kaldı), sadece
+`HandleClientConnected` içinde artık HALA BOŞ olan ilk role denk gelen index aranıyor
+(`_assignedRoles`'taki mevcut rollerin kümesine bakılıp `JoinOrder` sırasıyla ilk boş rol
+seçiliyor). Reflection ile canlı test edildi (Local UDP, Play Mode): 100/101/102 sırayla
+katılınca Sef/Yamak/Kasiyer aldı; 100 (Sef) ayrılıp yeni bir oyuncu (200) katılınca 200
+doğru şekilde Sef aldı (eski koddaki gibi ikinci bir Kasiyer OLUŞMADI). **Muhtemel bağlantı:**
+bu bug, aşağıdaki Rich Presence bug'ıyla (madde 3) birleşince gerçek testte "rol karıştı"
+izlenimi yaratmış olabilir — bayat "Katıl" seçeneğine tıklayan biri kısmen bağlanıp hemen
+kopabilir, bu da lobi fazında beklenmeyen bir connect/disconnect çifti üretip index kaymasına
+yol açabilirdi. Kesin nedensellik kanıtlanamadı ama makul bir zincir.
+
+**2) Yamak için kısıtlı emote çarkı erişimi:** Kullanıcı isteğiyle uygulandı. `EmoteSystem`'e
+`yamakEmoteLimit` (varsayılan 1) eklendi — Yamak sadece `availableEmotes` dizisinin ilk N
+elemanına erişebilir (Kasiyer tam listeyi kullanır); `SelectEmoteServerRpc` artık hem
+Kasiyer hem Yamak'ı kabul edip Yamak için ayrıca index sınırını server-authoritative
+doğruluyor. `EmoteWheelUI` artık Sef DIŞINDA her iki role de açılıyor (`IsWheelRole`
+helper'ı), çark açılırken role göre `_activeSlotCount` hesaplanıp fazla dilimler
+gizleniyor/tıklanamaz hale getiriliyor, açı→index hesaplaması sabit 3 yerine bu canlı sayıya
+göre yapılıyor. **BİLİNÇLİ, KOD DIŞI EKSİKLİK:** kısıtlı listenin İÇERİĞİ (hangi belirli
+emote'lar Yamak'a açık) tasarlanmadı — sadece SAYI kısıtlandı (basit placeholder, kullanıcı
+isteğiyle detaylandırma sonraya bırakıldı). Ayrıca dilim ikonları sabit 3-slot'luk açısal
+yerleşime göre konumlandırılmış olduğundan, `yamakEmoteLimit` ileride 1'den büyük bir değere
+çekilirse (örn. 2) görsel dilim konumu ile açı-tabanlı hit-test sınırı tam örtüşmeyebilir —
+limit 1 iken bu sorun yok (tek dilim, her açı ona eşlenir), limit artırılırsa çark
+düzeninin de (slot pozisyonları) yeniden gözden geçirilmesi gerekir.
+
+**3) Steam Rich Presence bayat "Katıl" seçeneği:** `SteamFriends.ClearRichPresence()`
+SADECE `SteamLobbyManager.LeaveLobby()` içinden çağrılıyordu. Oyun bir lobideyken "Lobiden
+Çık" butonuna basılmadan doğrudan kapatılırsa (Alt+F4, Stop Play Mode, Görev
+Yöneticisi'nden kapatma — bu projede gerçek çok-makineli testler sırasında sıkça olan bir
+senaryo) bu satır HİÇ ÇALIŞMIYORDU. `AdvertiseLobbyPresence`'ın ayarladığı `connect` Rich
+Presence değeri böylece Steam'in arkadaş listesi UI'ında o oyuncunun bir SONRAKI (hatta hiç
+lobi kurmadığı) oturumunda da bayat bir "Katıl" seçeneği olarak görünmeye devam edebiliyordu
+— tıklanınca gerçek bir lobi/host olmadığı için "Bağlantı Koptu" alınıyordu. Bu, aynı
+Rich Presence katmanının (Bileşen 1'de "Arkadaş Davet Et çalışmıyor" bug'ını çözen
+`AdvertiseLobbyPresence` fonksiyonuyla aynı mekanizma) SET tarafı düzgün ama CLEAR tarafının
+sadece "mutlu yol"a (Leave butonu / host-kaybı akışı) bağlı kalmasından kaynaklanıyordu.
+**Düzeltme:** `SteamLobbyManager`'a `OnApplicationQuit()` eklendi — hâlâ bir lobideyken
+uygulama kapanırsa Rich Presence açıkça temizleniyor (tam `LeaveLobby` akışına, yani
+`NetworkManager.Shutdown()` coroutine'ine gerek yok, uygulama zaten kapanıyor). **Ek olarak
+bir self-heal adımı eklendi** (`ClearStaleRichPresenceOnStartup`, `Start()`'tan
+tetiklenir): `OnApplicationQuit` CRASH veya Görev Yöneticisi'nden zorla sonlandırmada hiç
+çalışmayabileceği için, YENİ bir oturum başlarken (henüz hiçbir lobiye girilmeden/kurulmadan
+ÖNCE) `SteamClient.IsValid` olur olmaz Rich Presence açıkça temizleniyor — böylece önceki
+çalıştırmadan (crash dahil) kalan bayat değer yeni oturuma hiç sızmıyor. `SteamClient.Init`
+ayrı bir component'te (`FacepunchTransport.Awake()`) çağrıldığından, `IsValid` için 10 sn'lik
+makul bir sınırla bekleniyor. Bu iki önlemle (quit + startup self-heal) hem normal kapanış
+hem crash senaryosu kapatılmış oluyor.
+
+**4) Gerçek build'de LMB/BurgerAssemblyStation etkileşimi çalışmama raporu:** Statik kod
+incelemesiyle hem `Player.prefab`'daki `PlayerInteractor.interactableLayer` (`m_Bits: 256`,
+geçen turki fix'ten beri değişmemiş, hâlâ doğru) hem sahnedeki `BurgerAssemblyStation`
+(`m_Layer: 8` = "Interactable", `BoxCollider` mevcut ve enabled, `HoldOrPressInteractable`
+component'i mevcut ve enabled) hem `TagManager.asset`'teki layer 8 tanımı ("Interactable")
+tek tek doğrulandı — **statik olarak hiçbir şey bozuk değil**. Gerçek 3-makineli build'i
+burada çalıştırıp yeniden üretme imkânı yok (sadece Local Editor testi mümkün, bu proje
+genelinde tekrar eden bir sınır — bkz. yukarıdaki "sadece HOST'un Player.log'undan
+yapılabildi" notu). En olası hipotez (kanıtlanmadı): sahnede hâlâ sadece gri-kutu test
+seviyesi var, istasyon küçük bir 1x1x1 küp, `interactRange` 2.5m, VE bilinçli olarak henüz
+hiçbir "hedefe bakınca vurgula" prompt/highlight UI'ı yok (bkz. yukarıdaki "Bilinçli, kod
+dışı bir boşluk" notu) — gerçek oyuncular görsel geri bildirim olmadan hassas nişan alamayıp
+"çalışmıyor" izlenimine kapılmış olabilir. Kesin teşhis için `PlayerInteractor`'a teşhis
+amaçlı bir `Debug.Log` eklendi (SADECE raycast hiçbir hedef bulamadığında, tıklama anında
+basar — her frame değil): bir sonraki gerçek testte bu satır Player.log'da HİÇ/NADİREN
+görünüyorsa sorun raycast/layer/menzil katmanında DEĞİL, bulunan hedefin kendi
+mantığındadır (network/ownership); sık görünüyorsa nişan/menzil sorunu doğrulanmış olur.
+Teşhis netleşince bu log kaldırılmalı.
+
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
 - **Bileşen 1 — Steam Network, Lobby & VoIP:** `NetworkTransportManager`, `SteamLobbyManager`,
