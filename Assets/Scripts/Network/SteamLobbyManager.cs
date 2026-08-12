@@ -72,6 +72,27 @@ public class SteamLobbyManager : MonoBehaviour
 
         networkManager.OnClientDisconnectCallback += HandleClientDisconnect;
         networkManager.OnTransportFailure += HandleTransportFailure;
+
+        StartCoroutine(ClearStaleRichPresenceOnStartup());
+    }
+
+    // Self-heal: OnApplicationQuit sadece NORMAL kapanisi (Leave/Alt+F4/Stop Play Mode)
+    // kapsar — bir CRASH veya Gorev Yoneticisi'nden zorla sonlandirma OnApplicationQuit'i
+    // hic tetiklemeyebilir, bu durumda onceki oturumdan kalan Rich Presence "connect"
+    // degeri Steam'de bayat kalmaya devam eder. Bu coroutine, YENI bir oturum baslarken
+    // (henuz hicbir lobiye girilmeden/kurulmadan ONCE) SteamClient hazir olur olmaz Rich
+    // Presence'i aciktan temizler — boylece bir onceki calistirmadan kalan bayat deger bu
+    // yeni oturuma sizmaz. SteamClient.Init, FacepunchTransport.Awake() icinde ayri bir
+    // component uzerinde cagriliyor (Awake sirasi garantisi yok) — o yuzden burada
+    // SteamClient.IsValid olana kadar (makul bir sinirla) bekleniyor.
+    private System.Collections.IEnumerator ClearStaleRichPresenceOnStartup()
+    {
+        float deadline = Time.realtimeSinceStartup + 10f;
+        while (!SteamClient.IsValid && Time.realtimeSinceStartup < deadline)
+            yield return null;
+
+        if (SteamClient.IsValid)
+            SteamFriends.ClearRichPresence();
     }
 
     private void OnDestroy()
@@ -294,6 +315,20 @@ public class SteamLobbyManager : MonoBehaviour
         {
             _networkBusy = false;
         }
+    }
+
+    // BULUNAN HATA (bkz. CLAUDE.md): oyun bir lobideyken "Lobiden Cik" butonuna
+    // basilmadan dogrudan kapatilirsa (Alt+F4, Stop Play Mode, Gorev Yoneticisi'nden
+    // kapatma) SteamFriends.ClearRichPresence() HIC cagrilmiyordu. Rich Presence
+    // "connect" degeri Steam'in arkadas listesi UI'inda o oyuncunun bir SONRAKI
+    // (hatta hic lobi kurmadigi) oturumunda da bayat/gecersiz bir "Katil" secenegi
+    // olarak gorunmeye devam edebiliyordu. Uygulama kapanirken hala bir lobideysek
+    // en azindan Rich Presence'i acikca temizliyoruz (tam LeaveLobby akisina —
+    // NetworkManager.Shutdown coroutine'i vb. — gerek yok, uygulama zaten kapaniyor).
+    private void OnApplicationQuit()
+    {
+        if (_currentLobby.HasValue)
+            SteamFriends.ClearRichPresence();
     }
 
     private System.Collections.IEnumerator WaitForNetworkShutdown(NetworkManager networkManager)
