@@ -598,6 +598,90 @@ görünüyorsa sorun raycast/layer/menzil katmanında DEĞİL, bulunan hedefin k
 mantığındadır (network/ownership); sık görünüyorsa nişan/menzil sorunu doğrulanmış olur.
 Teşhis netleşince bu log kaldırılmalı.
 
+## Round Sırasında Disconnect — "Oyun Durduruldu" Rejoin Mekanizması
+
+Kullanıcı onayıyla uygulandı: round SIRASINDA (lobi fazında değil) bir client koparsa artık
+rolü boşa çıkmıyor, oyun donuyor ve SADECE aynı Steam kimliğine sahip oyuncu geri dönebiliyor
+— pozisyon/envanter/rol tamamen korunuyor. Mimari:
+
+- **SteamId eşleşmesi:** `SteamLobbyManager.WriteSteamIdToConnectionData()`,
+  `StartHost()`/`StartClient()`'tan HEMEN ÖNCE `NetworkManager.NetworkConfig.ConnectionData`'ya
+  kendi `SteamClient.SteamId`'sini (8 bayt, ulong) yazar — NGO'nun zaten var olan
+  `ConnectionApprovalRequest.Payload` mekanizması, yeni paket/kalıp gerekmedi. Host da NGO'da
+  "client 0" olarak kendi onay akışından geçtiği için bu adım host icin de gerekli.
+  `RoleManager.HandleConnectionApproval`, payload'ı `DecodeSteamId()` ile çözüp
+  `_pendingSteamIdByClientId` sözlüğünde `HandleClientConnected`'a kadar geçici olarak
+  taşır (bu iki NGO callback'i arasında SteamId'yi taşıyacak başka bir mekanizma yok).
+  `ClientRoleEntry` struct'ına `SteamId` (ulong) ve `IsFrozen` (bool) alanları eklendi.
+- **Disconnect (round aktifken):** `HandleClientDisconnectedOnServer`, kaydı SİLMEK yerine
+  `IsFrozen=true` yapıp SteamId ile saklıyor, `GameLoopManager.Instance.ServerPauseForDisconnect()`
+  çağırıyor. Lobi fazındaki (round aktif değilken) davranış — kaydı tamamen silmek —
+  DEĞİŞMEDİ.
+- **Reconnect:** `HandleConnectionApproval`, round aktifken gelen bağlantıyı SADECE
+  payload'daki SteamId dondurulmuş (`IsFrozen=true`) bir kayıtla eşleşiyorsa onaylıyor
+  (`error.round_in_progress` reddi + yeni Localization anahtarı eklendi, `tr` çevirisiyle) —
+  yabancı biri round ortasında giremez. `HandleClientConnected`, eşleşen dondurulmuş kaydı
+  YENİ clientId ile güncelleyip `IsFrozen=false` yapıyor (yeni bir rol ataması YAPILMIYOR),
+  `GameLoopManager.Instance.ServerResumeAfterReconnect()` çağırıyor.
+- **NetworkObject despawn ETMİYOR, snapshot/restore sistemi YOK:** `Player.prefab`'ın
+  `NetworkObject.DontDestroyWithOwner` `false`'tan `true`'ya çevrildi — sahibi kopan obje
+  artık sunucu tarafından otomatik yok edilmiyor, sahnede olduğu gibi (pozisyonu
+  `NetworkTransform` üzerinden, envanteri `PlayerInventory`'nin `NetworkList`'i üzerinden)
+  kalıyor. `PlayerSpawner`, rol→obje eşlemesini (`_spawnedPlayerObjects`, GameSystems kalıcı
+  olduğu için `OnNetworkSpawn`'da server tarafından temizleniyor — bkz. bilinen kalıp notu)
+  tutuyor; `HandleServerRoleAssigned` artık önce bu sözlükte o role ait canlı bir obje var mı
+  bakıyor — varsa (reconnect) `ChangeOwnership(clientId)` ile aynı objeyi geri veriyor, YENİ
+  bir `Instantiate`/`SpawnAsPlayerObject` YAPMIYOR. Elle bir "snapshot al / geri yükle"
+  sistemi BİLİNÇLİ OLARAK kurulmadı — gereksiz bir soyutlama olurdu, NGO'nun kendi
+  `DontDestroyWithOwner` özelliği zaten pozisyon/envanteri ücretsiz koruyor. **Not:** sahiplik
+  disconnect anında BİLEREK sunucuya devredilmiyor (`ChangeOwnership(ServerClientId)`
+  YAPILMIYOR) — bu proje Host aynı zamanda client 0 olduğu için, sahipliği sunucuya
+  devretmek Host'un kendi `IsOwner` kontrollerinin (`PlayerController`/`PlayerInteractor`)
+  yanlışlıkla dondurulmuş objeyi de "kendisininmiş gibi" görmesine yol açardı. Stale
+  `OwnerClientId` olduğu gibi bırakılıyor — kimse o clientId'ye sahip olmadığı için
+  `IsOwner` zaten herkeste false kalıyor, "donma" (hareket/etkileşim scriptlerinin
+  çalışmaması) bu sayede EK KOD YAZILMADAN, mevcut `IsOwner` guard'ları üzerinden ücretsiz
+  elde ediliyor.
+- **`GameLoopManager` (yeni, minimal iskelet):** Bilinçli olarak SADECE
+  `NetworkVariable<bool> IsGamePaused` + `ServerPauseForDisconnect()`/
+  `ServerResumeAfterReconnect()` içeriyor, başka HİÇBİR ŞEY yok — Bileşen 2 (round sayacı,
+  3 strike, skor hedefi, win/fail state) tam kurulunca bu sınıf büyüyecek, TAŞINMASI
+  gerekmeyecek şekilde önceden GameSystems üzerine eklendi.
+- **Bekleme süresi SINIRSIZ:** round bitene kadar bekleniyor, otomatik strike/timeout
+  BİLEREK eklenmedi — GDD'de tanımlı değil, GameLoopManager (Bileşen 2) tam kurulunca
+  netleşecek bir sonraki karar.
+- **BİLİNÇLİ, KOD DIŞI EKSİKLİK:** "oyun durduruldu" görsel/işitsel bir gösterge (ekranda
+  "X bekleniyor" yazısı, freeze VFX'i vb.) eklenmedi — sadece `GameLoopManager.IsGamePaused`
+  server-authoritative olarak senkronize ediliyor, buna bağlı bir UI henüz yok. Ayrıca
+  donmuş oyuncunun objesi için görsel bir "soluk/donuk" gösterge de eklenmedi.
+- **BULUNAN EKSİK (aynı turda düzeltildi):** `IsGamePaused` ilk uygulamada HİÇBİR YERDE
+  okunmuyordu — sadece kopan oyuncunun kendi objesi `IsOwner` hiçbir client'ta true
+  olmadığı için kendiliğinden donuyordu, ama BAĞLI KALAN diğer oyuncular (Şef dahil)
+  hareket/etkileşime devam edebiliyordu. "Kimse kıpırdayamayacak" gereksinimi sadece
+  kopan oyuncu için değil HERKES için geçerli olduğundan, `PlayerController.Update()`
+  ve `PlayerInteractor.HandleAttackStarted` artık `GameLoopManager.IsGamePaused.Value`
+  açıkça kontrol ediyor. `HandleAttackCanceled` BİLEREK bu kontrolü yapmıyor — devam eden
+  bir basımın bırakılmasını engellemek `HoldOrPressInteractable`'ı "basılı" durumda
+  kilitli bırakırdı. Aynı kontrol eksikliği `EmoteWheelUI`/`EmoteSystem`'de de vardı
+  (çark açma pause'a bağlı değildi) — `EmoteWheelUI.HandleInteractStarted` (client-taraflı,
+  yeni çark açmayı engeller — `HandleInteractCanceled` aynı "devam edeni kesme" prensibiyle
+  dokunulmadı) VE `EmoteSystem.SelectEmoteServerRpc` (server-authoritative, UI bypass'ına
+  karşı savunma) ikisine de aynı `IsGamePaused` kontrolü eklendi. Ayrıca doğrulandı: hiçbir RPC (`ClientRpcParams`/`TargetClientIds`)
+  oyuncu objesinin `OwnerClientId`'sini hedeflemiyor — tüm `ServerRpc`'ler
+  (`BurgerAssemblyStation`, `VoIPController`, `EmoteSystem`) zaten `RequireOwnership =
+  false` ve gönderen kimliğini kendi içlerinde doğruluyor — bu yüzden dondurulmuş
+  (sahibi kopmuş) bir objenin `OwnerClientId`'sinin geçersiz kalması hiçbir RPC
+  çağrısında hataya yol açmıyor.
+- **Doğrulama:** Reflection ile canlı test edildi (Local UDP, Play Mode) — tam senaryo:
+  3 oyuncu lobi fazında katılıp rol aldı → round başladı → Yamak (SteamId=1001) round
+  sırasında koptu (`IsGamePaused` `False→True`) → yabancı bir SteamId (9999) ile bağlanma
+  denemesi reddedildi (`error.round_in_progress`) → gerçek SteamId (1001) ile YENİ bir
+  clientId'den (201) gelen bağlantı onaylandı, rol doğru şekilde Yamak olarak geri geldi,
+  `IsGamePaused` `True→False` oldu. `PlayerSpawner`'ın obje-geri-verme (`ChangeOwnership`)
+  dalı gerçek bir Player.prefab spawn'ı gerektirdiği için bu reflection testinin kapsamı
+  dışında kaldı — sadece kod incelemesiyle doğrulandı, henüz gerçek çok-oyunculu bir testte
+  görülmedi.
+
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
 - **Bileşen 1 — Steam Network, Lobby & VoIP:** `NetworkTransportManager`, `SteamLobbyManager`,
@@ -695,4 +779,10 @@ Yazılan tüm kodlar SOLID prensiplerine uygun olacak şekilde yazılır.
     doğrulanmalı: spawn pozisyonu, kamera aktivasyonu (owner-only, sahne kamerası
     kapanıyor mu), `NetworkTransform.AuthorityMode` hâlâ `Owner` mı, `PlayerInteractor`
     raycast'i gerçekten bir `HoldOrPressInteractable` buluyor mu (canlı test, sadece
-    kod okuyarak değil), `HotbarUI` envanteri doğru yansıtıyor mu.
+    kod okuyarak değil), `HotbarUI` envanteri doğru yansıtıyor mu. **Yeni alan (bkz.
+    "Oyun Durduruldu" Rejoin Mekanizması notu):** `NetworkObject.DontDestroyWithOwner`
+    artık BİLEREK `true` — bu `false`'a geri dönerse (örn. prefab'ın yeniden
+    yapılandırılması sırasında farkında olmadan) round sırasında kopan oyuncuların
+    objeleri sessizce yok edilmeye başlar, rejoin mekanizması bozulur ama HİÇBİR HATA
+    VERMEZ (sadece geri dönen oyuncu "yeni bir karakterle" başlar gibi görünür) — bu
+    yüzden diğer alanlar gibi her dokunuşta açıkça kontrol edilmeli.
