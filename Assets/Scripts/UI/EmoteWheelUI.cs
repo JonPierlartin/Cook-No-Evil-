@@ -38,6 +38,8 @@ public class EmoteWheelUI : MonoBehaviour
         if (receivedEmoteIcon != null)
             receivedEmoteIcon.gameObject.SetActive(false);
 
+        InitializeWheelIcons();
+
         if (RoleManager.Instance != null)
             RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
 
@@ -57,6 +59,24 @@ public class EmoteWheelUI : MonoBehaviour
         {
             _interactAction.started -= HandleInteractStarted;
             _interactAction.canceled -= HandleInteractCanceled;
+        }
+    }
+
+    // BULUNAN HATA: carktaki dilim Image'larina hicbir yerde sprite atanmiyordu —
+    // sadece HighlightSlot/ResetHighlight .color'i degistiriyordu (secili/normal tonu).
+    // Bu yuzden Kasiyer kendi carkinda uc dilimi de sprite'siz (varsayilan beyaz
+    // dikdortgen) goruyordu; Yamak'in gordugu renk dogruydu cunku o ayri bir Image
+    // (receivedEmoteIcon) ve HandleEmoteReceived zaten sprite atiyordu.
+    private void InitializeWheelIcons()
+    {
+        if (slotIcons == null || EmoteSystem.Instance == null || EmoteSystem.Instance.AvailableEmotes == null)
+            return;
+
+        var availableEmotes = EmoteSystem.Instance.AvailableEmotes;
+        for (int i = 0; i < slotIcons.Length && i < availableEmotes.Length; i++)
+        {
+            if (slotIcons[i] != null && availableEmotes[i] != null)
+                slotIcons[i].sprite = availableEmotes[i].Icon;
         }
     }
 
