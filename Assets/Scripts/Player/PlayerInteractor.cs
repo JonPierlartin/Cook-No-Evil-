@@ -46,7 +46,16 @@ public class PlayerInteractor : NetworkBehaviour
     private void HandleAttackStarted(InputAction.CallbackContext context)
     {
         if (!TryGetCurrentTarget(out var target))
+        {
+            // TESHIS (gercek build'de LMB etkilesiminin calismama raporu icin):
+            // bu log SADECE raycast hicbir HoldOrPressInteractable bulamadiginda basar
+            // (her frame degil, sadece tiklama aninda) — bir sonraki gercek testte bu
+            // satir Player.log'da COK sik/hic gorunmuyorsa sorun raycast/layer/menzil
+            // katmaninda DEGIL, bulunan hedefin kendi mantiginda (network/ownership)
+            // aranmali. Teshis netlesince bu log kaldirilmali.
+            Debug.Log($"[PlayerInteractor] Hedef bulunamadi (camera={(playerCamera != null)}, range={interactRange}, layerMask={interactableLayer.value}).");
             return;
+        }
 
         // Basis anindaki hedef "kilitlenir" — basili tutarken crosshair objeden
         // ayrilsa bile EndPress orijinal hedefe gider (HoldOrPressInteractable
