@@ -156,6 +156,21 @@ Lobiden Çık butonları, "Lobi dolu"/"Bağlantı koptu" ayrımı), ve Unity Loc
   sızıyor, yeni lobide rol sayacı/round durumu sıfırlanmıyordu (`OnNetworkSpawn`'da server
   tarafından açıkça temizlendi); (2) `VoIPController._speakerPlayers` altında oluşturulan ses
   objeleri bir önceki oturumdan öksüz kalıyordu (`OnNetworkDespawn`'da yok edildi).
+  **BİLİNEN KALIP (regresyon sınıfı) — bu aynı ailenin bir örneği daha, ayrı bir günde bulundu:**
+  `RoleManager.IsRoundActive`'in reset mantığı `if (IsServer)` koşuluyla sadece `OnNetworkSpawn`'da
+  çalışıyor — client tarafı ASLA server olmadığı için bu satır client'ta hiçbir zaman tetiklenmiyor.
+  Host round SIRASINDA koparsa, client'taki `IsRoundActive.Value` son senkronize `true` değerinde
+  DONUK kalıyor (hiçbir yerde `false`'a dönmüyor). Bu, `LobbyUIController.OnApplicationFocus`'un
+  disconnect sonrası herhangi bir pencere-odağı değişiminde bu stale değeri okuyup imleci
+  yanlışlıkla yeniden kilitlemesine yol açan KRİTİK bir bug'a sebep oldu — client Host butonuna
+  tıklayamıyordu (imleç görünmez/kilitli kalıyordu). Düzeltme: `LobbyUIController`'a network
+  durumundan bağımsız YEREL bir `ShouldLockCursor` bayrağı eklendi, sadece kendi UI geçişlerinde
+  (round başlangıcı/bitişi, host disconnect) açıkça güncelleniyor — `EmoteWheelUI` de aynı
+  merkezi bayrağa bağlandı (o da doğrudan `IsRoundActive` okuyordu). **Genel ders:** `if (IsServer)`
+  korumalı bir reset/temizlik satırı, o objenin CLIENT'taki kopyasında ASLA çalışmaz — client
+  tarafındaki HERHANGİ bir karar (özellikle UI), server'ın resetlediğini varsaydığı bir
+  NetworkVariable'a değil, kendi yerel/açıkça yönetilen bir bayrağa güvenmeli. Yeni bir
+  NetworkVariable veya kalıcı obje state'i eklenirken bu kalıp akılda tutulmalı.
 - `RoleManager`, ayrılan bir client'ın rol kaydını `_assignedRoles`'tan silmiyordu — kayıt
   büyüyüp yeni katılan oyuncular `joinOrderIndex` sınırının dışına çıkarak `PlayerRole.None`
   alabiliyordu (`HandleClientDisconnectedOnServer` eklendi).

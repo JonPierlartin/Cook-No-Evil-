@@ -109,13 +109,15 @@ public class EmoteWheelUI : MonoBehaviour
 
         ResetHighlight();
 
-        // Cark kapaninca round hala aktifse (normal durum, emote'lar zaten sadece
-        // round'da gonderilebiliyor) imleci FPS kontrolu icin tekrar kilitle/gizle;
-        // degilse (ör. bu sirada round bittiyse) acik/gorunur birak — LobbyUIController'daki
-        // kuralla ayni.
-        bool roundActive = RoleManager.Instance.IsRoundActive.Value;
-        Cursor.lockState = roundActive ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !roundActive;
+        // Cark kapaninca imleci FPS kontrolu icin tekrar kilitle/gizle (normal durum)
+        // veya acik/gorunur birak — LobbyUIController.ShouldLockCursor (YEREL bayrak)
+        // kullanilir, RoleManager.IsRoundActive DEGIL: o bir NetworkVariable, host
+        // disconnect sonrasi client'ta hicbir yerde resetlenmedigi icin stale kalabiliyor
+        // (bkz. LobbyUIController — ayni sinif bug host-disconnect senaryosunda da
+        // bulunup duzeltildi).
+        bool shouldLock = LobbyUIController.Instance != null && LobbyUIController.Instance.ShouldLockCursor;
+        Cursor.lockState = shouldLock ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !shouldLock;
     }
 
     private void Update()

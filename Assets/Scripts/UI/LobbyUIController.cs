@@ -9,6 +9,8 @@ using UnityEngine.UI;
 // Unity Localization String Database uzerinden cozuluyor — bkz. Localize().
 public class LobbyUIController : MonoBehaviour
 {
+    public static LobbyUIController Instance { get; private set; }
+
     private const string TableName = "UIStrings";
 
     [SerializeField] private GameObject lobbyPanel;
@@ -20,8 +22,22 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private GameObject connectionLostPanel;
     [SerializeField] private Button connectionLostOkButton;
 
+    // Round aktifken imlecin kilitli/gizli olmasi gerektigini YEREL olarak izler.
+    // RoleManager.IsRoundActive'e (bir NetworkVariable) GUVENILMEZ: host disconnect
+    // sonrasi client'in kendi kopyasinda bu deger HICBIR YERDE false'a resetlenmiyor
+    // (RoleManager sadece IsServer iken OnNetworkSpawn'da resetliyor) — son senkronize
+    // "true" degeri bellekte donuk kalir. Bu yuzden disconnect sonrasi bir
+    // OnApplicationFocus tetiklenirse (alt-tab, pencere disina tiklama vb.) stale
+    // deger imleci YANLISLIKLA tekrar kilitliyordu — client'in Host butonuna
+    // tiklayamamasina (imlec gorunmez/kilitli kaldigi icin) yol acan kritik bir bug.
+    // Bu bayrak SADECE bizim kendi UI gecislerimizde (round basladi/bitti, host
+    // disconnect) guncellenir, hicbir zaman ag durumundan yeniden turetilmez.
+    public bool ShouldLockCursor { get; private set; }
+
     private void Awake()
     {
+        Instance = this;
+
         hostButton.onClick.AddListener(HandleHostClicked);
         inviteButton.onClick.AddListener(HandleInviteClicked);
         startGameButton.onClick.AddListener(HandleStartGameClicked);
@@ -64,6 +80,9 @@ public class LobbyUIController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this)
+            Instance = null;
+
         var lobby = SteamLobbyManager.Instance;
         if (lobby != null)
         {
@@ -175,6 +194,7 @@ public class LobbyUIController : MonoBehaviour
         else
             Debug.LogError("[LobbyUIController] GameplayCanvas sahnede bulunamadi.");
 
+        ShouldLockCursor = visible;
         Cursor.lockState = visible ? CursorLockMode.Locked : CursorLockMode.None;
         Cursor.visible = !visible;
     }
@@ -184,15 +204,18 @@ public class LobbyUIController : MonoBehaviour
     // vermez) — ama fokus GERI geldiginde bunu hicbir kod yeniden uygulamiyordu.
     // Gercek 3 kisilik testte "bir oyuncuda E'ye basinca da imlec cikiyor" olarak
     // bildirilen sorunun asil kok nedeni muhtemelen buydu (alt-tab/pencere disina
-    // tiklama), rol-bazli bir sizinti degil — bkz. CLAUDE.md.
+    // tiklama), rol-bazli bir sizinti degil — bkz. CLAUDE.md. ShouldLockCursor
+    // (YEREL bayrak) kullanilir, RoleManager.IsRoundActive DEGIL — o bir
+    // NetworkVariable, host disconnect sonrasi client'ta stale kaliyor (hicbir
+    // yerde false'a resetlenmiyor) ve bu da ayri, kritik bir bug'a yol aciyordu:
+    // disconnect sonrasi imlec tekrar kilitlenip client Host butonuna tiklayamiyordu.
     private void OnApplicationFocus(bool hasFocus)
     {
         if (!hasFocus)
             return;
 
-        bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
-        Cursor.lockState = roundActive ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !roundActive;
+        Cursor.lockState = ShouldLockCursor ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !ShouldLockCursor;
     }
 
     private void RefreshStatusText()
