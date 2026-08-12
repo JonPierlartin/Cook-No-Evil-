@@ -2,13 +2,14 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// Sadece Kasiyer icin aktif E-basili-tutma radyal emote menusu. HoldOrPressInteractable'dan
-// BAGIMSIZ (bu bir dunya-objesi etkilesimi degil, rol-bazli bir UI menusu) — kendi
-// ham Interact (E) basma/birakma girisini okur ve carktaki dilimi mouse pozisyonuna
-// gore secer. Secilen emote'un GORSEL TEPKISI (renk parlamasi + egilme/ziplama) artik
-// Kasiyer'in kendi karakterinde (PlayerEmoteReactor, herkesin ekraninda) oynatiliyor —
-// eskiden burada Yamak'a ozel ayri bir "ReceivedEmoteIcon" UI'i vardi, o tasarim
-// kaldirildi (bkz. EmoteSystem.cs ust notu).
+// Kasiyer VE Yamak icin aktif E-basili-tutma radyal emote menusu (Sef'te hic acilmaz;
+// Yamak'in secimi Kasiyer'e gore kisitli — bkz. EmoteSystem.YamakEmoteLimit).
+// HoldOrPressInteractable'dan BAGIMSIZ (bu bir dunya-objesi etkilesimi degil, rol-bazli
+// bir UI menusu) — kendi ham Interact (E) basma/birakma girisini okur ve carktaki dilimi
+// mouse pozisyonuna gore secer. Secilen emote'un GORSEL TEPKISI (renk parlamasi +
+// egilme/ziplama) artik secimi yapan oyuncunun kendi karakterinde (PlayerEmoteReactor,
+// herkesin ekraninda) oynatiliyor — eskiden burada Yamak'a ozel ayri bir
+// "ReceivedEmoteIcon" UI'i vardi, o tasarim kaldirildi (bkz. EmoteSystem.cs ust notu).
 public class EmoteWheelUI : MonoBehaviour
 {
     [SerializeField] private InputActionAsset inputActions;
@@ -23,6 +24,7 @@ public class EmoteWheelUI : MonoBehaviour
     private InputAction _interactAction;
     private InputAction _pointAction;
     private int _highlightedIndex = -1;
+    private int _activeSlotCount;
     private bool _wheelOpen;
 
     private void Start()
@@ -65,9 +67,13 @@ public class EmoteWheelUI : MonoBehaviour
         }
     }
 
+    // Kasiyer tam listeyle, Yamak kisitli (ilk N) listeyle carka erisebilir (bkz.
+    // EmoteSystem.YamakEmoteLimit). Sef'in carka hic erisimi yok.
+    private static bool IsWheelRole(PlayerRole role) => role == PlayerRole.Kasiyer || role == PlayerRole.Yamak;
+
     private void HandleLocalRoleAssigned(PlayerRole role)
     {
-        if (role != PlayerRole.Kasiyer || _interactAction != null)
+        if (!IsWheelRole(role) || _interactAction != null)
             return;
 
         var playerMap = inputActions.FindActionMap("Player");
@@ -85,8 +91,21 @@ public class EmoteWheelUI : MonoBehaviour
         // da imlecin acildigi bildirildi — GUNCEL rolu burada da dogrulamak (onbellege
         // guvenmek yerine, RoleManager'in gecmis round-baslama senkron sorunlarindaki
         // ayni "canli oku" duzeltmesiyle tutarli) bu sinifi kokten kapatiyor.
-        if (RoleManager.Instance == null || RoleManager.Instance.LocalRole != PlayerRole.Kasiyer)
+        if (RoleManager.Instance == null || !IsWheelRole(RoleManager.Instance.LocalRole))
             return;
+
+        // Kasiyer icin tum dilimler, Yamak icin sadece ilk N dilim aktif/tiklanabilir
+        // olur (kisitli liste — bkz. EmoteSystem.YamakEmoteLimit). Geri kalan dilimler
+        // gizlenir ki Yamak yanlislikla erisimi olmayan bir emote'u secmeye calismasin.
+        bool isKasiyer = RoleManager.Instance.LocalRole == PlayerRole.Kasiyer;
+        int yamakLimit = EmoteSystem.Instance != null ? EmoteSystem.Instance.YamakEmoteLimit : 0;
+        _activeSlotCount = isKasiyer ? slotIcons.Length : Mathf.Clamp(yamakLimit, 0, slotIcons.Length);
+
+        for (int i = 0; i < slotIcons.Length; i++)
+        {
+            if (slotIcons[i] != null)
+                slotIcons[i].gameObject.SetActive(i < _activeSlotCount);
+        }
 
         _wheelOpen = true;
         if (wheelRoot != null)
@@ -102,7 +121,7 @@ public class EmoteWheelUI : MonoBehaviour
 
     private void HandleInteractCanceled(InputAction.CallbackContext context)
     {
-        if (RoleManager.Instance == null || RoleManager.Instance.LocalRole != PlayerRole.Kasiyer)
+        if (RoleManager.Instance == null || !IsWheelRole(RoleManager.Instance.LocalRole))
             return;
 
         _wheelOpen = false;
@@ -127,7 +146,7 @@ public class EmoteWheelUI : MonoBehaviour
 
     private void Update()
     {
-        if (!_wheelOpen || _pointAction == null || wheelCenter == null || slotIcons == null || slotIcons.Length == 0)
+        if (!_wheelOpen || _pointAction == null || wheelCenter == null || slotIcons == null || _activeSlotCount == 0)
             return;
 
         Vector2 mouseScreenPos = _pointAction.ReadValue<Vector2>();
@@ -146,12 +165,12 @@ public class EmoteWheelUI : MonoBehaviour
         // katmadan (0 derece = sag) index hesaplamak her zaman komsu dilimi
         // isaretliyordu (bulunan gercek hata: mouse'un uzerinde durdugu degil,
         // yanindaki dilim parliyordu). Aciyi ayni offsetle kaydirip normalize ediyoruz.
-        float sliceSize = 360f / slotIcons.Length;
+        float sliceSize = 360f / _activeSlotCount;
         float adjustedAngle = angle - 90f;
         if (adjustedAngle < 0f)
             adjustedAngle += 360f;
 
-        int index = Mathf.RoundToInt(adjustedAngle / sliceSize) % slotIcons.Length;
+        int index = Mathf.RoundToInt(adjustedAngle / sliceSize) % _activeSlotCount;
         HighlightSlot(index);
     }
 
