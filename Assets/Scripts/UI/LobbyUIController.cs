@@ -21,6 +21,8 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private Text statusText;
     [SerializeField] private GameObject connectionLostPanel;
     [SerializeField] private Button connectionLostOkButton;
+    [Tooltip("GameObject.Find KULLANILMAZ: GameplayCanvas round bitince/disconnect'te inactive olabiliyor, Find inactive objelerde null doner (bulunan gercek bug — bkz. asagidaki not).")]
+    [SerializeField] private GameObject gameplayCanvas;
 
     // Round aktifken imlecin kilitli/gizli olmasi gerektigini YEREL olarak izler.
     // RoleManager.IsRoundActive'e (bir NetworkVariable) GUVENILMEZ: host disconnect
@@ -150,6 +152,18 @@ public class LobbyUIController : MonoBehaviour
         hostButton.gameObject.SetActive(false);
         leaveButton.gameObject.SetActive(true);
         RefreshStatusText();
+
+        // BULUNAN HATA (rejoin senaryosu): IsRoundActive.OnValueChanged SADECE canli bir
+        // deger degisikliginde tetiklenir. Round zaten aktifken (yeniden) baglanan bir
+        // client icin NGO bu NetworkVariable'in ilk senkronizasyonunu bir "degisiklik"
+        // olarak raporlamaz — deger dogrudan true olarak gelir, HandleRoundActiveChanged
+        // hic tetiklenmez. Ekran sonsuza dek "Baglandi... Rolun:" yazisinda takili kaliyordu.
+        // OnLocalRoleAssigned ise HEM ilk katilimda HEM rejoin'de guvenilir sekilde
+        // tetiklendigi icin (RoleManager her baglantida rolu yeniden atar), buraya GUNCEL
+        // round durumunu acikca uygulayan ayni cagriyi ekliyoruz — boylece hangi event
+        // once/sonra gelirse gelsin ekran dogru durumu yakaliyor.
+        bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
+        ApplyRoundActiveState(roundActive);
     }
 
     private void HandleRoundActiveChanged(bool previous, bool current)
@@ -161,14 +175,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         RefreshStatusText();
-
-        // Round basladiginda tam ekran lobi paneli (buton/status text) 3D oyun goruntusunu
-        // ve GameplayCanvas'i (Hotbar/Emote carki) tamamen kapatiyordu — oyuncular Player.prefab
-        // spawn olup kamerasi devreye girse bile ekranda hicbir degisiklik GORMUYORDU (gercek
-        // 3 makineli testte bulundu). lobbyPanel'i gizleyip GameplayCanvas'i acmak ve fare
-        // imlecini kilitlemek bu gecisi tamamliyor.
-        lobbyPanel.SetActive(!current);
-        SetGameplayCanvasVisible(current);
+        ApplyRoundActiveState(current);
 
         // TESHIS: gercek cok-makineli testte "Rolun:" adinin bos kalma raporunu local testte
         // tekrar uretemedik. Bug hala gorulurse Player.log'daki bu satiri kontrol et — LocalRole
@@ -181,18 +188,34 @@ public class LobbyUIController : MonoBehaviour
         }
     }
 
-    // GameplayCanvas, LobbyUIController'in yasadigi LobbyCanvas'tan ayri bir sahne
-    // objesi oldugu icin (Inspector referansi yerine) isimle bulunuyor — bu tek,
-    // durum-degisimi-basi bir cagri, performans sorunu yaratmaz. lobbyPanel'i
-    // KENDI YONETMEZ — her cagiran taraf kendi lobbyPanel durumuna karar verir
-    // (orn. host-disconnect'te lobbyPanel yerine connectionLostPanel gosterilir).
+    // Round basladiginda/rejoin'de tam ekran lobi paneli (buton/status text) 3D oyun
+    // goruntusunu ve GameplayCanvas'i (Hotbar/Emote carki) tamamen kapatiyordu — oyuncular
+    // Player.prefab spawn olup kamerasi devreye girse bile ekranda hicbir degisiklik
+    // GORMUYORDU (gercek 3 makineli testte bulundu). lobbyPanel'i gizleyip GameplayCanvas'i
+    // acmak ve fare imlecini kilitlemek bu gecisi tamamliyor. HEM HandleRoundActiveChanged
+    // (canli gecis) HEM HandleLocalRoleAssigned (baglanti/rejoin anindaki durum yakalama)
+    // tarafindan cagrilir — ikisi de gerekli, yukarida detayli aciklama var.
+    private void ApplyRoundActiveState(bool active)
+    {
+        lobbyPanel.SetActive(!active);
+        SetGameplayCanvasVisible(active);
+    }
+
+    // BULUNAN HATA: burada eskiden GameObject.Find("GameplayCanvas") kullaniliyordu.
+    // GameObject.Find INACTIVE objelerde null doner — GameplayCanvas bir onceki
+    // disconnect/round-bitisinde inactive kaldiysa Find basarisiz oluyordu, null-guard
+    // yuzunden SetActive hic cagrilmiyordu ve GameplayCanvas bir daha ASLA aktif
+    // olamiyordu (kendini kendi hatasiyla kilitleyen bir durum). Gercek testte "%2/3
+    // denemede GameplayCanvas sahnede bulunamadi hatasi + Emote carki acilmiyor" olarak
+    // gorulen bug buydu (cark, inactive GameplayCanvas'in child'i oldugu icin calismiyordu).
+    // Duzeltme: Inspector'dan sabit atanan referans kullaniliyor, aktif/inaktif durumundan
+    // bagimsiz her zaman bulunuyor.
     private void SetGameplayCanvasVisible(bool visible)
     {
-        var gameplayCanvas = GameObject.Find("GameplayCanvas");
         if (gameplayCanvas != null)
             gameplayCanvas.SetActive(visible);
         else
-            Debug.LogError("[LobbyUIController] GameplayCanvas sahnede bulunamadi.");
+            Debug.LogError("[LobbyUIController] gameplayCanvas Inspector referansi atanmamis.");
 
         ShouldLockCursor = visible;
         Cursor.lockState = visible ? CursorLockMode.Locked : CursorLockMode.None;
