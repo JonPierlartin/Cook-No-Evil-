@@ -116,6 +116,10 @@ MonoBehaviour:
     m_Localized: "Sunucu Ba\u011Flant\u0131s\u0131 Koptu"
     m_Metadata:
       m_Items: []
+  - m_Id: 1566336387538944
+    m_Localized: Round devam ediyor, sadece daha once baglanmis oyuncular geri donebilir.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

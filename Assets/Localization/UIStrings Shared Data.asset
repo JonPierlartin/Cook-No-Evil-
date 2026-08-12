@@ -111,6 +111,10 @@ MonoBehaviour:
     m_Key: panel.connection_lost
     m_Metadata:
       m_Items: []
+  - m_Id: 1566336387538944
+    m_Key: error.round_in_progress
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

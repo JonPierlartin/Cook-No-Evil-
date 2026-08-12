@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -17,6 +18,11 @@ public class RoleManager : NetworkBehaviour
     // LobbyUIController tarafinda yapilir.
     private const string LobbyFullReasonKey = "error.lobby_full";
 
+    // Round SIRASINDA gelen ve dondurulmus (round aktifken kopmus) hicbir SteamId ile
+    // eslesmeyen bir baglanti reddedilir — GDD'nin sabit 3 rol varsayimiyla tutarli,
+    // round ortasinda yabanci biri giremez.
+    private const string RoundInProgressReasonKey = "error.round_in_progress";
+
     public event Action<PlayerRole> OnLocalRoleAssigned;
 
     // Server-only hook: rol atamasi TAMAMLANDIKTAN sonra tetiklenir (PlayerSpawner
@@ -34,6 +40,12 @@ public class RoleManager : NetworkBehaviour
 
     private readonly NetworkList<ClientRoleEntry> _assignedRoles = new();
     private IRoleAssignmentStrategy _strategy;
+
+    // HandleConnectionApproval'da payload'tan cozulen SteamId, NGO'nun clientId'yi
+    // atadigi HandleClientConnected cagrisina kadar gecici olarak burada tutulur (bu iki
+    // callback arasinda SteamId'yi tasiyacak baska bir NGO mekanizmasi yok). Sadece
+    // server-ici, ag uzerinden senkronize edilmez.
+    private readonly Dictionary<ulong, ulong> _pendingSteamIdByClientId = new();
 
     private void Awake()
     {
@@ -77,6 +89,7 @@ public class RoleManager : NetworkBehaviour
             // sifirlamazsa, yeni lobide eski oyuncu sayisi/round durumu sizar — tam da
             // bu bug'in sebebi buydu.
             _assignedRoles.Clear();
+            _pendingSteamIdByClientId.Clear();
             IsRoundActive.Value = false;
         }
 
@@ -105,14 +118,19 @@ public class RoleManager : NetworkBehaviour
         }
     }
 
-    // Bir client aynı (host'un yeniden host olmadigi, hala calisan) lobiden ayrilip
-    // tekrar baglanmaya calisirsa, eski kaydi burada silinmezse _assignedRoles surekli
-    // buyur: yeni baglanti MaxPlayers sinirina takilir VEYA joinOrderIndex araligin
-    // disina cikip PlayerRole.None alir (Bilesen 1 test raporundaki "Round basladi!
-    // Rolun:" bos gorunmesi bugu tam olarak buydu). NOT: bir oyuncu round SIRASINDA
-    // ayrilirsa rolu bosa cikar ama round'un kendisi ne olacak (durur mu, bekler mi)
-    // GDD'de tanimli degil — bu, GameLoopManager (Bilesen 2) ile birlikte netlestirilecek
-    // ayri bir tasarim karari, burada sadece sayim/atama tutarliligi duzeltiliyor.
+    // Lobi fazinda: bir client ayrilip tekrar baglanmaya calisirsa, eski kaydi burada
+    // silinmezse _assignedRoles surekli buyur: yeni baglanti MaxPlayers sinirina takilir
+    // VEYA joinOrderIndex araligin disina cikip PlayerRole.None alir (Bilesen 1 test
+    // raporundaki "Round basladi! Rolun:" bos gorunmesi bugu tam olarak buydu).
+    //
+    // Round SIRASINDA: kayit ARTIK SILINMIYOR — "oyun durduruldu" rejoin mekanizmasinin
+    // parcasi olarak dondurulmus (IsFrozen=true) isaretlenip SteamId ile birlikte
+    // saklaniyor. Player.prefab'in NetworkObject'i DontDestroyWithOwner=true oldugu icin
+    // obje (pozisyon/envanter dahil) sunucu tarafindan yok edilmiyor, PlayerSpawner ayni
+    // rolle geri baglanan client'a objeyi (ChangeOwnership ile) aynen geri veriyor —
+    // ayrica bir snapshot/restore sistemine gerek yok. Bekleme suresi SINIRSIZ (round
+    // bitene kadar) — otomatik strike/timeout GameLoopManager (Bilesen 2) tam kurulunca
+    // netlesecek, GDD'de simdilik tanimli degil.
     private void HandleClientDisconnectedOnServer(ulong clientId)
     {
         for (int i = 0; i < _assignedRoles.Count; i++)
@@ -120,8 +138,20 @@ public class RoleManager : NetworkBehaviour
             if (_assignedRoles[i].ClientId != clientId)
                 continue;
 
-            Debug.Log($"[RoleManager] Client {clientId} ayrildi, rol kaydi kaldirildi ({_assignedRoles[i].Role}).");
-            _assignedRoles.RemoveAt(i);
+            var entry = _assignedRoles[i];
+
+            if (IsRoundActive.Value)
+            {
+                _assignedRoles[i] = new ClientRoleEntry(entry.ClientId, entry.Role, entry.SteamId, isFrozen: true);
+                Debug.Log($"[RoleManager] Client {clientId} round sirasinda koptu, rol donduruldu ({entry.Role}, SteamId={entry.SteamId}).");
+                GameLoopManager.Instance?.ServerPauseForDisconnect();
+            }
+            else
+            {
+                Debug.Log($"[RoleManager] Client {clientId} ayrildi, rol kaydi kaldirildi ({entry.Role}).");
+                _assignedRoles.RemoveAt(i);
+            }
+
             break;
         }
     }
@@ -134,10 +164,24 @@ public class RoleManager : NetworkBehaviour
 
     // Lobi zaten MaxPlayers'a ulasmissa yeni baglantiyi acik bir sebeple reddeder — SteamLobbyManager
     // bunu NetworkManager.DisconnectReason uzerinden okuyup ayirt edici bir UI mesaji gosterir
-    // (genel "Sunucu Baglantisi Koptu" ekraniyla karistirmadan).
+    // (genel "Sunucu Baglantisi Koptu" ekraniyla karistirmadan). Round SIRASINDA gelen
+    // baglantilar icin ayri bir kural gecerli: sadece dondurulmus (round aktifken kopmus)
+    // bir SteamId ile eslesirse kabul edilir — yabanci biri round ortasinda giremez.
     private void HandleConnectionApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
     {
         response.CreatePlayerObject = false;
+
+        ulong steamId = DecodeSteamId(request.Payload);
+        _pendingSteamIdByClientId[request.ClientNetworkId] = steamId;
+
+        if (IsRoundActive.Value)
+        {
+            bool isKnownReconnect = FindFrozenEntryIndex(steamId) >= 0;
+            response.Approved = isKnownReconnect;
+            if (!isKnownReconnect)
+                response.Reason = RoundInProgressReasonKey;
+            return;
+        }
 
         if (_assignedRoles.Count >= MaxPlayers)
         {
@@ -147,6 +191,32 @@ public class RoleManager : NetworkBehaviour
         }
 
         response.Approved = true;
+    }
+
+    // ConnectionData'ya (bkz. SteamLobbyManager.HostLobby/JoinLobby) client'in kendi
+    // SteamClient.SteamId'si 8 baytlik ulong olarak yaziliyor; burada geri cozuluyor.
+    // Payload eksik/bozuksa 0 dondurulur (eslesme aranmaz, sadece lobi-fazi atamasi
+    // etkilenmez — SteamId sadece round-ici rejoin eslestirmesi icin kullanilir).
+    private static ulong DecodeSteamId(byte[] payload)
+    {
+        if (payload == null || payload.Length < sizeof(ulong))
+            return 0;
+
+        return BitConverter.ToUInt64(payload, 0);
+    }
+
+    private int FindFrozenEntryIndex(ulong steamId)
+    {
+        if (steamId == 0)
+            return -1;
+
+        for (int i = 0; i < _assignedRoles.Count; i++)
+        {
+            if (_assignedRoles[i].IsFrozen && _assignedRoles[i].SteamId == steamId)
+                return i;
+        }
+
+        return -1;
     }
 
     // BULUNAN HATA: joinOrderIndex dogrudan _assignedRoles.Count'tan turetiliyordu.
@@ -162,7 +232,34 @@ public class RoleManager : NetworkBehaviour
     // bu yeni "iki oyuncuya ayni rol" bugu ayni anda cozulmus oluyor.
     private void HandleClientConnected(ulong clientId)
     {
-        var takenRoles = new System.Collections.Generic.HashSet<PlayerRole>();
+        ulong steamId = _pendingSteamIdByClientId.TryGetValue(clientId, out var pending) ? pending : 0;
+        _pendingSteamIdByClientId.Remove(clientId);
+
+        // Round SIRASINDA: HandleConnectionApproval bu SteamId'yi zaten dondurulmus bir
+        // kayitla eslestirip onaylamis olmali (aksi halde buraya hic ulasilmazdi) — ayni
+        // kaydi yeni clientId ile guncelleyip "donma"yi kaldiriyoruz. YENI bir rol atamasi
+        // YAPILMIYOR, PlayerSpawner de ayni objeyi (ChangeOwnership ile) geri veriyor.
+        if (IsRoundActive.Value)
+        {
+            int frozenIndex = FindFrozenEntryIndex(steamId);
+            if (frozenIndex >= 0)
+            {
+                var frozen = _assignedRoles[frozenIndex];
+                _assignedRoles[frozenIndex] = new ClientRoleEntry(clientId, frozen.Role, steamId, isFrozen: false);
+
+                Debug.Log($"[RoleManager] Client {clientId} (SteamId={steamId}) round sirasinda tekrar baglandi -> {frozen.Role}");
+                GameLoopManager.Instance?.ServerResumeAfterReconnect();
+                OnServerRoleAssigned?.Invoke(clientId, frozen.Role);
+                return;
+            }
+
+            // Buraya normalde hic ulasilmamali (HandleConnectionApproval zaten reddetmis
+            // olmali) — savunma amacli, sessizce hicbir rol atanmaz.
+            Debug.LogWarning($"[RoleManager] Client {clientId} round sirasinda baglandi ama dondurulmus bir kayitla eslesmedi.");
+            return;
+        }
+
+        var takenRoles = new HashSet<PlayerRole>();
         foreach (var entry in _assignedRoles)
             takenRoles.Add(entry.Role);
 
@@ -177,7 +274,7 @@ public class RoleManager : NetworkBehaviour
             }
         }
 
-        _assignedRoles.Add(new ClientRoleEntry(clientId, role));
+        _assignedRoles.Add(new ClientRoleEntry(clientId, role, steamId, isFrozen: false));
 
         Debug.Log($"[RoleManager] Client {clientId} -> {role}");
         OnServerRoleAssigned?.Invoke(clientId, role);
@@ -230,14 +327,22 @@ public readonly struct ClientRoleEntry : IEquatable<ClientRoleEntry>, INetworkSe
 {
     public readonly ulong ClientId;
     public readonly PlayerRole Role;
+    public readonly ulong SteamId;
+    // Round SIRASINDA kopan oyuncunun kaydi (bkz. HandleClientDisconnectedOnServer) —
+    // rol bosa cikmaz, sadece bu bayrak set edilir; ayni SteamId ile geri baglanan
+    // oyuncu (bkz. HandleClientConnected) kaydi guncelleyip bayragi false yapar.
+    public readonly bool IsFrozen;
 
-    public ClientRoleEntry(ulong clientId, PlayerRole role)
+    public ClientRoleEntry(ulong clientId, PlayerRole role, ulong steamId, bool isFrozen)
     {
         ClientId = clientId;
         Role = role;
+        SteamId = steamId;
+        IsFrozen = isFrozen;
     }
 
-    public bool Equals(ClientRoleEntry other) => ClientId == other.ClientId && Role == other.Role;
+    public bool Equals(ClientRoleEntry other) =>
+        ClientId == other.ClientId && Role == other.Role && SteamId == other.SteamId && IsFrozen == other.IsFrozen;
     public override bool Equals(object obj) => obj is ClientRoleEntry other && Equals(other);
-    public override int GetHashCode() => HashCode.Combine(ClientId, Role);
+    public override int GetHashCode() => HashCode.Combine(ClientId, Role, SteamId, IsFrozen);
 }

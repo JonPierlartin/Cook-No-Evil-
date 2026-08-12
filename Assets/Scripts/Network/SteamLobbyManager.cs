@@ -147,9 +147,23 @@ public class SteamLobbyManager : MonoBehaviour
         _currentLobby.Value.SetFriendsOnly();
         AdvertiseLobbyPresence(_currentLobby.Value.Id);
 
+        // Round sirasinda kopup ayni SteamId ile geri baglanan oyuncuyu taniyabilmek
+        // icin (bkz. RoleManager.HandleConnectionApproval/HandleClientConnected) kendi
+        // SteamId'mizi baglanti onayi payload'ina koyuyoruz — Host da NGO'da "client 0"
+        // oldugu icin bu adim ondan da gecerli.
+        WriteSteamIdToConnectionData();
         NetworkManager.Singleton.StartHost();
         Debug.Log($"[SteamLobbyManager] Lobi olusturuldu: {_currentLobby.Value.Id}");
         OnLobbyCreated?.Invoke();
+    }
+
+    // RoleManager.HandleConnectionApproval'in round-ici rejoin eslestirmesi icin
+    // kullandigi ConnectionApprovalRequest.Payload'i doldurur — NGO'nun StartHost/
+    // StartClient'tan ONCE ayarlanmasi gereken zaten var olan mekanizmasi (yeni paket
+    // gerekmiyor).
+    private static void WriteSteamIdToConnectionData()
+    {
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = BitConverter.GetBytes((ulong)SteamClient.SteamId);
     }
 
     // Steam Friends listesinde "Oyuna Davet Et" / "Katil" seceneklerinin gorunmesi VE
@@ -242,6 +256,8 @@ public class SteamLobbyManager : MonoBehaviour
         AdvertiseLobbyPresence(_currentLobby.Value.Id);
         transportManager.ConfigureTransport(TransportMode.Steam);
         transportManager.SetSteamHostTarget(_currentLobby.Value.Owner.Id);
+
+        WriteSteamIdToConnectionData();
         NetworkManager.Singleton.StartClient();
 
         Debug.Log($"[SteamLobbyManager] Lobiye katilindi, host: {_currentLobby.Value.Owner.Id}");
