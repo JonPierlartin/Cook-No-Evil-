@@ -403,6 +403,41 @@ tekrar doluyor (leak/duplikasyon yok), `OnServerRoleAssigned` tam olarak 1 kez t
   imleci hiç etkilemiyor; odak testi: yukarıda; açı düzeltmesi: 90/210/330° test açıları
   artık doğru slot
   index'ine (0/1/2) eşleniyor).
+- **GameplayCanvas "sahnede bulunamadı" hatası + round sırasında rejoin'de ekranın
+  "Bağlandı... Rolün:" yazısında takılı kalması — AYNI KÖKTEN iki ayrı bug:**
+  (1) `LobbyUIController.SetGameplayCanvasVisible`, `GameObject.Find("GameplayCanvas")`
+  kullanıyordu — `GameObject.Find` INAKTIF objelerde `null` döner. GameplayCanvas herhangi
+  bir disconnect'te inaktif olduğunda, sonraki HER "tekrar aç" denemesi `Find` başarısız
+  olduğu için null-guard'a takılıp hiçbir şey yapmıyordu — GameplayCanvas bir daha ASLA
+  aktif olamıyordu (kendi kendini kilitleyen bir durum). Emote çarkı da onun child'ı
+  olduğu için bu hatayla birlikte açılmıyordu. Düzeltme: Inspector'dan sabit atanan
+  referans (`gameplayCanvas` alanı) kullanılıyor. (2) `IsRoundActive.OnValueChanged`,
+  round ZATEN aktifken (yeniden) bağlanan bir client için hiç tetiklenmiyor — NGO bu
+  ilk senkronizasyonu bir "değişiklik" olarak raporlamıyor. Düzeltme: `HandleLocalRoleAssigned`
+  (her bağlantıda/rejoin'de güvenilir tetiklenir) artık güncel round durumunu da açıkça
+  uyguluyor, ortak `ApplyRoundActiveState()` metoduyla paylaşılıyor. **Genel ders:** hem
+  "aktif/inaktif obje + `GameObject.Find`" hem "NetworkVariable + sadece `OnValueChanged`'a
+  güvenme" ayrı ayrı bilinen tuzaklar — ikisi burada aynı semptomu (ekran geçişi
+  çalışmıyor) üretti.
+- **Emote sistemi yeniden tasarlandı:** eski tasarım (Yamak'a hedefli `ClientRpc` +
+  ayrı bir `ReceivedEmoteIcon` UI'ı) kaldırıldı — hem mimari olarak yanlış konumlandırılmıştı
+  hem de `ReceivedEmoteIcon` kalıcı görünür kalıyordu. Yeni tasarım: `EmoteSystem`
+  artık HERKESE broadcast bir `ClientRpc` (`EmoteTriggeredClientRpc`) gönderiyor;
+  `Player.prefab`'a eklenen `PlayerEmoteReactor`, sadece `OwnerClientId` Kasiyer'inkiyle
+  eşleşen kopyada (yani her client'ta doğru objede, ekstra hedefleme gerekmeden) kısa
+  bir renk parlaması + eğilme/zıplama oynatıyor — `EmoteDefinition.ReactionColor`
+  (mevcut kırmızı/mavi/yeşil paletiyle) üzerinden. Bilerek `NetworkVariable` DEĞİL
+  `ClientRpc` kullanıldı: Kasiyer aynı emote'u art arda seçerse bir `NetworkVariable`da
+  değer değişmediği için `OnValueChanged` hiç tetiklenmezdi (yukarıdaki rejoin bugunun
+  aynı ailesi) — RPC her çağrıyı koşulsuz iletir. Görsel efekt SADECE `Visual` child'ın
+  local transform/`MaterialPropertyBlock`'unda oynatılıyor, kökte DEĞİL — aksi halde
+  owner-authoritative `NetworkTransform` bunu gerçek hareket sanırdı.
+- **`Player.prefab` yeniden yapılandırıldı:** görsel mesh (Capsule `MeshFilter`/
+  `MeshRenderer`) kökten ayrı bir `Visual` child'a taşındı; `CharacterController`,
+  `NetworkObject`, `NetworkTransform` ve tüm script'ler kökte kaldı. Bu restructuring
+  sırasında `PlayerInteractor.interactableLayer` mask'inin `0`a düştüğü (raycast
+  hiçbir şeyi bulamıyordu) fark edilip düzeltildi — bkz. aşağıdaki "Genel Geliştirme
+  Disiplini" içindeki hassas-dosya notu.
 
 **Test ortamı notu (kod hatası DEĞİL):** Tek Unity Editor içinde arka arkaya birden fazla
 `StartHost()`/`Stop Play Mode` döngüsü denenirken, NGO'nun Play Mode çıkışındaki bilinen
@@ -538,3 +573,40 @@ Yazılan tüm kodlar SOLID prensiplerine uygun olacak şekilde yazılır.
   isimle (`CookNoEvilDevBuildN.zip`) zip'lenir. `Builds/` zaten `.gitignore`'da olduğu için
   bu commit'lere karışmaz. Bu adım unutulmaya müsait olduğu için buraya kalıcı kural olarak
   yazıldı — atlanmamalı.
+- **HASSAS DOSYALAR — her dokunuşta kısa bir regresyon testi zorunlu, atlanmamalı:**
+  - `Assets/Scripts/Network/RoleManager.cs` — geçmişte bulunup düzeltilen rol
+    sayacı/round-durumu sızıntısı, disconnect/rejoin dead-end'i gibi hassas bug'ları
+    var (bkz. "Bileşen 1 Tamamlanma Raporu"). Değiştirildikten sonra round-start /
+    lobiden çık-tekrar-katıl rol testi kısaca tekrar çalıştırılmalı.
+  - `Assets/Prefabs/Player.prefab` — bu oturumda ÜÇ AYRI bug kaynağı oldu:
+    (1) `NetworkTransform.AuthorityMode` varsayılan `Server`de kalmıştı (client
+    hareket/rotasyon bugu), (2) sahne kamerası geçişi/`CameraPivot` kurulumu,
+    (3) görsel mesh'in `Visual` child'a taşınması (emote tepki animasyonunun
+    `NetworkTransform`'un yönettiği kökle çakışmaması için). Ayrıca bu restructuring
+    sırasında `PlayerInteractor.interactableLayer` mask'inin `0`a düşmüş olduğu
+    (raycast hiçbir şeyi bulamıyordu) fark edildi.
+    **En olası açıklama (kesin kanıtlanamadı, ama restructuring KAYNAKLI DEĞİL gibi
+    görünüyor):** Bu turdaki restructuring kodu (`PrefabStageUtility.GetCurrentPrefabStage()`
+    üzerinden `DestroyImmediate`/`AddComponent`) `PlayerInteractor` component'ine hiç
+    dokunmadı — bu yüzden component'in remove/re-add edilmesi ihtimali ELENDİ (kod
+    izi kesin). Daha olası aday: `interactableLayer` ilk kez `manage_components
+    set_property` ile ayarlanmıştı (bkz. yukarıdaki not — düz int ile başarısız olup
+    `{"m_Bits": 256}` iç-içe formatıyla "başarılı" olmuştu) ve hemen ardından
+    `manage_prefabs create_from_gameobject` ile prefab'a çevrilmişti (bkz. yukarıdaki
+    "İlk Player.prefab oluşturma denemesi" notu — bu aracın o dönemde başka
+    güvenilirlik sorunları da vardı). Bu iki adım arasında değerin gerçekten
+    serialize edilip diske yazıldığından (`ApplyModifiedProperties`/`SaveAssets`)
+    emin olunamıyor — LayerMask gibi "özel" alanlarda bu tür bir commit-atlama
+    sessizce olabiliyor. Yani hata muhtemelen prefab'ın İLK OLUŞTURULDUĞU anda
+    zaten vardı, bu turda sadece ilk kez fark edildi (raycast'i canlı test eden
+    ilk seferdi).
+    **SOMUT UYARI:** Bu dosyaya her dokunuşta genel "regresyon testi yap" yetmez —
+    özellikle **`LayerMask` alanları** (örn. `PlayerInteractor.interactableLayer`) ve
+    **serialized obje referansları** (örn. `PlayerController.playerCamera`,
+    `PlayerEmoteReactor.visualRoot`/`visualRenderer`) tek tek, canlı bir testte
+    (sadece Inspector'dan bakarak değil — kod okuyarak da fark edilemiyor, gerçek
+    bir raycast/davranış testiyle) doğrulanmalı. Değiştirildikten sonra EN AZ şunlar
+    doğrulanmalı: spawn pozisyonu, kamera aktivasyonu (owner-only, sahne kamerası
+    kapanıyor mu), `NetworkTransform.AuthorityMode` hâlâ `Owner` mı, `PlayerInteractor`
+    raycast'i gerçekten bir `HoldOrPressInteractable` buluyor mu (canlı test, sadece
+    kod okuyarak değil), `HotbarUI` envanteri doğru yansıtıyor mu.
