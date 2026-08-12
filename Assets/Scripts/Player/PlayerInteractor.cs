@@ -45,6 +45,13 @@ public class PlayerInteractor : NetworkBehaviour
 
     private void HandleAttackStarted(InputAction.CallbackContext context)
     {
+        // "Oyun durduruldu" TUM oyunculari kapsar (bkz. PlayerController.Update ayni
+        // kontrol) — YENI bir etkilesim baslatilamaz. Zaten devam eden bir basimin
+        // EndPress'ini (HandleAttackCanceled) BILEREK engellemiyoruz, aksi halde
+        // HoldOrPressInteractable "basili" durumda takili kalirdi.
+        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
+            return;
+
         if (!TryGetCurrentTarget(out var target))
         {
             // TESHIS (gercek build'de LMB etkilesiminin calismama raporu icin):

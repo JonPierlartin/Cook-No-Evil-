@@ -74,6 +74,14 @@ public class PlayerController : NetworkBehaviour
         if (!IsOwner)
             return;
 
+        // "Oyun durduruldu" (round sirasinda bir oyuncu koptugunda, bkz. GameLoopManager)
+        // TUM oyuncular icin gecerli — sadece kopan oyuncunun kendi objesi degil. Kopan
+        // oyuncunun objesi zaten IsOwner hicbir client'ta true olmadigi icin kendiliginden
+        // donuyordu (bkz. RoleManager notu); burada BAGLI KALAN oyuncular icin ayni
+        // dondurma acikca uygulaniyor.
+        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
+            return;
+
         ApplyLook();
         ApplyMove();
     }

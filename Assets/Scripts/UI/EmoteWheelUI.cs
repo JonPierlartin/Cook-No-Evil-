@@ -94,6 +94,12 @@ public class EmoteWheelUI : MonoBehaviour
         if (RoleManager.Instance == null || !IsWheelRole(RoleManager.Instance.LocalRole))
             return;
 
+        // "Oyun durduruldu" (bkz. PlayerController/PlayerInteractor ayni kontrol) carki
+        // da kapsar — YENI bir cark acilamaz. Zaten acik bir cark varsa (HandleInteractCanceled)
+        // kapatilmasini BILEREK engellemiyoruz, PlayerInteractor'daki ayni prensiple tutarli.
+        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
+            return;
+
         // Kasiyer icin tum dilimler, Yamak icin sadece ilk N dilim aktif/tiklanabilir
         // olur (kisitli liste — bkz. EmoteSystem.YamakEmoteLimit). Geri kalan dilimler
         // gizlenir ki Yamak yanlislikla erisimi olmayan bir emote'u secmeye calismasin.
