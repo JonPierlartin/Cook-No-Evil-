@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EmoteDefinition
   localizationKey: emote.c
   icon: {fileID: 21300000, guid: 1aae890621b30394aa5215b1fc3a30a7, type: 3}
+  reactionColor: {r: 0.18039216, g: 0.8, b: 0.44313726, a: 1}

@@ -2,10 +2,13 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-// Kasiyer'in Yamak'a emote ile iletisim kurmasi (GDD 2.2). Bu, "state blindness"
-// veri gizleme kurali (Red Line 1) DEGIL — o kural cooking-state'e ozgu, burada
-// uygulanmiyor; bu sadece rol-bazli bir mesajlasma eylemi, hedefli ClientRpc
-// kullanmak network-verimliligi acisindan normal/uygun bir tercih.
+// Kasiyer'in emote carkindan sectigi tepki (GDD 2.2 — Kasiyer'in Yamak'i yonlendirmesi).
+// Eskiden sadece Yamak'a hedefli bir ClientRpc'ydi (ReceivedEmoteIcon adinda ayri bir
+// UI ile); yeniden tasarlandi: artik HERKESE broadcast ediliyor ve Kasiyer'in kendi
+// karakteri uzerinde (PlayerEmoteReactor) herkesin gorebilecegi kisa bir gorsel tepki
+// tetikliyor. NetworkVariable degil bilerek ClientRpc kullaniliyor — Kasiyer ayni
+// emote'u art arda iki kez secerse bir NetworkVariable'da deger degismedigi icin
+// OnValueChanged hic tetiklenmezdi (sessizce yutulurdu); RPC her cagriyi kosulsuz iletir.
 [RequireComponent(typeof(NetworkObject))]
 public class EmoteSystem : NetworkBehaviour
 {
@@ -13,7 +16,9 @@ public class EmoteSystem : NetworkBehaviour
 
     [SerializeField] private EmoteDefinition[] availableEmotes;
 
-    public event Action<int> OnEmoteReceived;
+    // (kasiyerClientId, emoteIndex) — PlayerEmoteReactor kendi OwnerClientId'siyle
+    // karsilastirip sadece dogru objede tepki oynatir.
+    public event Action<ulong, int> OnEmoteTriggered;
 
     public EmoteDefinition[] AvailableEmotes => availableEmotes;
 
@@ -48,39 +53,12 @@ public class EmoteSystem : NetworkBehaviour
         if (!RoleManager.Instance.IsRoundActive.Value)
             return;
 
-        if (!TryGetClientIdForRole(PlayerRole.Yamak, out ulong yamakClientId))
-            return;
-
-        var targetParams = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams { TargetClientIds = new[] { yamakClientId } }
-        };
-
-        EmoteReceivedClientRpc(emoteIndex, targetParams);
+        EmoteTriggeredClientRpc(senderId, emoteIndex);
     }
 
     [ClientRpc]
-    private void EmoteReceivedClientRpc(int emoteIndex, ClientRpcParams rpcParams = default)
+    private void EmoteTriggeredClientRpc(ulong kasiyerClientId, int emoteIndex)
     {
-        OnEmoteReceived?.Invoke(emoteIndex);
-    }
-
-    private bool TryGetClientIdForRole(PlayerRole role, out ulong clientId)
-    {
-        clientId = 0;
-
-        if (RoleManager.Instance == null || NetworkManager == null)
-            return false;
-
-        foreach (ulong id in NetworkManager.ConnectedClientsIds)
-        {
-            if (RoleManager.Instance.GetRole(id) != role)
-                continue;
-
-            clientId = id;
-            return true;
-        }
-
-        return false;
+        OnEmoteTriggered?.Invoke(kasiyerClientId, emoteIndex);
     }
 }

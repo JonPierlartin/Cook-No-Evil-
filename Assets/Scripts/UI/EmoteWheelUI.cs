@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -6,9 +5,10 @@ using UnityEngine.UI;
 // Sadece Kasiyer icin aktif E-basili-tutma radyal emote menusu. HoldOrPressInteractable'dan
 // BAGIMSIZ (bu bir dunya-objesi etkilesimi degil, rol-bazli bir UI menusu) — kendi
 // ham Interact (E) basma/birakma girisini okur ve carktaki dilimi mouse pozisyonuna
-// gore secer. Ayni bilesen, Yamak tarafinda alinan son emote ikonunu kisa sureligine
-// gosterir (Risk Duzeltmesi 2'deki "sadece ilgili rolun HUD'unda instantiate/goster"
-// deseniyle tutarli).
+// gore secer. Secilen emote'un GORSEL TEPKISI (renk parlamasi + egilme/ziplama) artik
+// Kasiyer'in kendi karakterinde (PlayerEmoteReactor, herkesin ekraninda) oynatiliyor —
+// eskiden burada Yamak'a ozel ayri bir "ReceivedEmoteIcon" UI'i vardi, o tasarim
+// kaldirildi (bkz. EmoteSystem.cs ust notu).
 public class EmoteWheelUI : MonoBehaviour
 {
     [SerializeField] private InputActionAsset inputActions;
@@ -20,40 +20,26 @@ public class EmoteWheelUI : MonoBehaviour
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color highlightedColor = Color.yellow;
 
-    [Header("Yamak - Alinan Emote")]
-    [SerializeField] private Image receivedEmoteIcon;
-    [SerializeField] private float receivedEmoteDisplayDuration = 3f;
-
     private InputAction _interactAction;
     private InputAction _pointAction;
     private int _highlightedIndex = -1;
     private bool _wheelOpen;
-    private Coroutine _receivedEmoteRoutine;
 
     private void Start()
     {
         if (wheelRoot != null)
             wheelRoot.SetActive(false);
 
-        if (receivedEmoteIcon != null)
-            receivedEmoteIcon.gameObject.SetActive(false);
-
         InitializeWheelIcons();
 
         if (RoleManager.Instance != null)
             RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
-
-        if (EmoteSystem.Instance != null)
-            EmoteSystem.Instance.OnEmoteReceived += HandleEmoteReceived;
     }
 
     private void OnDestroy()
     {
         if (RoleManager.Instance != null)
             RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
-
-        if (EmoteSystem.Instance != null)
-            EmoteSystem.Instance.OnEmoteReceived -= HandleEmoteReceived;
 
         if (_interactAction != null)
         {
@@ -65,8 +51,7 @@ public class EmoteWheelUI : MonoBehaviour
     // BULUNAN HATA: carktaki dilim Image'larina hicbir yerde sprite atanmiyordu —
     // sadece HighlightSlot/ResetHighlight .color'i degistiriyordu (secili/normal tonu).
     // Bu yuzden Kasiyer kendi carkinda uc dilimi de sprite'siz (varsayilan beyaz
-    // dikdortgen) goruyordu; Yamak'in gordugu renk dogruydu cunku o ayri bir Image
-    // (receivedEmoteIcon) ve HandleEmoteReceived zaten sprite atiyordu.
+    // dikdortgen) goruyordu. Duzeltildi.
     private void InitializeWheelIcons()
     {
         if (slotIcons == null || EmoteSystem.Instance == null || EmoteSystem.Instance.AvailableEmotes == null)
@@ -187,28 +172,5 @@ public class EmoteWheelUI : MonoBehaviour
             slotIcons[_highlightedIndex].color = normalColor;
 
         _highlightedIndex = -1;
-    }
-
-    private void HandleEmoteReceived(int emoteIndex)
-    {
-        if (receivedEmoteIcon == null || EmoteSystem.Instance?.AvailableEmotes == null)
-            return;
-
-        if (emoteIndex < 0 || emoteIndex >= EmoteSystem.Instance.AvailableEmotes.Length)
-            return;
-
-        receivedEmoteIcon.sprite = EmoteSystem.Instance.AvailableEmotes[emoteIndex].Icon;
-        receivedEmoteIcon.gameObject.SetActive(true);
-
-        if (_receivedEmoteRoutine != null)
-            StopCoroutine(_receivedEmoteRoutine);
-        _receivedEmoteRoutine = StartCoroutine(HideReceivedEmoteAfterDelay());
-    }
-
-    private IEnumerator HideReceivedEmoteAfterDelay()
-    {
-        yield return new WaitForSeconds(receivedEmoteDisplayDuration);
-        receivedEmoteIcon.gameObject.SetActive(false);
-        _receivedEmoteRoutine = null;
     }
 }
