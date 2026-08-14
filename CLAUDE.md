@@ -682,6 +682,97 @@ rolü boşa çıkmıyor, oyun donuyor ve SADECE aynı Steam kimliğine sahip oyu
   dışında kaldı — sadece kod incelemesiyle doğrulandı, henüz gerçek çok-oyunculu bir testte
   görülmedi.
 
+### Gerçek Testte Bulunan Kritik Hata — Reconnect Sonrası Hareket/Etkileşim Donuk Kalıyordu
+
+Yukarıdaki "kod incelemesiyle doğrulandı, henüz gerçek testte görülmedi" notu tam isabet
+etti: gerçek testte reconnect eden oyuncu rolünü/emote çark erişimini geri alıyordu (yani
+`IsGamePaused` doğru `False` oluyordu) ama `PlayerController` ile hareket edemiyor, LMB ile
+etkileşime giremiyordu — iki sistem de aynı `IsGamePaused`'a bağlı olduğu için bu bir
+tutarsızlıktı.
+
+**Kök neden:** `PlayerController`/`PlayerInteractor`'ın owner-kurulum mantığı (kamera
+aktivasyonu, Input System action map bağlama, `enabled` bayrağı) SADECE `OnNetworkSpawn()`
+içindeydi. Ama round-içi reconnect'te `PlayerSpawner` objeyi YENİDEN SPAWN ETMİYOR (bkz.
+yukarıdaki mimari not) — sadece `ChangeOwnership()` çağırıyor. `OnNetworkSpawn()` bir
+NetworkObject'in yaşam döngüsünde SADECE BİR KEZ çalışır; NGO, ownership sonradan
+değiştiğinde bunu TEKRAR ÇAĞIRMAZ. Reconnect eden oyuncunun objesi ilk kez o client'ın
+sürecine senkronize olduğunda (henüz `ChangeOwnership` çağrılmadan ÖNCEKİ bir anda,
+`OnClientConnectedCallback`/`ChangeOwnership` sırası yüzünden) `IsOwner=false` ile
+`OnNetworkSpawn()` çalışıp `enabled=false` yapıyordu — birkaç an sonra sahiplik gerçekten
+geri verilse bile bunu tetikleyecek/geri alacak hiçbir mekanizma yoktu, `enabled` sonsuza
+dek `false` kalıyordu. Emote çarkı bundan etkilenmiyordu çünkü `EmoteWheelUI` tamamen ayrı
+bir yoldan (`RoleManager.LocalRole`, oyuncu objesinin `enabled`/`IsOwner` durumundan
+bağımsız) çalışıyor.
+
+**Düzeltme:** NGO'nun tam bu senaryo için sağladığı resmi callback — `NetworkBehaviour.
+OnOwnershipChanged(ulong previous, ulong current)` (protected virtual) — kullanıldı. Kurulum
+mantığı ortak bir `ApplyOwnershipState()` metoduna taşındı, hem `OnNetworkSpawn()` hem
+`OnOwnershipChanged()` bunu çağırıyor; `PlayerInteractor` tarafında çift-abonelik olmaması
+için input action event'lerine önce unsubscribe edilip sonra (owner ise) tekrar subscribe
+ediliyor. **Bu, tahmin/geçici çözüm DEĞİL** — NGO'nun kendi resmi `NetworkTransform`
+component'i (`Library/PackageCache/.../NetworkTransform.cs:3834`) AYNI SORUNU AYNI YÖNTEMLE
+çözüyor (`OnOwnershipChanged` içinde `InternalInitialization(true)` çağırıp authority
+durumunu yeniden hesaplıyor) — paket kaynağından doğrulanarak bu deseni takip ettik.
+
+**Doğrulama:** Play Mode'da GERÇEK bir `Player.prefab` NetworkObject'i host'un kendi
+clientId'siyle spawn edilip `enabled=True` olduğu doğrulandı; NGO'nun `ChangeOwnership`'i
+sadece GERÇEKTEN bağlı bir clientId'ye izin verdiği (bağlı olmayan sahte bir ID'ye
+`ChangeOwnership` çağrısı sessizce hiçbir şey yapmıyor, `OwnerClientId` değişmiyor) bu
+ortamda (tek process, sadece host) tespit edildi — bu yüzden "sahiplik BAŞKA bir client'a
+geçince doğru donuyor mu" yönü NGO'nun kendi validasyonu yüzünden bu ortamda tam
+uçtan-uca test edilemedi (gerçek 2. bir bağlı client veya Multiplayer Play Mode gerekir).
+Buna karşılık NGO kaynağıyla çapraz doğrulanan `OnOwnershipChanged` deseni yüksek güvenle
+doğru kabul ediliyor; **kesin uçtan-uca doğrulama bir sonraki gerçek çok-makineli/round-içi
+reconnect testinde yapılmalı.**
+
+**Kamera pozisyonunun "farklı yerde" başlaması:** Beklenen davranıştır, bug DEĞİL —
+`NetworkTransform` disconnect sırasında güncelleme almayı bırakınca SON senkronize pozisyonu
+donuk tutar (elle bir snapshot/restore sistemi zaten kurulmadı, bkz. yukarıki not); reconnect
+eden oyuncu koptuğu ANDAKİ son pozisyonda "uyanır". Bu, `DontDestroyWithOwner=true`
+tasarımının doğrudan ve istenen bir sonucudur.
+
+### Koşma (Sprint) Kaldırıldı
+
+Kullanıcı isteğiyle `PlayerController`'dan Shift-koşma tamamen kaldırıldı — tek sabit
+`moveSpeed` var. `sprintMultiplier` alanı, `_sprintAction` referansı ve
+`InputSystem_Actions.inputactions` içindeki "Sprint" action + 3 binding'i (Keyboard leftShift,
+Gamepad leftStickPress, XR trigger) silindi.
+
+### LMB Etkileşimi Gerçek Build'de Çalışmıyor — Araştırma Genişletildi, Kesin Kök Neden Bulunamadı
+
+Kullanıcının hipotezi ("GameplayCanvas'ta görünmez ama `raycastTarget=true` kalmış tam-ekran
+bir Image LMB'yi 3D dünyaya ulaştırmıyor olabilir") **doğrudan Unity üzerinden çalıştırılan
+bir sorguyla ELENDİ:** `GameplayCanvas` altındaki TÜM `raycastTarget=true` grafikleri
+tarandı (`GetComponentsInChildren<Graphic>`) — hepsi küçük (56x56/48x48) hotbar/emote-çark
+slotları, hiçbiri tam-ekran değil. Ayrıca bu hipotez zaten MİMARİ olarak da mümkün değildi:
+`PlayerInteractor` ham Input System aksiyonunu (`Attack`) okuyor, UI Event System/Graphic
+Raycaster'dan GEÇMİYOR — bir UI Image'ın `raycastTarget`'ı sadece UI'ın kendi tıklama
+olaylarını etkiler, `Physics.Raycast`'i ya da Input System aksiyon tetiklemesini ETKİLEMEZ.
+Bu, önceki turda eklenen teşhis logunun HER tıklamada basmış olmasıyla da (aşağıya bkz.)
+doğrulandı — Attack action'ın kendisi güvenilir şekilde tetikleniyor, sorun input katmanında
+DEĞİL.
+
+**Player-prev.log incelemesi (clientId=1, rol=Yamak):** `[PlayerInteractor] Hedef bulunamadi`
+logu 30 KEZ ÜST ÜSTE basılmış, HER SEFERİNDE `camera=True, range=2,5, layerMask=256` —
+yani raycast doğru şekilde deneniyor ama HİÇBİR ZAMAN bir hedef bulamıyor. `Player.prefab`,
+`BurgerAssemblyStation` (layer=8, BoxCollider enabled) ve `TagManager`'daki layer 8 tanımı
+("Interactable") tek tek statik olarak yeniden doğrulandı — hepsi doğru.
+
+**Kesin kök neden bulunamadı — en olası (kanıtlanmamış) hipotez:** `CameraPivot`'un yerel
+Y konumu 0.6 (CharacterController: height=2, center=0 → karakter zeminde dururken kamera
+dünya Y'sinde ~1.6 civarına oturur, normal bir göz hizası) ama `BurgerAssemblyStation`
+sadece 1 birim yükseklikte bir küp (dünya Y aralığı [0,1]) — yani oyuncunun LEVEL (yukarı/
+aşağı bakmadan) bir açıyla değil, BİLİNÇLİ olarak aşağı bakarak nişan alması gerekiyor, ve
+hâlâ hiçbir "hedefe bakınca vurgula" görsel ipucu yok (bkz. daha önce belgelenen bilinçli
+eksiklik). 30/30 başarısızlık oranı rastgele nişan hatasına göre yüksek görünse de, bu
+kombinasyonla (düşük hedef + sıfır görsel geri bildirim + dar 2.5m menzil) tutarlı bir
+açıklama. **Kesinlik için** teşhis logu güçlendirildi: artık `camPos`/`camForward` de
+basılıyor (`BurgerAssemblyStation`'ın bilinen konumu ~(7, 0.5, 4) ile karşılaştırılabilir) —
+bir sonraki gerçek testte bu değerler oyuncunun GERÇEKTEN istasyona bakıp bakmadığını kesin
+olarak gösterecek. **Bu tur BİLEREK körlemesine bir "düzeltme" yapılmadı** ("play-around"
+yasağı) — kanıtlanmamış bir hipoteze göre kod değiştirmek yerine, bir sonraki gerçek testte
+kesin teşhis koyacak bir araç bırakıldı.
+
 ## Mimari Dosya Yapısı (Bölüm 3 özeti)
 
 - **Bileşen 1 — Steam Network, Lobby & VoIP:** `NetworkTransportManager`, `SteamLobbyManager`,
