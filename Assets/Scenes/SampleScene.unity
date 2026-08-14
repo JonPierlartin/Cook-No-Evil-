@@ -2098,6 +2098,7 @@ GameObject:
   - component: {fileID: 1035616285}
   - component: {fileID: 1035616288}
   - component: {fileID: 1035616287}
+  - component: {fileID: 1035616289}
   m_Layer: 0
   m_Name: GameSystems
   m_TagString: Untagged
@@ -2190,6 +2191,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 317edbf7812348f42bd9158f244e8434, type: 2}
   - {fileID: 11400000, guid: 566a9f37d3b9175428b846288fdc6e9d, type: 2}
   - {fileID: 11400000, guid: ffad394b2131f4842af79eff280ee889, type: 2}
+  yamakEmoteLimit: 1
 --- !u!114 &1035616288
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2205,6 +2207,19 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   playerPrefab: {fileID: 7549273773044718612, guid: 9cbe772140954124289d316a770f8f2f, type: 3}
   spawnSpacing: 2
+--- !u!114 &1035616289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1035616282}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dee76de500b1d3941a20176bf79dd11c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameLoopManager
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &1059510336
 GameObject:
   m_ObjectHideFlags: 0
