@@ -81,11 +81,14 @@ public class PlayerInteractor : NetworkBehaviour
         {
             // TESHIS (gercek build'de LMB etkilesiminin calismama raporu icin):
             // bu log SADECE raycast hicbir HoldOrPressInteractable bulamadiginda basar
-            // (her frame degil, sadece tiklama aninda) — bir sonraki gercek testte bu
-            // satir Player.log'da COK sik/hic gorunmuyorsa sorun raycast/layer/menzil
-            // katmaninda DEGIL, bulunan hedefin kendi mantiginda (network/ownership)
-            // aranmali. Teshis netlesince bu log kaldirilmali.
-            Debug.Log($"[PlayerInteractor] Hedef bulunamadi (camera={(playerCamera != null)}, range={interactRange}, layerMask={interactableLayer.value}).");
+            // (her frame degil, sadece tiklama aninda). Kamera pozisyonu/yonu de basiliyor
+            // ki bir sonraki gercek testte oyuncunun GERCEKTEN istasyona (bilinen konum:
+            // BurgerAssemblyStation ~ (7, 0.5, 4)) bakip bakmadigi Player.log'dan
+            // dogrulanabilsin — bu, "kod hatasi" ile "hassas nisan/gorsel geri bildirim
+            // eksikligi" ihtimallerini kesin ayirt eder.
+            Vector3 camPos = playerCamera != null ? playerCamera.transform.position : Vector3.zero;
+            Vector3 camFwd = playerCamera != null ? playerCamera.transform.forward : Vector3.zero;
+            Debug.Log($"[PlayerInteractor] Hedef bulunamadi (camera={(playerCamera != null)}, range={interactRange}, layerMask={interactableLayer.value}, camPos={camPos}, camForward={camFwd}).");
             return;
         }
 
