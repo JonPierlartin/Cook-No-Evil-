@@ -15,7 +15,6 @@ public class PlayerController : NetworkBehaviour
     [Tooltip("Bu prefab'in kendi kamerasi (MainCamera etiketi TASIMAMALI — sahnenin statik kamerasiyla Camera.main belirsizligini onlemek icin).")]
     [SerializeField] private Camera playerCamera;
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float sprintMultiplier = 1.6f;
     [SerializeField] private float mouseSensitivity = 0.12f;
     [SerializeField] private float minPitch = -80f;
     [SerializeField] private float maxPitch = 80f;
@@ -24,7 +23,6 @@ public class PlayerController : NetworkBehaviour
     private CharacterController _characterController;
     private InputAction _moveAction;
     private InputAction _lookAction;
-    private InputAction _sprintAction;
     private float _pitch;
     private float _verticalVelocity;
 
@@ -34,6 +32,26 @@ public class PlayerController : NetworkBehaviour
     }
 
     public override void OnNetworkSpawn()
+    {
+        ApplyOwnershipState();
+    }
+
+    // BULUNAN HATA: round-ici rejoin'de PlayerSpawner ayni objeyi yeniden Spawn ETMIYOR,
+    // sadece ChangeOwnership cagiriyor (bkz. PlayerSpawner) — OnNetworkSpawn ise sadece
+    // objenin YASAM DONGUSUNDE BIR KEZ calisir, ownership sonradan degistiginde NGO
+    // bunu TEKRAR cagirmaz. Eski kod bu yuzden "IsOwner=false" durumunu OnNetworkSpawn
+    // aninda (henuz eski/dondurulmus sahiple senkron oldugunda) tek seferlik goruyor,
+    // enabled=false yapiyor ve BIR DAHA ASLA true'ya donmuyordu — reconnect eden oyuncu
+    // gercekten IsOwner=true olsa bile hareket edemiyordu (IsGamePaused'dan bagimsiz,
+    // ayri bir "donma" kaynagi). Duzeltme: kurulum mantigi ApplyOwnershipState'e alindi,
+    // hem OnNetworkSpawn'da HEM NGO'nun ownership-degisikligi icin saglanan
+    // OnOwnershipChanged callback'inde cagriliyor.
+    protected override void OnOwnershipChanged(ulong previous, ulong current)
+    {
+        ApplyOwnershipState();
+    }
+
+    private void ApplyOwnershipState()
     {
         if (!IsOwner)
         {
@@ -49,7 +67,8 @@ public class PlayerController : NetworkBehaviour
         // Sahnenin statik lobi kamerasini (Camera.main, henuz player kamerasi
         // aktif/etiketli olmadigi icin bu asamada tek/belirgin MainCamera) kapatip
         // kendi kameramizi devreye sokuyoruz — sahne kamerasi silinmiyor, sadece
-        // devre disi birakiliyor.
+        // devre disi birakiliyor. Reconnect'te bu tekrar calisirsa (sahne kamerasi zaten
+        // kapaliysa) SetActive(false) idempotent, zararsizdir.
         var sceneCamera = Camera.main;
         if (sceneCamera != null)
             sceneCamera.gameObject.SetActive(false);
@@ -61,7 +80,8 @@ public class PlayerController : NetworkBehaviour
         playerMap.Enable();
         _moveAction = playerMap.FindAction("Move");
         _lookAction = playerMap.FindAction("Look");
-        _sprintAction = playerMap.FindAction("Sprint");
+
+        enabled = true;
 
         // TESHIS: gercek cok-makineli testte "round basladiginda ekranda hicbir sey
         // degismiyor" raporu icin — Player.log'da bu satirin varligi owner kamerasinin
@@ -99,10 +119,7 @@ public class PlayerController : NetworkBehaviour
     private void ApplyMove()
     {
         Vector2 moveInput = _moveAction.ReadValue<Vector2>();
-        bool sprinting = _sprintAction != null && _sprintAction.IsPressed();
-        float speed = moveSpeed * (sprinting ? sprintMultiplier : 1f);
-
-        Vector3 move = (transform.right * moveInput.x + transform.forward * moveInput.y) * speed;
+        Vector3 move = (transform.right * moveInput.x + transform.forward * moveInput.y) * moveSpeed;
 
         if (_characterController.isGrounded && _verticalVelocity < 0f)
             _verticalVelocity = -1f;
