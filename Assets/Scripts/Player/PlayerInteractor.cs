@@ -21,11 +21,36 @@ public class PlayerInteractor : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        ApplyOwnershipState();
+    }
+
+    // BULUNAN HATA: round-ici rejoin'de PlayerSpawner ayni objeyi yeniden Spawn ETMIYOR,
+    // sadece ChangeOwnership cagiriyor — OnNetworkSpawn objenin yasam dongusunde BIR KEZ
+    // calisir, ownership sonradan degistiginde NGO bunu tekrar cagirmaz (bkz.
+    // PlayerController'daki ayni kok neden notu). Duzeltme: kurulum/abonelik mantigi
+    // ApplyOwnershipState'e alindi, hem OnNetworkSpawn'da HEM OnOwnershipChanged'da
+    // cagiriliyor; cift-abonelik olmasin diye once mevcut abonelik varsa kaldiriliyor.
+    protected override void OnOwnershipChanged(ulong previous, ulong current)
+    {
+        ApplyOwnershipState();
+    }
+
+    private void ApplyOwnershipState()
+    {
+        if (_attackAction != null)
+        {
+            _attackAction.started -= HandleAttackStarted;
+            _attackAction.canceled -= HandleAttackCanceled;
+            _attackAction = null;
+        }
+
         if (!IsOwner)
         {
             enabled = false;
             return;
         }
+
+        enabled = true;
 
         var playerMap = inputActions.FindActionMap("Player");
         playerMap.Enable();
