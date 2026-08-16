@@ -5,18 +5,19 @@ using UnityEngine.UI;
 // Kasiyer VE Yamak icin aktif E-basili-tutma radyal emote menusu (Sef'te hic acilmaz;
 // Yamak'in secimi Kasiyer'e gore kisitli — bkz. EmoteSystem.YamakEmoteLimit).
 // HoldOrPressInteractable'dan BAGIMSIZ (bu bir dunya-objesi etkilesimi degil, rol-bazli
-// bir UI menusu) — kendi ham Interact (E) basma/birakma girisini okur ve carktaki dilimi
-// mouse pozisyonuna gore secer. Secilen emote'un GORSEL TEPKISI (renk parlamasi +
-// egilme/ziplama) artik secimi yapan oyuncunun kendi karakterinde (PlayerEmoteReactor,
-// herkesin ekraninda) oynatiliyor — eskiden burada Yamak'a ozel ayri bir
-// "ReceivedEmoteIcon" UI'i vardi, o tasarim kaldirildi (bkz. EmoteSystem.cs ust notu).
+// bir UI menusu) — kendi ham Interact (E) basma/birakma girisini okur. Rust'in insa
+// carki gibi: imlec HER ZAMAN kilitli/gizli kalir, dilim secimi carktan beri biriken
+// ham mouse delta'sinin yonune gore yapilir (bkz. Update()). Secilen emote'un GORSEL
+// TEPKISI (renk parlamasi + egilme/ziplama) secimi yapan oyuncunun kendi karakterinde
+// (PlayerEmoteReactor, herkesin ekraninda) oynatiliyor — eskiden burada Yamak'a ozel
+// ayri bir "ReceivedEmoteIcon" UI'i vardi, o tasarim kaldirildi (bkz. EmoteSystem.cs
+// ust notu).
 public class EmoteWheelUI : MonoBehaviour
 {
     [SerializeField] private InputActionAsset inputActions;
 
     [Header("Kasiyer - Cark")]
     [SerializeField] private GameObject wheelRoot;
-    [SerializeField] private RectTransform wheelCenter;
     [SerializeField] private Image[] slotIcons;
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color highlightedColor = Color.yellow;
@@ -32,10 +33,14 @@ public class EmoteWheelUI : MonoBehaviour
     [SerializeField] private Text centerDescription;
 
     private InputAction _interactAction;
-    private InputAction _pointAction;
     private int _highlightedIndex = -1;
     private int _activeSlotCount;
     private bool _wheelOpen;
+    // Cark acikken imlec KILITLI/GIZLI kalir (bkz. HandleInteractStarted) — mutlak
+    // ekran pozisyonu artik anlamsiz (sabit kalir). Bunun yerine, cark acildigindan
+    // beri biriken ham mouse delta'sinin YONU, hangi dilimin vurgulanacagini belirler
+    // (Rust'in insa carki gibi).
+    private Vector2 _accumulatedOffset;
 
     private void Start()
     {
@@ -89,7 +94,6 @@ public class EmoteWheelUI : MonoBehaviour
         var playerMap = inputActions.FindActionMap("Player");
         playerMap.Enable();
         _interactAction = playerMap.FindAction("Interact");
-        _pointAction = inputActions.FindActionMap("UI").FindAction("Point");
         _interactAction.started += HandleInteractStarted;
         _interactAction.canceled += HandleInteractCanceled;
     }
@@ -128,13 +132,14 @@ public class EmoteWheelUI : MonoBehaviour
             wheelRoot.SetActive(true);
 
         ClearCenterPanel();
+        _accumulatedOffset = Vector2.zero;
 
-        // Round aktifken imlec kilitli/gizli (FPS kontrolu icin, bkz. LobbyUIController).
-        // Kilitliyken InputSystem'in mutlak Point/Mouse.position degeri artik hareket
-        // etmiyor (sabit kaliyor) — bu da carktaki mutlak-pozisyon tabanli dilim secimini
-        // calismaz hale getirirdi. Cark acik oldugu surece imleci gecici serbest birakiyoruz.
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        // BULUNAN HATA: cark acilirken imlec BILEREK serbest/gorunur birakiliyordu —
+        // Rust'in insa carkinda imlec HER ZAMAN kilitli/gizli kalir (normal FPS gorusu),
+        // sadece ham mouse delta'si dilim secimi icin kullanilir. Cursor.lockState/visible
+        // artik burada HIC DEGISTIRILMIYOR — round aktifken zaten kilitli/gizli olan
+        // durum oldugu gibi korunuyor (bkz. Update() — artik mutlak pozisyon degil
+        // biriken delta okunuyor).
     }
 
     private void HandleInteractCanceled(InputAction.CallbackContext context)
@@ -151,31 +156,28 @@ public class EmoteWheelUI : MonoBehaviour
 
         ResetHighlight();
         ClearCenterPanel();
+        _accumulatedOffset = Vector2.zero;
 
-        // Cark kapaninca imleci FPS kontrolu icin tekrar kilitle/gizle (normal durum)
-        // veya acik/gorunur birak — LobbyUIController.ShouldLockCursor (YEREL bayrak)
-        // kullanilir, RoleManager.IsRoundActive DEGIL: o bir NetworkVariable, host
-        // disconnect sonrasi client'ta hicbir yerde resetlenmedigi icin stale kalabiliyor
-        // (bkz. LobbyUIController — ayni sinif bug host-disconnect senaryosunda da
-        // bulunup duzeltildi).
-        bool shouldLock = LobbyUIController.Instance != null && LobbyUIController.Instance.ShouldLockCursor;
-        Cursor.lockState = shouldLock ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !shouldLock;
+        // Cursor.lockState/visible artik burada da DEGISTIRILMIYOR — cark hicbir zaman
+        // imlec kilit durumunu degistirmedigi icin geri alacak bir sey de yok (bkz.
+        // HandleInteractStarted).
     }
 
     private void Update()
     {
-        if (!_wheelOpen || _pointAction == null || wheelCenter == null || slotIcons == null || _activeSlotCount == 0)
+        if (!_wheelOpen || slotIcons == null || _activeSlotCount == 0)
             return;
 
-        Vector2 mouseScreenPos = _pointAction.ReadValue<Vector2>();
-        Vector2 centerScreenPos = RectTransformUtility.WorldToScreenPoint(null, wheelCenter.position);
-        Vector2 direction = mouseScreenPos - centerScreenPos;
+        // Imlec kilitli/gizli oldugu icin mutlak pozisyon yerine, cark acildigindan beri
+        // biriken ham mouse delta'si "sanal imlec pozisyonu" gibi kullanilir — Mouse.current
+        // her zaman gercek donanim delta'sini raporlar, Cursor.lockState'ten bagimsizdir.
+        Vector2 delta = Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
+        _accumulatedOffset += delta;
 
-        if (direction.sqrMagnitude < 4f)
+        if (_accumulatedOffset.sqrMagnitude < 4f)
             return;
 
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        float angle = Mathf.Atan2(_accumulatedOffset.y, _accumulatedOffset.x) * Mathf.Rad2Deg;
         if (angle < 0f)
             angle += 360f;
 
