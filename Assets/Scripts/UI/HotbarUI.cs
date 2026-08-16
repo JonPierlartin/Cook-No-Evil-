@@ -50,17 +50,30 @@ public class HotbarUI : MonoBehaviour
         RefreshVisuals();
     }
 
+    // BULUNAN HATA: NetworkManager.LocalClient.PlayerObject, NGO tarafindan SADECE bir
+    // objenin ILK spawn mesaji islenirken guncelleniyor (SpawnNetworkObjectLocallyCommon
+    // -> UpdateNetworkClientPlayer) — ChangeOwnership (round-ici reconnect'te
+    // PlayerSpawner'in kullandigi yontem) bu alani HIC GUNCELLEMIYOR (NGO paket kaynagi
+    // dogrulandi). Bu yuzden reconnect eden oyuncunun kendi client'inda bu alan eski/
+    // hic set edilmemis kalabiliyordu. Bunun yerine sahnedeki PlayerController'lar
+    // arasinda GERCEKTEN aktif (enabled=true) olani araniyor — PlayerController zaten
+    // NGO'nun DontDestroyWithOwner objelerini disconnect'te otomatik olarak
+    // ServerClientId'ye devretmesine karsi korumali (bkz. PlayerController'daki
+    // OnOwnershipChanged notu), yani bu sinyal IsOwner'in kendisinden daha guvenilir.
     private void TryResolveLocalInventory()
     {
         var networkManager = NetworkManager.Singleton;
         if (networkManager == null || !networkManager.IsConnectedClient)
             return;
 
-        var playerObject = networkManager.LocalClient?.PlayerObject;
-        if (playerObject == null)
-            return;
+        foreach (var controller in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+        {
+            if (!controller.enabled)
+                continue;
 
-        _inventory = playerObject.GetComponent<PlayerInventory>();
+            _inventory = controller.GetComponent<PlayerInventory>();
+            return;
+        }
     }
 
     private void RefreshVisuals()
