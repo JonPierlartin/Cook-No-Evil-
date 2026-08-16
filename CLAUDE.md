@@ -861,6 +861,19 @@ eklendi (henüz gerçek testte doğrulanmadı, Shift+Tab overlay testiyle parale
 **Bir sonraki adım:** gerçek testte Player.log'da bu 4 yeni log satırı kontrol edilmeli;
 hangisi eksik/beklenmedik görünüyorsa sorun o katmandadır.
 
+**SONUÇ (kök neden kesinleşti):** Host'un gerçek `Player.log`'u incelendi — 6 teşhis
+satırının 5'i tamamen sağlıklı (`RestartAppIfNecessary=False`, `SteamAPI.Init` başarılı,
+`AppId=480` eşleşiyor, lobi `FriendsOnly`, `OpenGameInviteOverlay` gerçekten çağrılıyor —
+log'da 15+ kez tekrar ediyor, host butona defalarca basmış). Tek "beklenmeyen" (aslında
+hipotezi doğrulayan) değer: **`SteamUtils.IsOverlayEnabled = False`**. Arkadaşları Davet
+Et / Steam Overlay development build'de çalışmıyor — kök neden `IsOverlayEnabled=False`,
+**ortam kısıtı, kod hatası değil**. Steam client bu development build'i overlay'e uygun
+olarak hiç işaretlememiş (resmi depot'a kayıtlı olmaması). Gerçek Steam yayınında
+(Steamworks depot) otomatik çözülecek. Yerel testte geçici çözüm: exe'yi Steam
+kütüphanesine **Non-Steam Game olarak ekleyip oradan çalıştırmak**. Kodda yapılacak başka
+bir şey yok — bu konuda ileride yeni bir hipotezle tekrar kod değişikliği denenmemeli,
+gerçek AppID alınana kadar bu sınır kabul edilmeli.
+
 ## LMB Etkileşim Test Toast'ı (Geçici Teşhis Aracı)
 
 Gerçek 3 kişilik testte konsola bakmadan etkileşim denemelerini görebilmek için eklendi —
