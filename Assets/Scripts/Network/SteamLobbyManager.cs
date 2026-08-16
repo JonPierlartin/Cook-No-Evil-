@@ -91,8 +91,24 @@ public class SteamLobbyManager : MonoBehaviour
         while (!SteamClient.IsValid && Time.realtimeSinceStartup < deadline)
             yield return null;
 
-        if (SteamClient.IsValid)
-            SteamFriends.ClearRichPresence();
+        // TESHIS ("Arkadaslari Davet Et" arastirmasi icin): SteamClient.Init'in kendisi
+        // FacepunchTransport.Awake()'te (ayri bir component, bkz. paket kaynagi) cagriliyor
+        // ve sonucu HICBIR YERDE loglanmiyordu — basarisiz olursa (orn. Steam client kapali,
+        // steam_appid.txt eksik/yanlis) sessizce sonsuza kadar beklenirdi. Burada acikca
+        // basari/zaman-asimi VE calisan AppId'nin steam_appid.txt'deki 480 ile eslesip
+        // eslesmedigi loglaniyor.
+        if (!SteamClient.IsValid)
+        {
+            Debug.LogError("[SteamLobbyManager] SteamClient.IsValid 10 sn icinde true olmadi — SteamAPI.Init basarisiz/tamamlanmadi (Steam client acik mi? steam_appid.txt dogru mu?).");
+            yield break;
+        }
+
+        uint runningAppId = SteamClient.AppId;
+        Debug.Log($"[SteamLobbyManager] SteamAPI hazir: SteamId={SteamClient.SteamId}, AppId={runningAppId}, Name={SteamClient.Name}.");
+        if (runningAppId != 480)
+            Debug.LogWarning($"[SteamLobbyManager] Calisan AppId ({runningAppId}) beklenen 480 degil — steam_appid.txt ile FacepunchTransport.steamAppId alani tutarsiz olabilir.");
+
+        SteamFriends.ClearRichPresence();
     }
 
     private void OnDestroy()
@@ -145,6 +161,7 @@ public class SteamLobbyManager : MonoBehaviour
         // CreateLobbyAsync varsayilan olarak GORUNMEZ bir lobi olusturur; arkadaslar
         // gorebilsin/davet edilebilsin diye acikca FriendsOnly yapiyoruz.
         _currentLobby.Value.SetFriendsOnly();
+        Debug.Log($"[SteamLobbyManager] Lobi tipi FriendsOnly yapildi (lobbyId={_currentLobby.Value.Id}).");
         AdvertiseLobbyPresence(_currentLobby.Value.Id);
 
         // Round sirasinda kopup ayni SteamId ile geri baglanan oyuncuyu taniyabilmek
@@ -175,7 +192,9 @@ public class SteamLobbyManager : MonoBehaviour
         SteamFriends.SetRichPresence("connect", $"{ConnectPrefix}{lobbyId}");
     }
 
-    // Host tarafinda: Steam overlay'inden arkadas davet penceresini acar.
+    // Host tarafinda: Steam overlay'inden arkadas davet penceresini acar. TESHIS
+    // ("Arkadaslari Davet Et" arastirmasi icin): bu cagrinin GERCEKTEN yapildigini
+    // (sadece Rich Presence'a guvenmedigini) Player.log'da dogrulamak icin log eklendi.
     public void OpenInviteOverlay()
     {
         if (!_currentLobby.HasValue)
@@ -184,6 +203,7 @@ public class SteamLobbyManager : MonoBehaviour
             return;
         }
 
+        Debug.Log($"[SteamLobbyManager] SteamFriends.OpenGameInviteOverlay cagriliyor (lobbyId={_currentLobby.Value.Id}, SteamClient.IsValid={SteamClient.IsValid}).");
         SteamFriends.OpenGameInviteOverlay(_currentLobby.Value.Id);
     }
 
