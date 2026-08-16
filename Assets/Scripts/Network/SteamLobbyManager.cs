@@ -73,6 +73,19 @@ public class SteamLobbyManager : MonoBehaviour
         networkManager.OnClientDisconnectCallback += HandleClientDisconnect;
         networkManager.OnTransportFailure += HandleTransportFailure;
 
+        // TESHIS (Shift+Tab overlay arastirmasi icin): standart Steamworks entegrasyon
+        // deseni bu cagriyi SteamAPI_Init'ten ONCE yapip true donerse Application.Quit()
+        // eder (Steam sureci uygulamayi kendi baslatir). BILEREK quit ETMIYORUZ: 480
+        // (Spacewar) bu oyunun GERCEK AppID'si degil — true donup Quit() cagirsak Steam
+        // "480 icin kayitli" olan GERCEK Spacewar'i baslatmaya calisirdi, bu build'i
+        // degil. Ayrica SteamClient.Init zaten FacepunchTransport.Awake()'te (bizim
+        // kontrolumuz disinda, bu satirdan ONCE) calismis oluyor — bu yuzden "Init'ten
+        // once" olmasi gereken metin-kitabi zamanlamasi da saglanamiyor. Sadece donus
+        // degeri loglanip hicbir aksiyon alinmiyor; gercek bir AppID kaydedilince bu
+        // mantik (quit-if-true dahil) yeniden degerlendirilmeli.
+        bool wouldRestart = SteamClient.RestartAppIfNecessary(480);
+        Debug.Log($"[SteamLobbyManager] SteamClient.RestartAppIfNecessary(480) = {wouldRestart} (bilerek quit edilmiyor, yukaridaki notu oku).");
+
         StartCoroutine(ClearStaleRichPresenceOnStartup());
     }
 
@@ -107,6 +120,18 @@ public class SteamLobbyManager : MonoBehaviour
         Debug.Log($"[SteamLobbyManager] SteamAPI hazir: SteamId={SteamClient.SteamId}, AppId={runningAppId}, Name={SteamClient.Name}.");
         if (runningAppId != 480)
             Debug.LogWarning($"[SteamLobbyManager] Calisan AppId ({runningAppId}) beklenen 480 degil — steam_appid.txt ile FacepunchTransport.steamAppId alani tutarsiz olabilir.");
+
+        // TESHIS (Shift+Tab overlay arastirmasi icin): overlay process oyun surecine
+        // "hook" olmak icin birkac saniye surebiliyor (bkz. Steamworks dokumantasyonu),
+        // o yuzden burada kisa bir bekleme sonrasi kontrol ediliyor. FALSE donerse
+        // sorun kodda/render'da DEGIL — Steam client bu exe icin overlay'i hic
+        // etkinlestirmemis demektir (development build resmi kutuphaneye kayitli
+        // olmadigi icin bu ihtimal yuksek). TRUE donup overlay hala acilmiyorsa
+        // gercek bir render-hook/DX sorunu var demektir — DX12/DX11 denemesi ancak
+        // O ZAMAN anlamli olur.
+        yield return new WaitForSeconds(3f);
+        bool overlayEnabled = SteamUtils.IsOverlayEnabled;
+        Debug.Log($"[SteamLobbyManager] SteamUtils.IsOverlayEnabled = {overlayEnabled} (3 sn bekleme sonrasi).");
 
         SteamFriends.ClearRichPresence();
     }
