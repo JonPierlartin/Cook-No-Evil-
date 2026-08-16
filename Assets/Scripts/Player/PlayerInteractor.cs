@@ -109,6 +109,7 @@ public class PlayerInteractor : NetworkBehaviour
             Vector3 camPos = playerCamera != null ? playerCamera.transform.position : Vector3.zero;
             Vector3 camFwd = playerCamera != null ? playerCamera.transform.forward : Vector3.zero;
             Debug.Log($"[PlayerInteractor] Hedef bulunamadi (camera={(playerCamera != null)}, range={interactRange}, layerMask={interactableLayer.value}, camPos={camPos}, camForward={camFwd}).");
+            ReportInteractionAttemptServerRpc(false);
             return;
         }
 
@@ -117,6 +118,25 @@ public class PlayerInteractor : NetworkBehaviour
         // kendi started/canceled durumunu buna gore yonetiyor).
         _pressedTarget = target;
         _pressedTarget.BeginPress();
+        ReportInteractionAttemptServerRpc(true);
+    }
+
+    // Test/teshis amacli: gercek 3 kisilik testte LMB etkilesim denemesini (basarili/
+    // basarisiz) konsola bakmadan gorebilmek icin — broadcast oldugu icin hem tiklayan
+    // client hem HOST (hem ucuncu oyuncu) ekraninda kisa bir metin gosterir. Yukaridaki
+    // camPos/camForward konsol logu ile BIRLIKTE calisir, biri digerinin yerine gecmez.
+    // Varsayilan RequireOwnership=true kullanildi (EmoteSystem'in aksine, bu RPC
+    // Player.prefab'in KENDI NetworkObject'inde — cagiran zaten dogal olarak sahibi).
+    [ServerRpc]
+    private void ReportInteractionAttemptServerRpc(bool succeeded)
+    {
+        InteractionAttemptClientRpc(succeeded);
+    }
+
+    [ClientRpc]
+    private void InteractionAttemptClientRpc(bool succeeded)
+    {
+        InteractionToastUI.Instance?.Show(succeeded ? "Küple Etkileşime Geçiyorsun" : "Etkileşim Hedefi Bulunamadı");
     }
 
     private void HandleAttackCanceled(InputAction.CallbackContext context)
