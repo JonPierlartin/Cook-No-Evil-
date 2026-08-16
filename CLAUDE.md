@@ -889,6 +889,29 @@ tasarım kararı:** her deneme TÜM oyunculara broadcast ediliyor (sadece tıkla
 — hedefli `ClientRpcParams` kurmak yerine mevcut broadcast deseniyle tutarlı kalmak tercih
 edildi, "en az tıklayan+host görür" gereksinimini zaten kapsıyor.
 
+## Emote Çarkı — Cooldown ve Kamera/Çark Mouse Delta Çakışması Düzeltmesi
+
+**Seçim cooldown'u:** `EmoteSystem`'e `selectionCooldown` (Inspector'dan ayarlanabilir,
+varsayılan 2.5 sn) + server-authoritative `NetworkVariable<double> _lastSelectionServerTime`
+eklendi. Aynı/farklı emote farketmeksizin, son BAŞARILI seçimden itibaren bu süre dolmadan
+`SelectEmoteServerRpc` sessizce reddediyor (`IsOnCooldown` public property, `NetworkManager.
+ServerTime.Time` ile hesaplanıyor — host/client arası senkron saat, ham `Time.time` DEĞİL).
+GLOBAL bir cooldown — kimin seçtiği önemli değil, `yamakEmoteLimit` gibi basit tutuldu, kişi
+başına ayrıca takip edilmiyor. `EmoteWheelUI.HandleInteractStarted` da aynı kontrolü yapıp
+cooldown'dayken çarkı hiç açmıyor (client tarafı, sunucu zaten bypass'a karşı ayrıca
+reddediyor). Reflection ile doğrulandı: 1. seçim başarılı + `IsOnCooldown=True` oluyor,
+hemen ardından farklı bir emote ile 2. seçim denemesi sessizce reddediliyor (event
+tetiklenmiyor).
+
+**BULUNAN, GERÇEK BİR ÇAKIŞMA:** Bir önceki turda eklenen "çark açıkken biriken mouse
+delta'sı" girişi ile `PlayerController.ApplyLook()`'un kamera yaw/pitch'i için okuduğu
+HAM mouse delta'sı AYNI donanım kaynağını (`Mouse.current.delta`) paylaşıyordu — çark
+açıkken kamera da dönmeye devam ediyordu (iki tüketici aynı anda aktifti). Düzeltme:
+`EmoteWheelUI.IsWheelOpen` (statik, client başına tek instance olduğu için instance
+referansına gerek yok) eklendi, `PlayerController.Update()` çark açıkken `ApplyLook()`'u
+atlıyor — `ApplyMove()` (hareket) BİLEREK etkilenmiyor, sadece bakış/dönme duruyor. Mouse
+delta'sının tek tüketicisi artık her zaman ya çark ya kamera, ikisi birden değil.
+
 ## Kritik Uyarılar (Red Lines) ⚠️
 
 1. **Client-Side Rendering İzolasyonu:** Durum Körlüğü verisi server-authoritative olarak tüm
