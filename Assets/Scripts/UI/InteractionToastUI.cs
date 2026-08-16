@@ -37,8 +37,19 @@ public class InteractionToastUI : MonoBehaviour
             Instance = null;
     }
 
+    // BULUNAN HATA: bu component GameplayCanvas'in KENDI uzerinde ("Coroutine couldn't be
+    // started because the game object GameplayCanvas is inactive!" konsol hatasi) —
+    // Player.prefab round baslamadan (lobi fazinda, GameplayCanvas henuz gizliyken) once
+    // spawn olup Attack action'ini hemen etkinlestirdigi icin, oyuncu lobideyken LMB'ye
+    // basarsa RPC yine de tetiklenip buraya ulasiyordu; ayni sekilde host-disconnect
+    // sonrasi GameplayCanvas tekrar gizlendiginde de olusabilir. GameObject aktif degilken
+    // StartCoroutine cagirmak Unity'de hata firlatir (log spam'i + gereksiz maliyet) —
+    // canvas gizliyken zaten gosterilecek bir UI olmadigi icin sessizce atlaniyor.
     public void Show(string message)
     {
+        if (!gameObject.activeInHierarchy)
+            return;
+
         if (messageText != null)
             messageText.text = message;
 
