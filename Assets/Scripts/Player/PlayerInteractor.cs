@@ -30,25 +30,33 @@ public class PlayerInteractor : NetworkBehaviour
     // PlayerController'daki ayni kok neden notu). Duzeltme: kurulum/abonelik mantigi
     // ApplyOwnershipState'e alindi, hem OnNetworkSpawn'da HEM OnOwnershipChanged'da
     // cagiriliyor; cift-abonelik olmasin diye once mevcut abonelik varsa kaldiriliyor.
+    //
+    // IKINCI BULUNAN HATA (bkz. PlayerController'daki ayni notun detayi): NGO,
+    // DontDestroyWithOwner=true bir objenin sahibi kopunca sahipligi OTOMATIK olarak
+    // ServerClientId'ye devrediyor — host da her zaman client 0=ServerClientId oldugu
+    // icin bu, host'ta IsOwner'i yanlislikla true yapip kopan oyuncunun LMB kontrolunu
+    // host'a devrediyordu. current == ServerClientId geldiginde IsOwner'a guvenilmeyip
+    // acikca sahipsiz durum zorlaniyor.
     protected override void OnOwnershipChanged(ulong previous, ulong current)
     {
+        if (current == NetworkManager.ServerClientId)
+        {
+            ApplyNonOwnerState();
+            return;
+        }
+
         ApplyOwnershipState();
     }
 
     private void ApplyOwnershipState()
     {
-        if (_attackAction != null)
-        {
-            _attackAction.started -= HandleAttackStarted;
-            _attackAction.canceled -= HandleAttackCanceled;
-            _attackAction = null;
-        }
-
         if (!IsOwner)
         {
-            enabled = false;
+            ApplyNonOwnerState();
             return;
         }
+
+        UnsubscribeAttackAction();
 
         enabled = true;
 
@@ -59,13 +67,25 @@ public class PlayerInteractor : NetworkBehaviour
         _attackAction.canceled += HandleAttackCanceled;
     }
 
-    public override void OnNetworkDespawn()
+    private void ApplyNonOwnerState()
+    {
+        UnsubscribeAttackAction();
+        enabled = false;
+    }
+
+    private void UnsubscribeAttackAction()
     {
         if (_attackAction == null)
             return;
 
         _attackAction.started -= HandleAttackStarted;
         _attackAction.canceled -= HandleAttackCanceled;
+        _attackAction = null;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        UnsubscribeAttackAction();
     }
 
     private void HandleAttackStarted(InputAction.CallbackContext context)

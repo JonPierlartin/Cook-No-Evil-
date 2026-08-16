@@ -46,8 +46,27 @@ public class PlayerController : NetworkBehaviour
     // ayri bir "donma" kaynagi). Duzeltme: kurulum mantigi ApplyOwnershipState'e alindi,
     // hem OnNetworkSpawn'da HEM NGO'nun ownership-degisikligi icin saglanan
     // OnOwnershipChanged callback'inde cagriliyor.
+    //
+    // IKINCI BULUNAN HATA (gercek testte, yukaridaki fix'in yan etkisi olarak ortaya
+    // cikti): NGO, DontDestroyWithOwner=true bir objenin sahibi kopunca OTOMATIK olarak
+    // (NetworkConnectionManager.cs, bizim cagirdigimiz bir sey DEGIL) sahipligi
+    // NetworkManager.ServerClientId'ye devrediyor (ownedObject.RemoveOwnership()).
+    // Host ayni zamanda HER ZAMAN client 0 = ServerClientId oldugu icin, bu otomatik
+    // devir host'ta IsOwner'i YANLISLIKLA true yapiyor — host boylece KOPAN OYUNCUNUN
+    // karakterini "kendisininmis gibi" gorup kamerasini/kontrolunu aktif ediyordu (host
+    // ekrani ayrilan client'in kamerasina geciyordu). Host'un KENDI objesinde ownership
+    // spawn'dan beri hic degismedigi icin bu callback o objede zaten hic tetiklenmez —
+    // yani current == ServerClientId gelmesi HER ZAMAN bu otomatik "sahipsiz kaldi"
+    // temizligidir, gercek bir "bu benim karakterim" atamasi degildir. Bu durumda
+    // IsOwner'in kendisine guvenilmeyip acikca donuk/sahipsiz durum zorlaniyor.
     protected override void OnOwnershipChanged(ulong previous, ulong current)
     {
+        if (current == NetworkManager.ServerClientId)
+        {
+            ApplyNonOwnerState();
+            return;
+        }
+
         ApplyOwnershipState();
     }
 
@@ -55,12 +74,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (!IsOwner)
         {
-            // Uzak oyuncular icin bu bilesen hic calismaz — pozisyonlari NetworkTransform
-            // uzerinden gelir, kendi CharacterController'lari sadece fiziksel collider olarak durur.
-            if (playerCamera != null)
-                playerCamera.gameObject.SetActive(false);
-
-            enabled = false;
+            ApplyNonOwnerState();
             return;
         }
 
@@ -87,6 +101,16 @@ public class PlayerController : NetworkBehaviour
         // degismiyor" raporu icin — Player.log'da bu satirin varligi owner kamerasinin
         // gercekten devreye girdigini dogrular (bkz. PlayerSpawner'daki spawn log'u).
         Debug.Log($"[PlayerController] Owner kamerasi aktif, sahne kamerasi kapatildi (clientId={NetworkManager.LocalClientId}).");
+    }
+
+    private void ApplyNonOwnerState()
+    {
+        // Uzak oyuncular icin bu bilesen hic calismaz — pozisyonlari NetworkTransform
+        // uzerinden gelir, kendi CharacterController'lari sadece fiziksel collider olarak durur.
+        if (playerCamera != null)
+            playerCamera.gameObject.SetActive(false);
+
+        enabled = false;
     }
 
     private void Update()
