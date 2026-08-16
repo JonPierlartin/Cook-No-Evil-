@@ -798,6 +798,84 @@ kaynaklanır — veri gizleme İLE DEĞİL:
    duman VFX'i Şef'in kamerası için culling mask/layer exclusion ile TAMAMEN render dışı
    bırakılır (video filtreyle değil).
 
+## NGO'nun Otomatik "Orphan-to-Server" Ownership Devri — Kritik, Tekrar Eden Bug Ailesi
+
+Gerçek testte iki ayrı, birbiriyle bağlantılı kritik hata bulundu; ikisi de AYNI, önceden
+bilinmeyen NGO davranışından kaynaklanıyor: `NetworkConnectionManager.cs`'de (paket kaynağı,
+`OnClientDisconnect` temizliği), `DontDestroyWithOwner=true` bir objenin sahibi kopunca NGO
+**OTOMATIK olarak** (bizim çağırdığımız bir şey DEĞİL) `ownedObject.RemoveOwnership()` çağırıp
+sahipliği `NetworkManager.ServerClientId`'ye devrediyor — bu, `CLAUDE.md`'de zaten belgelenmiş
+"sahiplik disconnect anında BİLEREK sunucuya devredilmiyor" kararımızı NGO'nun kendisi es geçip
+yine de yapıyor. Host her zaman client 0 = ServerClientId olduğu için, bu otomatik devir host'ta
+`IsOwner`'ı YANLIŞLIKLA `true` yapıyor.
+
+- **Envanterde gezinilememe (reconnect sonrası):** Farklı, AYRI bir kök neden —
+  `NetworkManager.LocalClient.PlayerObject` NGO tarafından SADECE bir objenin İLK spawn
+  mesajı işlenirken güncelleniyor (`SpawnNetworkObjectLocallyCommon` → `UpdateNetworkClientPlayer`);
+  `ChangeOwnership` bu alanı HİÇ güncellemiyor (paket kaynağından doğrulandı). `HotbarUI`'nin
+  eski `TryResolveLocalInventory()`'si tam bu alana bağımlıydı. **Düzeltme:** artık sahnedeki
+  `PlayerController`'lar arasında GERÇEKTEN `enabled=true` olanı aranıyor —
+  `PlayerController` zaten aşağıdaki orphan-to-server durumuna karşı korumalı olduğu için bu
+  sinyal `IsOwner`'ın kendisinden daha güvenilir.
+- **Host'un ekranı ayrılan client'ın kamerasına geçmesi:** Yukarıdaki otomatik ownership
+  devrinin DOĞRUDAN sonucu — host, kopan oyuncunun karakterini "kendisininmiş gibi" görüp
+  `PlayerController`/`PlayerInteractor`'ın owner-kurulumunu (kamera aktivasyonu, input
+  bağlama) o karakter için de çalıştırıyordu. **Düzeltme:** `OnOwnershipChanged(previous,
+  current)`'da `current == NetworkManager.ServerClientId` özel durumu ayrıca kontrol ediliyor
+  — host'un KENDİ objesinde ownership spawn'dan beri hiç değişmediği için bu callback o
+  objede zaten hiç tetiklenmez; yani `current == ServerClientId` gelmesi HER ZAMAN bu otomatik
+  temizliktir, gerçek bir "bu benim karakterim" ataması değildir. Bu durumda `IsOwner`'a
+  güvenilmeyip açıkça `ApplyNonOwnerState()` zorlanıyor (`PlayerController` VE
+  `PlayerInteractor`'ın ikisinde de).
+- **Doğrulama:** Play Mode'da gerçek bir Player.prefab host'un kendi clientId'siyle spawn
+  edilip `enabled=True` olduğu doğrulandı; `OnOwnershipChanged(999, ServerClientId)`
+  reflection ile simüle edilince `enabled` `False`'a döndü — `IsOwner`'ın kendisi yanıltıcı
+  olsa bile guard'ın doğru çalıştığı kanıtlandı. Gerçek 2. bağlı client'la (round-içi
+  disconnect senaryosuyla) uçtan uca doğrulama bir sonraki gerçek testte yapılmalı.
+- **Genel ders (mevcut "BİLİNEN KALIP" notlarına ek):** `DontDestroyWithOwner=true` +
+  host'un aynı zamanda client 0 olması kombinasyonu, NGO'nun kendi iç temizlik mantığının
+  host'u yanlışlıkla "sahiplenmiş" gösterebileceği YENİ bir tuzak sınıfı — bu prefab'a
+  dokunan gelecekteki her `IsOwner`/`OnOwnershipChanged` kullanımı bu riski göz önünde
+  bulundurmalı (bkz. aşağıdaki HASSAS DOSYALAR notu).
+
+## "Arkadaşları Davet Et" — Dört Nokta Kontrolü (Teşhis Genişletildi)
+
+Kullanıcı isteğiyle 4 nokta sırayla kontrol edildi, kod incelemesi + yeni teşhis logları
+eklendi (henüz gerçek testte doğrulanmadı, Shift+Tab overlay testiyle paralel yürütülüyor):
+
+1. **SteamAPI.Init() başarı loglanıyor muydu:** HAYIR — `SteamClient.Init()`,
+   `FacepunchTransport.Awake()` (paket kodu) içinde çağrılıyor ve sonucu (başarı/hata)
+   HİÇBİR YERDE loglanmıyordu; paketin kendi `InitSteamworks()` coroutine'i başarısızlıkta
+   sonsuza kadar sessizce beklerdi. **Düzeltme:** `SteamLobbyManager.ClearStaleRichPresenceOnStartup`
+   (zaten `SteamClient.IsValid` bekleyen coroutine) artık açıkça başarı (`SteamId`, `AppId`,
+   `Name`) veya 10 sn zaman aşımını `Debug.LogError` ile logluyor.
+2. **steam_appid.txt (480) ile runtime AppId eşleşmesi:** `SteamClient.AppId` artık aynı
+   coroutine'de loglanıp 480 ile karşılaştırılıyor, uyuşmazlıkta `Debug.LogWarning` basıyor.
+3. **Davet çağrısı gerçek mi:** `OpenInviteOverlay()` gerçekten `SteamFriends.
+   OpenGameInviteOverlay(lobbyId)` çağırıyor (Rich Presence'a pasif güvenmiyor) — bu zaten
+   doğruydu, şimdi çağrının yapıldığını (ve `SteamClient.IsValid` durumunu) doğrulayan bir log
+   eklendi.
+4. **Lobi tipi:** `HostLobby()` zaten `_currentLobby.Value.SetFriendsOnly()` çağırıyordu
+   (Bileşen 1'de bulunup düzeltilmiş bir bug) — artık bunu doğrulayan bir log da eklendi.
+
+**Bir sonraki adım:** gerçek testte Player.log'da bu 4 yeni log satırı kontrol edilmeli;
+hangisi eksik/beklenmedik görünüyorsa sorun o katmandadır.
+
+## LMB Etkileşim Test Toast'ı (Geçici Teşhis Aracı)
+
+Gerçek 3 kişilik testte konsola bakmadan etkileşim denemelerini görebilmek için eklendi —
+kalıcı bir oyun mekaniği DEĞİL. `InteractionToastUI` (yeni, `GameplayCanvas` üzerinde)
+basit bir panel+Text gösterip `displayDuration` (1.5 sn) sonra gizliyor. `PlayerInteractor.
+HandleAttackStarted`, raycast sonucuna göre `ReportInteractionAttemptServerRpc` çağırıp
+sunucudan TÜM client'lara `InteractionAttemptClientRpc` ile broadcast ediyor (EmoteSystem'in
+broadcast deseniyle tutarlı) — böylece hem tıklayan client hem host (hem üçüncü oyuncu) aynı
+anda görüyor. Mesajlar: başarılı → "Küple Etkileşime Geçiyorsun", başarısız → "Etkileşim
+Hedefi Bulunamadı". Önceki turda eklenen `camPos`/`camForward` konsol logu KALDIRILMADI,
+ikisi birlikte çalışıyor (toast anlık görsel onay, log kesin sayısal veri). **Bilinçli
+tasarım kararı:** her deneme TÜM oyunculara broadcast ediliyor (sadece tıklayan+host değil)
+— hedefli `ClientRpcParams` kurmak yerine mevcut broadcast deseniyle tutarlı kalmak tercih
+edildi, "en az tıklayan+host görür" gereksinimini zaten kapsıyor.
+
 ## Kritik Uyarılar (Red Lines) ⚠️
 
 1. **Client-Side Rendering İzolasyonu:** Durum Körlüğü verisi server-authoritative olarak tüm
@@ -876,4 +954,13 @@ Yazılan tüm kodlar SOLID prensiplerine uygun olacak şekilde yazılır.
     yapılandırılması sırasında farkında olmadan) round sırasında kopan oyuncuların
     objeleri sessizce yok edilmeye başlar, rejoin mekanizması bozulur ama HİÇBİR HATA
     VERMEZ (sadece geri dönen oyuncu "yeni bir karakterle" başlar gibi görünür) — bu
-    yüzden diğer alanlar gibi her dokunuşta açıkça kontrol edilmeli.
+    yüzden diğer alanlar gibi her dokunuşta açıkça kontrol edilmeli. **Yeni, kritik alan
+    (bkz. "NGO'nun Otomatik Orphan-to-Server Ownership Devri" notu):** `PlayerController`/
+    `PlayerInteractor`'daki `OnOwnershipChanged`'in `current == NetworkManager.
+    ServerClientId` guard'ı — bu satır silinir/atlanırsa host'un ekranı round-içi
+    disconnect'lerde tekrar başka oyuncunun kamerasına geçmeye başlar, ama HİÇBİR HATA/
+    UYARI VERMEZ (NGO'nun kendi otomatik ownership devri sessizce olur). Bu prefab'a
+    dokunan her yeni `IsOwner`/`OnOwnershipChanged` kullanımı (örn. ileride eklenecek
+    başka bir owner-bağımlı script) bu guard'ı tekrarlamalı veya `PlayerController.
+    enabled`/benzer zaten-korumalı bir sinyale dayanmalı — ham `IsOwner`'a asla
+    güvenilmemeli.
