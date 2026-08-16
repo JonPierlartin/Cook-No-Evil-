@@ -15,3 +15,5 @@ MonoBehaviour:
   localizationKey: emote.b
   icon: {fileID: 21300000, guid: f21816c09db5d1a4fab634aa95eca725, type: 3}
   reactionColor: {r: 0.20392157, g: 0.59607846, b: 0.85882354, a: 1}
+  displayName: Bekle
+  description: Şu an bekle, henüz sırası değil.

@@ -21,6 +21,16 @@ public class EmoteWheelUI : MonoBehaviour
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color highlightedColor = Color.yellow;
 
+    // Merkez panel: imlecin isaret ettigi (en yakin acidaki) dilimin BUYUK ikonu +
+    // adi + kisa aciklamasi — imlec hareket ettikce (HighlightSlot her degisimde)
+    // canli guncellenir. Rust'in insa carkindaki merkez bilgi paneline benzer bir
+    // sunum — mimari/network tarafina (broadcast RPC, role-gating) DOKUNMUYOR, sadece
+    // sunum katmani.
+    [Header("Merkez Panel - Secili Emote Detayi")]
+    [SerializeField] private Image centerIcon;
+    [SerializeField] private Text centerDisplayName;
+    [SerializeField] private Text centerDescription;
+
     private InputAction _interactAction;
     private InputAction _pointAction;
     private int _highlightedIndex = -1;
@@ -117,6 +127,8 @@ public class EmoteWheelUI : MonoBehaviour
         if (wheelRoot != null)
             wheelRoot.SetActive(true);
 
+        ClearCenterPanel();
+
         // Round aktifken imlec kilitli/gizli (FPS kontrolu icin, bkz. LobbyUIController).
         // Kilitliyken InputSystem'in mutlak Point/Mouse.position degeri artik hareket
         // etmiyor (sabit kaliyor) — bu da carktaki mutlak-pozisyon tabanli dilim secimini
@@ -138,6 +150,7 @@ public class EmoteWheelUI : MonoBehaviour
             EmoteSystem.Instance?.SelectEmoteServerRpc(_highlightedIndex);
 
         ResetHighlight();
+        ClearCenterPanel();
 
         // Cark kapaninca imleci FPS kontrolu icin tekrar kilitle/gizle (normal durum)
         // veya acik/gorunur birak — LobbyUIController.ShouldLockCursor (YEREL bayrak)
@@ -189,6 +202,8 @@ public class EmoteWheelUI : MonoBehaviour
         _highlightedIndex = index;
         if (slotIcons[index] != null)
             slotIcons[index].color = highlightedColor;
+
+        RefreshCenterPanel(index);
     }
 
     private void ResetHighlight()
@@ -197,5 +212,43 @@ public class EmoteWheelUI : MonoBehaviour
             slotIcons[_highlightedIndex].color = normalColor;
 
         _highlightedIndex = -1;
+    }
+
+    // Imlecin isaret ettigi dilimin buyuk ikonu/adi/aciklamasi — HighlightSlot her
+    // gercek degisimde (ayni dilimde kalirken tekrar tekrar degil) cagirir.
+    private void RefreshCenterPanel(int index)
+    {
+        var availableEmotes = EmoteSystem.Instance != null ? EmoteSystem.Instance.AvailableEmotes : null;
+        if (availableEmotes == null || index < 0 || index >= availableEmotes.Length || availableEmotes[index] == null)
+            return;
+
+        var emote = availableEmotes[index];
+
+        if (centerIcon != null)
+        {
+            centerIcon.sprite = emote.Icon;
+            centerIcon.enabled = emote.Icon != null;
+        }
+
+        if (centerDisplayName != null)
+            centerDisplayName.text = emote.DisplayName;
+
+        if (centerDescription != null)
+            centerDescription.text = emote.Description;
+    }
+
+    private void ClearCenterPanel()
+    {
+        if (centerIcon != null)
+        {
+            centerIcon.sprite = null;
+            centerIcon.enabled = false;
+        }
+
+        if (centerDisplayName != null)
+            centerDisplayName.text = string.Empty;
+
+        if (centerDescription != null)
+            centerDescription.text = string.Empty;
     }
 }
