@@ -14,6 +14,12 @@ using UnityEngine.UI;
 // ust notu).
 public class EmoteWheelUI : MonoBehaviour
 {
+    // PlayerController, cark acikken kamera yaw/pitch'inin mouse delta'sini OKUMAMASI
+    // icin bunu kontrol eder — mouse delta'nin tek tuketicisi ayni anda ya cark ya
+    // kamera olur, ikisi birden degil. Statik: bu bilesenden client basina tek bir
+    // ornek olur (GameplayCanvas uzerinde), instance referansina gerek yok.
+    public static bool IsWheelOpen { get; private set; }
+
     [SerializeField] private InputActionAsset inputActions;
 
     [Header("Kasiyer - Cark")]
@@ -63,6 +69,8 @@ public class EmoteWheelUI : MonoBehaviour
             _interactAction.started -= HandleInteractStarted;
             _interactAction.canceled -= HandleInteractCanceled;
         }
+
+        IsWheelOpen = false;
     }
 
     // BULUNAN HATA: carktaki dilim Image'larina hicbir yerde sprite atanmiyordu —
@@ -136,6 +144,7 @@ public class EmoteWheelUI : MonoBehaviour
         }
 
         _wheelOpen = true;
+        IsWheelOpen = true;
         if (wheelRoot != null)
             wheelRoot.SetActive(true);
 
@@ -156,6 +165,7 @@ public class EmoteWheelUI : MonoBehaviour
             return;
 
         _wheelOpen = false;
+        IsWheelOpen = false;
         if (wheelRoot != null)
             wheelRoot.SetActive(false);
 

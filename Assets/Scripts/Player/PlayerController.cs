@@ -126,7 +126,14 @@ public class PlayerController : NetworkBehaviour
         if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
             return;
 
-        ApplyLook();
+        // Mouse delta'sinin TEK tuketicisi ayni anda ya cark ya kamera olur: EmoteWheelUI
+        // acikken artik kendi biriken-delta girdisi icin ham Mouse.current.delta'yi
+        // okuyor (bkz. o sinif) — burada da okunmaya devam edilirse ikisi CAKISIR (cark
+        // acikken kamera da donerdi). Cark acikken ApplyLook BILEREK atlanir; ApplyMove
+        // (hareket) bundan etkilenmez, sadece bakis/donme durur.
+        if (!EmoteWheelUI.IsWheelOpen)
+            ApplyLook();
+
         ApplyMove();
     }
 
