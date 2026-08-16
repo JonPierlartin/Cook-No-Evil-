@@ -23,6 +23,20 @@ public class EmoteSystem : NetworkBehaviour
     // tasarlanacak, simdilik sadece SAYI kisitlanmis durumda.
     [SerializeField] private int yamakEmoteLimit = 1;
 
+    // Ayni veya farkli emote farketmeksizin, son basarili secimden itibaren bu sure
+    // gecmeden yeni bir secim reddedilir (spam/iletisim kirliligini onlemek icin,
+    // kullanici istegi). GLOBAL bir cooldown — kimin sectigi onemli degil, herkes
+    // icin ayni sayaci paylasir (yamakEmoteLimit gibi basit tutuluyor, kisi-basi
+    // ayrica takip edilmiyor).
+    [SerializeField] private float selectionCooldown = 2.5f;
+
+    // Server-authoritative zaman damgasi (NetworkManager.ServerTime.Time, sunucuda
+    // yazilir) — client'lar IsOnCooldown uzerinden canli okuyup carki acmadan/secim
+    // yapmadan once kendi taraflarinda da kontrol edebilir (yamakEmoteLimit'teki gibi
+    // hem client hem server tarafinda).
+    private readonly NetworkVariable<double> _lastSelectionServerTime =
+        new(-1000d, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     // (kasiyerClientId, emoteIndex) — PlayerEmoteReactor kendi OwnerClientId'siyle
     // karsilastirip sadece dogru objede tepki oynatir. Isim tarihsel: artik Yamak da
     // tetikleyebiliyor, ama alan/parametre adi degistirilmedi (RPC/UI'da hala
@@ -31,6 +45,11 @@ public class EmoteSystem : NetworkBehaviour
 
     public EmoteDefinition[] AvailableEmotes => availableEmotes;
     public int YamakEmoteLimit => yamakEmoteLimit;
+    public float SelectionCooldown => selectionCooldown;
+
+    public bool IsOnCooldown =>
+        NetworkManager != null &&
+        NetworkManager.ServerTime.Time - _lastSelectionServerTime.Value < selectionCooldown;
 
     private void Awake()
     {
@@ -76,6 +95,14 @@ public class EmoteSystem : NetworkBehaviour
         // (EmoteWheelUI) carki acmayi zaten engelliyor, bu sadece bypass'a karsi savunma.
         if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
             return;
+
+        // Ayni/farkli emote farketmeksizin, cooldown suresi dolmadan yeni secim
+        // server-authoritative olarak reddedilir — client tarafi (EmoteWheelUI) zaten
+        // ayni kontrolu yapip carki acmiyor/secim yollamiyor, bu bypass'a karsi savunma.
+        if (IsOnCooldown)
+            return;
+
+        _lastSelectionServerTime.Value = NetworkManager.ServerTime.Time;
 
         EmoteTriggeredClientRpc(senderId, emoteIndex);
     }

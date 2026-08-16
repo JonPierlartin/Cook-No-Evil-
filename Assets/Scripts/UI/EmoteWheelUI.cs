@@ -114,6 +114,14 @@ public class EmoteWheelUI : MonoBehaviour
         if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
             return;
 
+        // Ayni/farkli emote farketmeksizin, son secimden itibaren cooldown suresi
+        // dolmadan cark hic acilmiyor (yamakEmoteLimit gibi client tarafinda da
+        // kontrol edilir — sunucu zaten SelectEmoteServerRpc icinde ayrica reddeder).
+        // Cark acilamadigi icin secim yapilamaz, ekstra bir "kilitli dilim" gosterimine
+        // gerek kalmiyor.
+        if (EmoteSystem.Instance != null && EmoteSystem.Instance.IsOnCooldown)
+            return;
+
         // Kasiyer icin tum dilimler, Yamak icin sadece ilk N dilim aktif/tiklanabilir
         // olur (kisitli liste — bkz. EmoteSystem.YamakEmoteLimit). Geri kalan dilimler
         // gizlenir ki Yamak yanlislikla erisimi olmayan bir emote'u secmeye calismasin.
