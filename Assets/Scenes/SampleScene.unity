@@ -2241,7 +2241,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EmoteWheelUI
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   wheelRoot: {fileID: 262573045}
-  wheelCenter: {fileID: 262573046}
   slotIcons:
   - {fileID: 2095995464}
   - {fileID: 1909406687}
@@ -2484,6 +2483,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 566a9f37d3b9175428b846288fdc6e9d, type: 2}
   - {fileID: 11400000, guid: ffad394b2131f4842af79eff280ee889, type: 2}
   yamakEmoteLimit: 1
+  selectionCooldown: 2.5
 --- !u!114 &1035616288
 MonoBehaviour:
   m_ObjectHideFlags: 0
