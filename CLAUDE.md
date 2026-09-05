@@ -912,6 +912,57 @@ referansına gerek yok) eklendi, `PlayerController.Update()` çark açıkken `Ap
 atlıyor — `ApplyMove()` (hareket) BİLEREK etkilenmiyor, sadece bakış/dönme duruyor. Mouse
 delta'sının tek tüketicisi artık her zaman ya çark ya kamera, ikisi birden değil.
 
+## Round State Mimarisi — Tek Otoriteye Konsolidasyon (Bileşen 2 Öncesi Zorunlu Ön Adım)
+
+Kullanıcı isteğiyle uygulandı: `RoleManager.IsRoundActive` (round açık/kapalı) ve
+`GameLoopManager.IsGamePaused` (disconnect/reconnect kilidi) birbirinden HABERSİZ, bağımsız
+iki `NetworkVariable`'dı — Bileşen 2 (sipariş timer'ı, 3 hak kuralı) bunun üzerine inşa
+edilseydi, disconnect sırasında timer'in işlemeye devam edip dönen oyuncuya haksız "1 Hata"
+yazdırması VEYA pause sırasında round bitişinin tetiklenebilmesi gibi hatalara açıktı.
+
+- **Tek otorite:** Yeni `RoundState` enum'u (`Lobby`/`RoundActive`/`RoundEnded`, `Assets/
+  Scripts/Core/RoundState.cs`) + `GameLoopManager.CurrentRoundState` (TEK
+  `NetworkVariable<RoundState>`, server-authoritative). `RoleManager.IsRoundActive`
+  TAMAMEN KALDIRILDI — `RoleManager` artık SADECE rol atamasından sorumlu, round
+  durumuyla ilgili hiçbir şey tutmuyor.
+- **StartRound() taşındı:** `RoleManager.StartRound()` kaldırıldı,
+  `GameLoopManager.StartRound()` oldu (host'un "Oyunu Başlat" butonu artık buraya
+  bağlı). Rol sayısı kontrolü için `RoleManager.AssignedRoleCount` (yeni, public,
+  salt-okunur) property'sini okuyor — rol ATAMA mantığına karışmıyor.
+- **IsPaused artık ayrı bir state değil, RoundActive'e bağımlı bir overlay:**
+  `GameLoopManager.IsGamePaused` artık bir `NetworkVariable` DEĞİL, computed bir
+  property (`IsRoundActive && _isPaused.Value`) — Lobby veya RoundEnded'da `_isPaused.
+  Value` ne olursa olsun `IsGamePaused` HER ZAMAN `false` döner, çağıran kod bunu
+  ayrıca kontrol etmek ZORUNDA DEĞİL. `ServerPauseForDisconnect()`/
+  `ServerResumeAfterReconnect()` de `!IsRoundActive` iken no-op. **Tüm eski
+  `GameLoopManager.Instance.IsGamePaused.Value` çağrı yerleri artık `.Value` OLMADAN
+  (`GameLoopManager.Instance.IsGamePaused`) okunuyor** — `PlayerController`,
+  `PlayerInteractor`, `EmoteWheelUI`, `EmoteSystem`.
+- **Güncellenen tüketiciler:** `LobbyUIController` ve `VoIPController`, eskiden
+  `RoleManager.Instance.IsRoundActive.OnValueChanged` (bool) dinliyordu — artık
+  `GameLoopManager.Instance.CurrentRoundState.OnValueChanged` (RoundState) dinliyor,
+  `current == RoundState.RoundActive` ile "aktif" durumu türetiyor.
+- **BİLEŞEN 2 İÇİN NOT (kod içine de yazıldı):** `RoundEnded`'a geçiş mantığı henüz
+  hiç kurulmadı — Bileşen 2 bunu eklerken, `IsPaused.Value == true` iken bu geçişi
+  TETİKLEMEMELİ (kullanıcı gereksinimi, henüz uygulanacak kod yok çünkü tetikleyecek
+  bir mekanizma yok, ama gelecekteki implementasyon bunu unutmamalı).
+- **Doğrulama:** Play Mode'da reflection ile uçtan uca test edildi — (1) Lobby'de
+  `ServerPauseForDisconnect()` çağrısı no-op (`IsGamePaused` `False` kalıyor), (2) 2
+  oyuncuyla `StartRound()` başarısız, 3. oyuncu katılınca başarılı oluyor (`RoundState`
+  `RoundActive`'e geçiyor), (3) round aktifken disconnect `IsGamePaused`'u `True`
+  yapıyor, yabancı SteamId reddediliyor, gerçek SteamId ile reconnect rolü geri verip
+  `IsGamePaused`'u `False`'a döndürüyor, (4) `RoundEnded`'da da pause no-op.
+  Gerçek sipariş timer'ı/hata sayacı Bileşen 2 ile gelecek — bu turun kabul kriteri
+  olan "sipariş timer'ının durması/hata sayılmaması" ancak Bileşen 2 kurulunca gerçek
+  bir timer/sayaç üzerinden uçtan uca test edilebilir; bu tur SADECE alttaki
+  `RoundState`/`IsGamePaused` mekanizmasının doğruluğunu garanti ediyor.
+- **Fırsatçı, bu turdan bağımsız bir düzeltme:** Sahne dosyası bu tura kadar
+  `SaveScene` ile açıkça kaydedilmemiş iki eksik serileştirmeyi taşıyordu —
+  `EmoteWheelUI`'nin artık var olmayan `wheelCenter` alanına stale bir referans ve
+  `EmoteSystem.selectionCooldown`'ın (varsayılan 2.5, davranışı etkilemiyordu ama
+  sahnede hiç yazılı değildi) sahnede hiç görünmemesi. Bu tur sahneyi ilk kez
+  açıkça kaydettiği için ikisi de kendiliğinden düzeldi, ayrı bir commit'te.
+
 ## Kritik Uyarılar (Red Lines) ⚠️
 
 1. **Client-Side Rendering İzolasyonu:** Durum Körlüğü verisi server-authoritative olarak tüm
