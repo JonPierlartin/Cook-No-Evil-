@@ -5,8 +5,9 @@ using UnityEngine;
 // IVoiceProvider ile calisan, AudioSource entegreli, rol tabanli sesli sohbet yonetimi.
 // GDD 2.2 / Red Line 2: Kasiyer'in mikrofonu server tarafindan susturulur, Yamak gelen
 // ses sohbetini Low-Pass filtreli duyar, Sef'in etkilesim/VoIP sesi Hyper-Spatial olur.
-// Bu kisitlamalar sadece round aktifken uygulanir (RoleManager.IsRoundActive) — lobide
-// herkes normal konusup duyabilir; koordinasyon icin.
+// Bu kisitlamalar sadece round aktifken uygulanir (GameLoopManager.IsRoundActive,
+// Round State tek otoriteye konsolide edildi) — lobide herkes normal konusup duyabilir;
+// koordinasyon icin.
 [RequireComponent(typeof(NetworkObject))]
 public class VoIPController : NetworkBehaviour
 {
@@ -17,7 +18,7 @@ public class VoIPController : NetworkBehaviour
     private readonly Dictionary<ulong, VoiceStreamPlayer> _speakerPlayers = new();
     private PlayerRole _localRole = PlayerRole.None;
 
-    private static bool IsRoundActive => RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
+    private static bool IsRoundActive => GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
 
     public override void OnNetworkSpawn()
     {
@@ -32,19 +33,19 @@ public class VoIPController : NetworkBehaviour
         _voiceProvider.Initialize();
 
         if (RoleManager.Instance != null)
-        {
             RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
-            RoleManager.Instance.IsRoundActive.OnValueChanged += HandleRoundActiveChanged;
-        }
+
+        if (GameLoopManager.Instance != null)
+            GameLoopManager.Instance.CurrentRoundState.OnValueChanged += HandleRoundStateChanged;
     }
 
     public override void OnNetworkDespawn()
     {
         if (RoleManager.Instance != null)
-        {
             RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
-            RoleManager.Instance.IsRoundActive.OnValueChanged -= HandleRoundActiveChanged;
-        }
+
+        if (GameLoopManager.Instance != null)
+            GameLoopManager.Instance.CurrentRoundState.OnValueChanged -= HandleRoundStateChanged;
 
         _voiceProvider?.Shutdown();
         _voiceProvider = null;
@@ -82,7 +83,7 @@ public class VoIPController : NetworkBehaviour
         UpdateLocalMuteState();
     }
 
-    private void HandleRoundActiveChanged(bool previous, bool current)
+    private void HandleRoundStateChanged(RoundState previous, RoundState current)
     {
         UpdateLocalMuteState();
 

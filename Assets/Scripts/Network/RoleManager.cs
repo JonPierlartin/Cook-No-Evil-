@@ -30,14 +30,11 @@ public class RoleManager : NetworkBehaviour
     // NetworkManager.OnClientConnectedCallback'e ayrica abone olmak yerine).
     public event Action<ulong, PlayerRole> OnServerRoleAssigned;
 
-    // GEÇİCİ yer tutucu: gerçek round/oyun döngüsü yönetimi Bileşen 2'deki GameLoopManager'a
-    // ait olacak. O gelene kadar rol kısıtlamalarının (VoIPController) ne zaman devreye
-    // girecegini belirlemek icin burada tutuluyor. StartRound() host'un "Oyunu Baslat"
-    // butonuyla cagrilir; GameLoopManager gelince bu cagri oradaki gercek round-baslatma
-    // mantigina devredilecek.
-    public readonly NetworkVariable<bool> IsRoundActive =
-        new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
+    // Round State mimarisi TEK OTORITEYE (GameLoopManager.CurrentRoundState) konsolide
+    // edildi — RoleManager artik round acik/kapali durumunu TUTMUYOR, sadece rol
+    // atamasindan sorumlu. Round durumuna ihtiyac duyan kod GameLoopManager.Instance.
+    // IsRoundActive okumali (bkz. asagidaki HandleClientConnected/HandleConnectionApproval/
+    // HandleClientDisconnectedOnServer).
     private readonly NetworkList<ClientRoleEntry> _assignedRoles = new();
     private IRoleAssignmentStrategy _strategy;
 
@@ -90,7 +87,6 @@ public class RoleManager : NetworkBehaviour
             // bu bug'in sebebi buydu.
             _assignedRoles.Clear();
             _pendingSteamIdByClientId.Clear();
-            IsRoundActive.Value = false;
         }
 
         _assignedRoles.OnListChanged += HandleAssignedRolesChanged;
@@ -140,7 +136,8 @@ public class RoleManager : NetworkBehaviour
 
             var entry = _assignedRoles[i];
 
-            if (IsRoundActive.Value)
+            bool roundActive = GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
+            if (roundActive)
             {
                 _assignedRoles[i] = new ClientRoleEntry(entry.ClientId, entry.Role, entry.SteamId, isFrozen: true);
                 Debug.Log($"[RoleManager] Client {clientId} round sirasinda koptu, rol donduruldu ({entry.Role}, SteamId={entry.SteamId}).");
@@ -174,7 +171,8 @@ public class RoleManager : NetworkBehaviour
         ulong steamId = DecodeSteamId(request.Payload);
         _pendingSteamIdByClientId[request.ClientNetworkId] = steamId;
 
-        if (IsRoundActive.Value)
+        bool roundActive = GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
+        if (roundActive)
         {
             bool isKnownReconnect = FindFrozenEntryIndex(steamId) >= 0;
             response.Approved = isKnownReconnect;
@@ -239,7 +237,8 @@ public class RoleManager : NetworkBehaviour
         // kayitla eslestirip onaylamis olmali (aksi halde buraya hic ulasilmazdi) — ayni
         // kaydi yeni clientId ile guncelleyip "donma"yi kaldiriyoruz. YENI bir rol atamasi
         // YAPILMIYOR, PlayerSpawner de ayni objeyi (ChangeOwnership ile) geri veriyor.
-        if (IsRoundActive.Value)
+        bool roundActive = GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
+        if (roundActive)
         {
             int frozenIndex = FindFrozenEntryIndex(steamId);
             if (frozenIndex >= 0)
@@ -280,26 +279,10 @@ public class RoleManager : NetworkBehaviour
         OnServerRoleAssigned?.Invoke(clientId, role);
     }
 
-    // Host'un "Oyunu Baslat" butonuyla cagirdigi, server-authoritative round baslatma.
-    // GameLoopManager (Bilesen 2) gelince bu metod oradaki gercek round-baslatma
-    // akisina (5 dk sayac, strike sistemi vb.) devredilecek.
-    public bool StartRound()
-    {
-        if (!IsServer)
-            return false;
-
-        if (IsRoundActive.Value)
-            return true;
-
-        if (_assignedRoles.Count < MaxPlayers)
-        {
-            Debug.LogWarning($"[RoleManager] Round baslatilamiyor, {_assignedRoles.Count}/{MaxPlayers} oyuncu var.");
-            return false;
-        }
-
-        IsRoundActive.Value = true;
-        return true;
-    }
+    // Round baslatma mantigi GameLoopManager.StartRound()'a tasindi (Round State tek
+    // otoriteye konsolide edildi) — o metod rol sayisini kontrol etmek icin bu property'i
+    // okuyor, RoleManager rol ATAMA mantigina karismiyor.
+    public int AssignedRoleCount => _assignedRoles.Count;
 
     private void HandleAssignedRolesChanged(NetworkListEvent<ClientRoleEntry> change)
     {

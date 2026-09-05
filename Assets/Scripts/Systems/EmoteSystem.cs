@@ -87,13 +87,13 @@ public class EmoteSystem : NetworkBehaviour
         if (role == PlayerRole.Yamak && emoteIndex >= yamakEmoteLimit)
             return;
 
-        if (!RoleManager.Instance.IsRoundActive.Value)
+        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
             return;
 
         // "Oyun durduruldu" (bkz. PlayerController/PlayerInteractor/EmoteWheelUI ayni
         // kontrol) server-authoritative olarak burada da doğrulanıyor — client tarafi
         // (EmoteWheelUI) carki acmayi zaten engelliyor, bu sadece bypass'a karsi savunma.
-        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
+        if (GameLoopManager.Instance.IsGamePaused)
             return;
 
         // Ayni/farkli emote farketmeksizin, cooldown suresi dolmadan yeni secim

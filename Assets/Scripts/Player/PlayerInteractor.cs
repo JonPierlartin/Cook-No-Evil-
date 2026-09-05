@@ -94,7 +94,7 @@ public class PlayerInteractor : NetworkBehaviour
         // kontrol) — YENI bir etkilesim baslatilamaz. Zaten devam eden bir basimin
         // EndPress'ini (HandleAttackCanceled) BILEREK engellemiyoruz, aksi halde
         // HoldOrPressInteractable "basili" durumda takili kalirdi.
-        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
+        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
             return;
 
         if (!TryGetCurrentTarget(out var target))

@@ -119,7 +119,7 @@ public class EmoteWheelUI : MonoBehaviour
         // "Oyun durduruldu" (bkz. PlayerController/PlayerInteractor ayni kontrol) carki
         // da kapsar — YENI bir cark acilamaz. Zaten acik bir cark varsa (HandleInteractCanceled)
         // kapatilmasini BILEREK engellemiyoruz, PlayerInteractor'daki ayni prensiple tutarli.
-        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
+        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
             return;
 
         // Ayni/farkli emote farketmeksizin, son secimden itibaren cooldown suresi

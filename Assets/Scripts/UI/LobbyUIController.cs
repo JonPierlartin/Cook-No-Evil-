@@ -72,11 +72,21 @@ public class LobbyUIController : MonoBehaviour
         if (RoleManager.Instance != null)
         {
             RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
-            RoleManager.Instance.IsRoundActive.OnValueChanged += HandleRoundActiveChanged;
         }
         else
         {
             Debug.LogError("[LobbyUIController] RoleManager.Instance bulunamadi.");
+        }
+
+        // Round State artik tek otorite: GameLoopManager.CurrentRoundState (eskiden
+        // RoleManager.IsRoundActive idi, Round State konsolidasyonu ile tasindi).
+        if (GameLoopManager.Instance != null)
+        {
+            GameLoopManager.Instance.CurrentRoundState.OnValueChanged += HandleRoundStateChanged;
+        }
+        else
+        {
+            Debug.LogError("[LobbyUIController] GameLoopManager.Instance bulunamadi.");
         }
     }
 
@@ -95,10 +105,10 @@ public class LobbyUIController : MonoBehaviour
         }
 
         if (RoleManager.Instance != null)
-        {
             RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
-            RoleManager.Instance.IsRoundActive.OnValueChanged -= HandleRoundActiveChanged;
-        }
+
+        if (GameLoopManager.Instance != null)
+            GameLoopManager.Instance.CurrentRoundState.OnValueChanged -= HandleRoundStateChanged;
     }
 
     private void HandleHostClicked()
@@ -115,7 +125,7 @@ public class LobbyUIController : MonoBehaviour
 
     private void HandleStartGameClicked()
     {
-        bool started = RoleManager.Instance != null && RoleManager.Instance.StartRound();
+        bool started = GameLoopManager.Instance != null && GameLoopManager.Instance.StartRound();
         if (!started)
             statusText.text = Localize("lobby.start_failed", RoleManager.MaxPlayers);
     }
@@ -153,35 +163,37 @@ public class LobbyUIController : MonoBehaviour
         leaveButton.gameObject.SetActive(true);
         RefreshStatusText();
 
-        // BULUNAN HATA (rejoin senaryosu): IsRoundActive.OnValueChanged SADECE canli bir
+        // BULUNAN HATA (rejoin senaryosu): NetworkVariable.OnValueChanged SADECE canli bir
         // deger degisikliginde tetiklenir. Round zaten aktifken (yeniden) baglanan bir
         // client icin NGO bu NetworkVariable'in ilk senkronizasyonunu bir "degisiklik"
-        // olarak raporlamaz — deger dogrudan true olarak gelir, HandleRoundActiveChanged
+        // olarak raporlamaz — deger dogrudan RoundActive olarak gelir, HandleRoundStateChanged
         // hic tetiklenmez. Ekran sonsuza dek "Baglandi... Rolun:" yazisinda takili kaliyordu.
         // OnLocalRoleAssigned ise HEM ilk katilimda HEM rejoin'de guvenilir sekilde
         // tetiklendigi icin (RoleManager her baglantida rolu yeniden atar), buraya GUNCEL
         // round durumunu acikca uygulayan ayni cagriyi ekliyoruz — boylece hangi event
         // once/sonra gelirse gelsin ekran dogru durumu yakaliyor.
-        bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
+        bool roundActive = GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
         ApplyRoundActiveState(roundActive);
     }
 
-    private void HandleRoundActiveChanged(bool previous, bool current)
+    private void HandleRoundStateChanged(RoundState previous, RoundState current)
     {
-        if (current)
+        bool isActive = current == RoundState.RoundActive;
+
+        if (isActive)
         {
             startGameButton.gameObject.SetActive(false);
             inviteButton.gameObject.SetActive(false);
         }
 
         RefreshStatusText();
-        ApplyRoundActiveState(current);
+        ApplyRoundActiveState(isActive);
 
         // TESHIS: gercek cok-makineli testte "Rolun:" adinin bos kalma raporunu local testte
         // tekrar uretemedik. Bug hala gorulurse Player.log'daki bu satiri kontrol et — LocalRole
         // None ise sorun RoleManager senkronizasyonunda, dolu ama statusText'te gorunmuyorsa
         // sorun UI/Localization katmanindadir. Teshis netlesince bu log kaldirilmali.
-        if (current)
+        if (isActive)
         {
             var role = RoleManager.Instance != null ? RoleManager.Instance.LocalRole : PlayerRole.None;
             Debug.Log($"[LobbyUIController] Round baslama teshis: LocalRole={role} statusText=\"{statusText.text}\"");
@@ -192,7 +204,7 @@ public class LobbyUIController : MonoBehaviour
     // goruntusunu ve GameplayCanvas'i (Hotbar/Emote carki) tamamen kapatiyordu — oyuncular
     // Player.prefab spawn olup kamerasi devreye girse bile ekranda hicbir degisiklik
     // GORMUYORDU (gercek 3 makineli testte bulundu). lobbyPanel'i gizleyip GameplayCanvas'i
-    // acmak ve fare imlecini kilitlemek bu gecisi tamamliyor. HEM HandleRoundActiveChanged
+    // acmak ve fare imlecini kilitlemek bu gecisi tamamliyor. HEM HandleRoundStateChanged
     // (canli gecis) HEM HandleLocalRoleAssigned (baglanti/rejoin anindaki durum yakalama)
     // tarafindan cagrilir — ikisi de gerekli, yukarida detayli aciklama var.
     private void ApplyRoundActiveState(bool active)
@@ -244,7 +256,7 @@ public class LobbyUIController : MonoBehaviour
     private void RefreshStatusText()
     {
         bool isHost = SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.IsHost;
-        bool roundActive = RoleManager.Instance != null && RoleManager.Instance.IsRoundActive.Value;
+        bool roundActive = GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
 
         // Onbellege alinmis bir alan yerine RoleManager'in NetworkList uzerinden senkronize
         // ettigi GUNCEL rolu her seferinde yeniden okuyoruz. Boylece bu metod hangi event'ten

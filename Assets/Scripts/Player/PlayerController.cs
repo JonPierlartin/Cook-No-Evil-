@@ -123,7 +123,7 @@ public class PlayerController : NetworkBehaviour
         // oyuncunun objesi zaten IsOwner hicbir client'ta true olmadigi icin kendiliginden
         // donuyordu (bkz. RoleManager notu); burada BAGLI KALAN oyuncular icin ayni
         // dondurma acikca uygulaniyor.
-        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused.Value)
+        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
             return;
 
         // Mouse delta'sinin TEK tuketicisi ayni anda ya cark ya kamera olur: EmoteWheelUI
