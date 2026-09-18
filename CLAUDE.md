@@ -340,6 +340,20 @@ Bunlar tekrar karşılaşılmaması gereken, bedeli ödenmiş derslerdir.
   bulundu: bir oyuncunun etkileşim toast'ı üç ekranda birden çıkıyordu.)*
   **İstisna:** emote broadcast'i (`EmoteSystem.EmoteTriggeredClientRpc`) **kasıtlıdır** — emote'ları
   herkes görür (GDD §3.6.0). Bu bir bug değildir, düzeltilmeyecektir.
+- **Sunucu kodundan çağrılan bir `ServerRpc` yerel olarak çalışır ve `rpcParams` `default` olur** —
+  yani `rpcParams.Receive.SenderClientId` sessizce **0 (host)** olur, gerçek etkileşen oyuncu değil.
+  `SenderClientId` okuyan hiçbir `ServerRpc`, sunucu tarafındaki bir kod yolundan çağrılmamalıdır.
+  *(18 Eyl 2026: Adım 1 `BeginPress()`'i sunucuya taşıyınca `BurgerAssemblyStation`'ın
+  `OnInteractionCompleted` dinleyicisi de sunucuda çalışır oldu ve `PlaceIngredientServerRpc`'yi
+  yerel olarak çağırmaya başladı; hangi client tıklarsa tıklasın **host'un** aktif envanter
+  slotundaki malzeme siliniyordu. Kod derleniyor, hata vermiyor, "çalışıyor" görünüyor — teşhisi
+  bu yüzden zor.)*
+- **Etkileşim olayları etkileşen oyuncunun kimliğini taşımak zorundadır.**
+  `HoldOrPressInteractable`'ın olayları `Action<ulong>`'dur ve etkileşen client id'sini geçirir.
+  Bir dünya nesnesi üzerindeki olay sunucuda çalıştığı için "kim tetikledi" bilgisini kendi
+  taşımalıdır; taşımazsa o nesneye abone olan her bileşen yanlış oyuncu üzerinde iş yapar. Yeni bir
+  istasyon (ızgara, paketleme, teslim) yazılırken bu parametre kullanılır, `SenderClientId`
+  yeniden okunmaya çalışılmaz.
 - `HoldOrPressInteractable` bir `MonoBehaviour`'dır ve `Update()` içindeki hold zamanlayıcısı
   `IsPressed` bayrağına bağlıdır. `BeginPress()`/`EndPress()` **yalnızca sunucudan çağrılır** —
   böylece zamanlayıcı da yalnızca sunucuda işler (K6). İstemci kodundan çağrılırsa hold süresi
