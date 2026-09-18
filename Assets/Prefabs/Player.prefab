@@ -338,6 +338,8 @@ MonoBehaviour:
   interactableLayer:
     serializedVersion: 2
     m_Bits: 256
+  aimDotThreshold: 0.5
+  testInteractionItem: {fileID: 11400000, guid: 107e12c39a0c3a248bae42745159c596, type: 2}
 --- !u!114 &3199632351283314670
 MonoBehaviour:
   m_ObjectHideFlags: 0
