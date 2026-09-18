@@ -21,6 +21,10 @@ steam_appid.txt
 /[Aa]ssets/_Recovery.meta
 *.log
 
+# Hassas veriler (CLAUDE.md 2.4 - API key/token/sifre buraya, C# scriptlerine degil)
+/Assets/LocalSecrets/
+/Assets/LocalSecrets.meta
+
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/
