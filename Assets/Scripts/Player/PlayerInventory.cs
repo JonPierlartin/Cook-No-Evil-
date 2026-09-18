@@ -37,6 +37,18 @@ public class PlayerInventory : NetworkBehaviour
         ActiveSlotIndex.Value = slotIndex;
     }
 
+    // Salt-okunur uygunluk kontrolu — mutasyon yapmaz, sadece bos slot var mi bakar.
+    public bool HasFreeSlot()
+    {
+        for (int i = 0; i < Slots.Count; i++)
+        {
+            if (Slots[i] == EmptySlot)
+                return true;
+        }
+
+        return false;
+    }
+
     public bool ServerTryAddItem(int ingredientId)
     {
         if (!IsServer)

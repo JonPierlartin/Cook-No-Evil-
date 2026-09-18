@@ -32,20 +32,16 @@ public class BurgerAssemblyStation : NetworkBehaviour
         _interactable.OnInteractionCompleted -= HandleInteractionCompleted;
     }
 
-    private void HandleInteractionCompleted()
+    // GECICI TESHIS — Adim 6'da kaldirilacak.
+    private void HandleInteractionCompleted(ulong clientId)
     {
-        PlaceIngredientServerRpc();
-    }
+        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
+        Debug.Log($"[BurgerAssemblyStation] HandleInteractionCompleted cagrildi (clientId={clientId}, role={role}).");
 
-    [ServerRpc(RequireOwnership = false)]
-    private void PlaceIngredientServerRpc(ServerRpcParams rpcParams = default)
-    {
-        ulong senderId = rpcParams.Receive.SenderClientId;
-
-        if (RoleManager.Instance == null || RoleManager.Instance.GetRole(senderId) != PlayerRole.Sef)
+        if (RoleManager.Instance == null || role != PlayerRole.Sef)
             return;
 
-        if (NetworkManager == null || !NetworkManager.ConnectedClients.TryGetValue(senderId, out var client) || client.PlayerObject == null)
+        if (NetworkManager == null || !NetworkManager.ConnectedClients.TryGetValue(clientId, out var client) || client.PlayerObject == null)
             return;
 
         var inventory = client.PlayerObject.GetComponent<PlayerInventory>();

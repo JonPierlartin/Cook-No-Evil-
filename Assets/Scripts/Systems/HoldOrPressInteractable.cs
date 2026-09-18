@@ -15,20 +15,24 @@ public class HoldOrPressInteractable : MonoBehaviour
     [SerializeField] private float holdDuration = 2.5f;
 
     // Ham basma/birakma — orn. Diyafon'un "basili tutuldugu surece kanal acik" davranisi icin.
-    public event Action OnPressBegin;
-    public event Action OnPressEnd;
+    // Tum event'ler etkilesimi baslatan oyuncunun clientId'sini tasir (CLAUDE.md NGO notu —
+    // etkilesim olaylari kimlik tasimak zorundadir; aksi halde dinleyen taraf, sunucunun kendi
+    // yerel cagrisinda varsayilan/yanlis bir SenderClientId'ye dusebilir).
+    public event Action<ulong> OnPressBegin;
+    public event Action<ulong> OnPressEnd;
 
     // Press: BeginPress ile aninda tamamlanir. Hold: holdDuration dolunca tamamlanir.
-    public event Action OnInteractionCompleted;
+    public event Action<ulong> OnInteractionCompleted;
     // Sadece Hold: sure dolmadan birakilirsa tetiklenir.
-    public event Action OnInteractionCancelled;
+    public event Action<ulong> OnInteractionCancelled;
 
     public bool IsPressed { get; private set; }
 
     private float _pressStartTime;
     private bool _completedThisPress;
+    private ulong _interactorClientId;
 
-    public void BeginPress()
+    public void BeginPress(ulong interactorClientId)
     {
         if (IsPressed)
             return;
@@ -36,12 +40,13 @@ public class HoldOrPressInteractable : MonoBehaviour
         IsPressed = true;
         _completedThisPress = false;
         _pressStartTime = Time.time;
-        OnPressBegin?.Invoke();
+        _interactorClientId = interactorClientId;
+        OnPressBegin?.Invoke(_interactorClientId);
 
         if (interactionType == InteractionType.Press)
         {
             _completedThisPress = true;
-            OnInteractionCompleted?.Invoke();
+            OnInteractionCompleted?.Invoke(_interactorClientId);
         }
     }
 
@@ -51,10 +56,10 @@ public class HoldOrPressInteractable : MonoBehaviour
             return;
 
         IsPressed = false;
-        OnPressEnd?.Invoke();
+        OnPressEnd?.Invoke(_interactorClientId);
 
         if (interactionType == InteractionType.Hold && !_completedThisPress)
-            OnInteractionCancelled?.Invoke();
+            OnInteractionCancelled?.Invoke(_interactorClientId);
     }
 
     private void Update()
@@ -65,7 +70,7 @@ public class HoldOrPressInteractable : MonoBehaviour
         if (Time.time - _pressStartTime >= holdDuration)
         {
             _completedThisPress = true;
-            OnInteractionCompleted?.Invoke();
+            OnInteractionCompleted?.Invoke(_interactorClientId);
         }
     }
 }

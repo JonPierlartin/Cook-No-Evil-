@@ -172,8 +172,15 @@ public class PlayerInteractor : NetworkBehaviour
             return;
         }
 
+        // GECICI TEST ETKISI KONTROLU — gercek malzeme kaplari gelince kaldirilacak.
+        if (testInteractionItem != null && _inventory != null && !_inventory.HasFreeSlot())
+        {
+            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): envanterde bos slot yok.");
+            return;
+        }
+
         _serverPressedInteractable = interactable;
-        interactable.BeginPress();
+        interactable.BeginPress(senderId);
 
         // GECICI TEST ETKISI — gercek malzeme kaplari gelince kaldirilacak.
         if (testInteractionItem != null)
