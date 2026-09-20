@@ -2,6 +2,6 @@ public enum PlayerRole
 {
     None,
     Kasiyer,
-    Yamak,
+    Komi,
     Sef
 }

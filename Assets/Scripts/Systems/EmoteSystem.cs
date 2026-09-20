@@ -2,9 +2,9 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-// Kasiyer VE Yamak'in emote carkindan sectigi tepki (GDD 2.2 — Kasiyer'in Yamak'i
-// yonlendirmesi; Yamak'in erisimi kisitli/placeholder — bkz. yamakEmoteLimit). Eskiden
-// sadece Yamak'a hedefli bir ClientRpc'ydi (ReceivedEmoteIcon adinda ayri bir UI ile);
+// Kasiyer VE Komi'nin emote carkindan sectigi tepki (GDD 2.2 — Kasiyer'in Komi'yi
+// yonlendirmesi; Komi'nin erisimi kisitli/placeholder — bkz. komiEmoteLimit). Eskiden
+// sadece Komi'ye hedefli bir ClientRpc'ydi (ReceivedEmoteIcon adinda ayri bir UI ile);
 // yeniden tasarlandi: artik HERKESE broadcast ediliyor ve secimi yapan oyuncunun kendi
 // karakteri uzerinde (PlayerEmoteReactor) herkesin gorebilecegi kisa bir gorsel tepki
 // tetikliyor. NetworkVariable degil bilerek ClientRpc kullaniliyor — ayni emote art arda
@@ -17,34 +17,34 @@ public class EmoteSystem : NetworkBehaviour
 
     [SerializeField] private EmoteDefinition[] availableEmotes;
 
-    // Yamak da carka erisebilir ama Kasiyer'den daha kisitli bir secimle: sadece
+    // Komi da carka erisebilir ama Kasiyer'den daha kisitli bir secimle: sadece
     // availableEmotes dizisinin ILK N elemani. Placeholder/basit tutuluyor (kullanici
     // istegi) — gercek kisitli-liste icerigi (hangi emote'lar) ileride ayrica
     // tasarlanacak, simdilik sadece SAYI kisitlanmis durumda.
-    [SerializeField] private int yamakEmoteLimit = 1;
+    [SerializeField] private int komiEmoteLimit = 1;
 
     // Ayni veya farkli emote farketmeksizin, son basarili secimden itibaren bu sure
     // gecmeden yeni bir secim reddedilir (spam/iletisim kirliligini onlemek icin,
     // kullanici istegi). GLOBAL bir cooldown — kimin sectigi onemli degil, herkes
-    // icin ayni sayaci paylasir (yamakEmoteLimit gibi basit tutuluyor, kisi-basi
+    // icin ayni sayaci paylasir (komiEmoteLimit gibi basit tutuluyor, kisi-basi
     // ayrica takip edilmiyor).
     [SerializeField] private float selectionCooldown = 2.5f;
 
     // Server-authoritative zaman damgasi (NetworkManager.ServerTime.Time, sunucuda
     // yazilir) — client'lar IsOnCooldown uzerinden canli okuyup carki acmadan/secim
-    // yapmadan once kendi taraflarinda da kontrol edebilir (yamakEmoteLimit'teki gibi
+    // yapmadan once kendi taraflarinda da kontrol edebilir (komiEmoteLimit'teki gibi
     // hem client hem server tarafinda).
     private readonly NetworkVariable<double> _lastSelectionServerTime =
         new(-1000d, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     // (kasiyerClientId, emoteIndex) — PlayerEmoteReactor kendi OwnerClientId'siyle
-    // karsilastirip sadece dogru objede tepki oynatir. Isim tarihsel: artik Yamak da
+    // karsilastirip sadece dogru objede tepki oynatir. Isim tarihsel: artik Komi da
     // tetikleyebiliyor, ama alan/parametre adi degistirilmedi (RPC/UI'da hala
     // "hangi client tetikledi" anlaminda kullaniliyor).
     public event Action<ulong, int> OnEmoteTriggered;
 
     public EmoteDefinition[] AvailableEmotes => availableEmotes;
-    public int YamakEmoteLimit => yamakEmoteLimit;
+    public int KomiEmoteLimit => komiEmoteLimit;
     public float SelectionCooldown => selectionCooldown;
 
     public bool IsOnCooldown =>
@@ -80,11 +80,11 @@ public class EmoteSystem : NetworkBehaviour
             return;
 
         var role = RoleManager.Instance.GetRole(senderId);
-        if (role != PlayerRole.Kasiyer && role != PlayerRole.Yamak)
+        if (role != PlayerRole.Kasiyer && role != PlayerRole.Komi)
             return;
 
-        // Yamak sadece kisitli (ilk N) emote'a erisebilir; Kasiyer tam listeyi kullanir.
-        if (role == PlayerRole.Yamak && emoteIndex >= yamakEmoteLimit)
+        // Komi sadece kisitli (ilk N) emote'a erisebilir; Kasiyer tam listeyi kullanir.
+        if (role == PlayerRole.Komi && emoteIndex >= komiEmoteLimit)
             return;
 
         if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)

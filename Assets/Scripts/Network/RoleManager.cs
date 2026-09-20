@@ -220,7 +220,7 @@ public class RoleManager : NetworkBehaviour
     // BULUNAN HATA: joinOrderIndex dogrudan _assignedRoles.Count'tan turetiliyordu.
     // Lobi fazinda (round baslamadan once) bir oyuncu ayrilip _assignedRoles'tan
     // kaydi silinince (bkz. HandleClientDisconnectedOnServer) sayac geriye duserdi —
-    // ornegin Sef (index 0) ayrilirsa kalanlar Yamak+Kasiyer (count=2), sonra YENI
+    // ornegin Sef (index 0) ayrilirsa kalanlar Komi+Kasiyer (count=2), sonra YENI
     // bir oyuncu katilinca joinOrderIndex=2 -> JoinOrder[2]=Kasiyer atanirdi: artik
     // IKI oyuncu Kasiyer olur ve Sef rolu HIC KIMSEYE atanmamis kalirdi (count yine
     // MaxPlayers'a ulastigi icin StartRound() bunu fark etmeden gecerdi). Duzeltme:

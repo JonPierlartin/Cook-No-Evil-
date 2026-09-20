@@ -318,7 +318,7 @@ public class LobbyUIController : MonoBehaviour
         string key = role switch
         {
             PlayerRole.Sef => "role.sef",
-            PlayerRole.Yamak => "role.yamak",
+            PlayerRole.Komi => "role.komi",
             PlayerRole.Kasiyer => "role.kasiyer",
             _ => "role.none",
         };

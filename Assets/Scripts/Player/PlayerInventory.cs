@@ -2,7 +2,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 // Generic 4-slotlu envanter — tum roller icin AYNI kavram (eskiden planlanan
-// Yamak'a-ozel 3-durumlu CarryState enum'i yerine gecti). Slot degerleri
+// Komi'ye-ozel 3-durumlu CarryState enum'i yerine gecti). Slot degerleri
 // IngredientType.Id referansidir, -1 bos slot demektir. Sadece server yazar;
 // ItemHandoffSlot/PackagingStation/BurgerAssemblyStation gibi istasyonlarin
 // ServerRpc'leri basarili oldugunda bu API'yi cagirir. ActiveSlotIndex ise

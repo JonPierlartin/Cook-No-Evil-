@@ -6,7 +6,7 @@ public class SequentialRoleAssignmentStrategy : IRoleAssignmentStrategy
     private static readonly PlayerRole[] JoinOrder =
     {
         PlayerRole.Sef,
-        PlayerRole.Yamak,
+        PlayerRole.Komi,
         PlayerRole.Kasiyer
     };
 

@@ -2,14 +2,14 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// Kasiyer VE Yamak icin aktif E-basili-tutma radyal emote menusu (Sef'te hic acilmaz;
-// Yamak'in secimi Kasiyer'e gore kisitli — bkz. EmoteSystem.YamakEmoteLimit).
+// Kasiyer VE Komi icin aktif E-basili-tutma radyal emote menusu (Sef'te hic acilmaz;
+// Komi'nin secimi Kasiyer'e gore kisitli — bkz. EmoteSystem.KomiEmoteLimit).
 // HoldOrPressInteractable'dan BAGIMSIZ (bu bir dunya-objesi etkilesimi degil, rol-bazli
 // bir UI menusu) — kendi ham Interact (E) basma/birakma girisini okur. Rust'in insa
 // carki gibi: imlec HER ZAMAN kilitli/gizli kalir, dilim secimi carktan beri biriken
 // ham mouse delta'sinin yonune gore yapilir (bkz. Update()). Secilen emote'un GORSEL
 // TEPKISI (renk parlamasi + egilme/ziplama) secimi yapan oyuncunun kendi karakterinde
-// (PlayerEmoteReactor, herkesin ekraninda) oynatiliyor — eskiden burada Yamak'a ozel
+// (PlayerEmoteReactor, herkesin ekraninda) oynatiliyor — eskiden burada Komi'ye ozel
 // ayri bir "ReceivedEmoteIcon" UI'i vardi, o tasarim kaldirildi (bkz. EmoteSystem.cs
 // ust notu).
 public class EmoteWheelUI : MonoBehaviour
@@ -90,9 +90,9 @@ public class EmoteWheelUI : MonoBehaviour
         }
     }
 
-    // Kasiyer tam listeyle, Yamak kisitli (ilk N) listeyle carka erisebilir (bkz.
-    // EmoteSystem.YamakEmoteLimit). Sef'in carka hic erisimi yok.
-    private static bool IsWheelRole(PlayerRole role) => role == PlayerRole.Kasiyer || role == PlayerRole.Yamak;
+    // Kasiyer tam listeyle, Komi kisitli (ilk N) listeyle carka erisebilir (bkz.
+    // EmoteSystem.KomiEmoteLimit). Sef'in carka hic erisimi yok.
+    private static bool IsWheelRole(PlayerRole role) => role == PlayerRole.Kasiyer || role == PlayerRole.Komi;
 
     private void HandleLocalRoleAssigned(PlayerRole role)
     {
@@ -109,7 +109,7 @@ public class EmoteWheelUI : MonoBehaviour
     private void HandleInteractStarted(InputAction.CallbackContext context)
     {
         // Savunma amacli tekrar kontrol: HandleLocalRoleAssigned zaten Kasiyer-disi
-        // rollerde bu callback'i hic abone etmiyor, ama gercek 3-kisilik testte Yamak'ta
+        // rollerde bu callback'i hic abone etmiyor, ama gercek 3-kisilik testte Komi'de
         // da imlecin acildigi bildirildi — GUNCEL rolu burada da dogrulamak (onbellege
         // guvenmek yerine, RoleManager'in gecmis round-baslama senkron sorunlarindaki
         // ayni "canli oku" duzeltmesiyle tutarli) bu sinifi kokten kapatiyor.
@@ -123,19 +123,19 @@ public class EmoteWheelUI : MonoBehaviour
             return;
 
         // Ayni/farkli emote farketmeksizin, son secimden itibaren cooldown suresi
-        // dolmadan cark hic acilmiyor (yamakEmoteLimit gibi client tarafinda da
+        // dolmadan cark hic acilmiyor (komiEmoteLimit gibi client tarafinda da
         // kontrol edilir — sunucu zaten SelectEmoteServerRpc icinde ayrica reddeder).
         // Cark acilamadigi icin secim yapilamaz, ekstra bir "kilitli dilim" gosterimine
         // gerek kalmiyor.
         if (EmoteSystem.Instance != null && EmoteSystem.Instance.IsOnCooldown)
             return;
 
-        // Kasiyer icin tum dilimler, Yamak icin sadece ilk N dilim aktif/tiklanabilir
-        // olur (kisitli liste — bkz. EmoteSystem.YamakEmoteLimit). Geri kalan dilimler
-        // gizlenir ki Yamak yanlislikla erisimi olmayan bir emote'u secmeye calismasin.
+        // Kasiyer icin tum dilimler, Komi icin sadece ilk N dilim aktif/tiklanabilir
+        // olur (kisitli liste — bkz. EmoteSystem.KomiEmoteLimit). Geri kalan dilimler
+        // gizlenir ki Komi yanlislikla erisimi olmayan bir emote'u secmeye calismasin.
         bool isKasiyer = RoleManager.Instance.LocalRole == PlayerRole.Kasiyer;
-        int yamakLimit = EmoteSystem.Instance != null ? EmoteSystem.Instance.YamakEmoteLimit : 0;
-        _activeSlotCount = isKasiyer ? slotIcons.Length : Mathf.Clamp(yamakLimit, 0, slotIcons.Length);
+        int komiLimit = EmoteSystem.Instance != null ? EmoteSystem.Instance.KomiEmoteLimit : 0;
+        _activeSlotCount = isKasiyer ? slotIcons.Length : Mathf.Clamp(komiLimit, 0, slotIcons.Length);
 
         for (int i = 0; i < slotIcons.Length; i++)
         {

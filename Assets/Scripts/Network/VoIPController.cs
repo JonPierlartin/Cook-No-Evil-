@@ -3,7 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 // IVoiceProvider ile calisan, AudioSource entegreli, rol tabanli sesli sohbet yonetimi.
-// GDD 2.2 / Red Line 2: Kasiyer'in mikrofonu server tarafindan susturulur, Yamak gelen
+// GDD 2.2 / Red Line 2: Kasiyer'in mikrofonu server tarafindan susturulur, Komi gelen
 // ses sohbetini Low-Pass filtreli duyar, Sef'in etkilesim/VoIP sesi Hyper-Spatial olur.
 // Bu kisitlamalar sadece round aktifken uygulanir (GameLoopManager.IsRoundActive,
 // Round State tek otoriteye konsolide edildi) — lobide herkes normal konusup duyabilir;
@@ -11,8 +11,8 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkObject))]
 public class VoIPController : NetworkBehaviour
 {
-    [Tooltip("Yamak (Sagir) rolu icin gelen ses sohbetine uygulanacak Low-Pass kesim frekansi (Hz).")]
-    [SerializeField] private float yamakLowPassCutoffHz = 800f;
+    [Tooltip("Komi (Sagir) rolu icin gelen ses sohbetine uygulanacak Low-Pass kesim frekansi (Hz).")]
+    [SerializeField] private float komiLowPassCutoffHz = 800f;
 
     private IVoiceProvider _voiceProvider;
     private readonly Dictionary<ulong, VoiceStreamPlayer> _speakerPlayers = new();
@@ -165,11 +165,11 @@ public class VoIPController : NetworkBehaviour
 
         switch (_localRole)
         {
-            case PlayerRole.Yamak:
+            case PlayerRole.Komi:
                 // Sagir icin gelen ses sohbeti tamamen bogukluyor.
                 source.spatialBlend = 0f;
                 var lowPass = source.gameObject.AddComponent<AudioLowPassFilter>();
-                lowPass.cutoffFrequency = yamakLowPassCutoffHz;
+                lowPass.cutoffFrequency = komiLowPassCutoffHz;
                 break;
 
             case PlayerRole.Sef:
