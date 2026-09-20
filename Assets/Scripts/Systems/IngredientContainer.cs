@@ -7,7 +7,7 @@ using UnityEngine;
 // cagrilir); olay etkilesen oyuncunun kimligini tasidigi icin SenderClientId okunmaz.
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(HoldOrPressInteractable))]
-public class IngredientContainer : NetworkBehaviour
+public class IngredientContainer : NetworkBehaviour, IInteractionGate
 {
     [SerializeField] private IngredientType ingredient;
     [Tooltip("Bu kabi kullanabilecek roller. Bos birakilirsa herkes alabilir.")]
@@ -30,40 +30,55 @@ public class IngredientContainer : NetworkBehaviour
         _interactable.OnInteractionCompleted -= HandleInteractionCompleted;
     }
 
-    private void HandleInteractionCompleted(ulong clientId)
+    // Kural TEK yerde (GDD 4.1.2, 6.3): malzeme atanmis, rol izinli, envanterde bos slot var.
+    // Sunucu bunu tamamlanmada, crosshair her karede (istemcide) sorar.
+    public bool CanInteract(ulong clientId, out string reason)
     {
-        if (!IsServer)
-            return;
+        return TryEvaluate(clientId, out _, out reason);
+    }
+
+    private bool TryEvaluate(ulong clientId, out PlayerInventory inventory, out string reason)
+    {
+        inventory = null;
 
         if (ingredient == null)
         {
-            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={clientId}): malzeme atanmamış.");
-            return;
+            reason = "malzeme atanmamış";
+            return false;
         }
 
         var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
         if (!IsRoleAllowed(role))
         {
-            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={clientId}, rol={role}): rol izinli değil.");
-            return;
+            reason = "rol izinli değil";
+            return false;
         }
 
-        if (!NetworkManager.ConnectedClients.TryGetValue(clientId, out var client) || client.PlayerObject == null)
-        {
-            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={clientId}, rol={role}): oyuncu objesi bulunamadı.");
-            return;
-        }
-
-        var inventory = client.PlayerObject.GetComponent<PlayerInventory>();
+        inventory = PlayerInventory.FindForClient(clientId);
         if (inventory == null)
         {
-            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={clientId}, rol={role}): PlayerInventory yok.");
-            return;
+            reason = "oyuncu envanteri bulunamadı";
+            return false;
         }
 
         if (!inventory.HasFreeSlot())
         {
-            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={clientId}, rol={role}): boş slot yok.");
+            reason = "boş slot yok";
+            return false;
+        }
+
+        reason = null;
+        return true;
+    }
+
+    private void HandleInteractionCompleted(ulong clientId)
+    {
+        if (!IsServer)
+            return;
+
+        if (!TryEvaluate(clientId, out var inventory, out var reason))
+        {
+            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={clientId}): {reason}.");
             return;
         }
 

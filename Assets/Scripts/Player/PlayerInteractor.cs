@@ -14,6 +14,10 @@ using UnityEngine.InputSystem;
 // sunucuda dogrulaniyor. Basili-tutma zamanlayicisi HoldOrPressInteractable.Update()'te
 // zaten var (degistirilmedi) — BeginPress()/EndPress() artik SADECE sunucu tarafindan
 // cagriliyor, bu yuzden o zamanlayici da fiilen sunucu-otoriteli calisiyor.
+//
+// GDD 4.1.2 (1) crosshair: ayni raycast (TryGetCurrentTarget) her karede de calisir ve sonuc
+// HoldOrPressInteractable.CanInteract sorgusuyla Feedback'e cevrilir. Bu SADECE gosterim
+// tahminidir — RPC gonderilmez; gercek karar, ayni sorguyu soran sunucudadir (K6).
 [RequireComponent(typeof(NetworkObject))]
 public class PlayerInteractor : NetworkBehaviour
 {
@@ -26,6 +30,10 @@ public class PlayerInteractor : NetworkBehaviour
     [SerializeField, Range(0f, 1f)] private float aimDotThreshold = 0.5f;
 
     private InputAction _attackAction;
+
+    // Yalnizca yerel (owner) oyuncunun etkilesimcisi; CrosshairUI buradan okur.
+    public static PlayerInteractor Local { get; private set; }
+    public CrosshairState Feedback { get; private set; }
 
     // Sadece sunucuda anlamlidir: bu oyuncunun su an basili tuttugu hedef. Client'in kendi
     // kopyasinda bu alan hic kullanilmaz (RequestInteractServerRpc/RequestEndInteractServerRpc
@@ -71,6 +79,7 @@ public class PlayerInteractor : NetworkBehaviour
 
         UnsubscribeAttackAction();
 
+        Local = this;
         enabled = true;
 
         var playerMap = inputActions.FindActionMap("Player");
@@ -83,7 +92,16 @@ public class PlayerInteractor : NetworkBehaviour
     private void ApplyNonOwnerState()
     {
         UnsubscribeAttackAction();
+        ClearLocal();
         enabled = false;
+    }
+
+    private void ClearLocal()
+    {
+        if (Local == this)
+            Local = null;
+
+        Feedback = CrosshairState.Neutral;
     }
 
     private void UnsubscribeAttackAction()
@@ -99,6 +117,23 @@ public class PlayerInteractor : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         UnsubscribeAttackAction();
+        ClearLocal();
+    }
+
+    // enabled yalnizca owner'da true (bkz. ApplyOwnershipState/ApplyNonOwnerState).
+    private void Update()
+    {
+        Feedback = ComputeFeedback();
+    }
+
+    private CrosshairState ComputeFeedback()
+    {
+        if (!TryGetCurrentTarget(out var target))
+            return CrosshairState.Neutral;
+
+        return target.CanInteract(NetworkManager.LocalClientId, out _)
+            ? CrosshairState.Usable
+            : CrosshairState.Blocked;
     }
 
     // Istemci burada YALNIZCA niyetini ve hedefini bildirir. Sonuc (basarili/basarisiz)
@@ -114,16 +149,7 @@ public class PlayerInteractor : NetworkBehaviour
             return;
 
         if (!TryGetCurrentTarget(out var target))
-        {
-            // TESHIS (gercek build'de LMB etkilesiminin calismama raporu icin):
-            // bu log SADECE raycast hicbir HoldOrPressInteractable bulamadiginda basar
-            // (her frame degil, sadece tiklama aninda). Bu durumda sunucuya hicbir istek
-            // gonderilmez — gonderilecek bir hedef yok.
-            Vector3 camPos = playerCamera != null ? playerCamera.transform.position : Vector3.zero;
-            Vector3 camFwd = playerCamera != null ? playerCamera.transform.forward : Vector3.zero;
-            Debug.Log($"[PlayerInteractor] Hedef bulunamadi (camera={(playerCamera != null)}, range={interactRange}, layerMask={interactableLayer.value}, camPos={camPos}, camForward={camFwd}).");
             return;
-        }
 
         var targetNetworkObject = target.GetComponentInParent<NetworkObject>();
         if (targetNetworkObject == null)
@@ -165,12 +191,6 @@ public class PlayerInteractor : NetworkBehaviour
 
         _serverPressedInteractable = interactable;
         interactable.BeginPress(senderId);
-
-        var targetParams = new ClientRpcParams
-        {
-            Send = new ClientRpcSendParams { TargetClientIds = new[] { senderId } }
-        };
-        InteractionSucceededClientRpc(targetParams);
     }
 
     [ServerRpc]
@@ -233,16 +253,15 @@ public class PlayerInteractor : NetworkBehaviour
             return false;
         }
 
-        return true;
-    }
+        // Rol / envanter / istasyon kurallari: crosshair'in istemcide sordugu SORGUNUN AYNISI.
+        if (!interactable.CanInteract(senderId, out var gateReason))
+        {
+            reason = gateReason;
+            interactable = null;
+            return false;
+        }
 
-    // Test/teshis amacli: gercek 3 kisilik testte LMB etkilesim basarisini konsola
-    // bakmadan gorebilmek icin — SADECE cagiran client'a hedeflenir (ClientRpcParams).
-    // Basarisiz denemelerde HICBIR client'a RPC gonderilmez (sessiz red, K6 geregi).
-    [ClientRpc]
-    private void InteractionSucceededClientRpc(ClientRpcParams rpcParams = default)
-    {
-        InteractionToastUI.Instance?.Show("Küple Etkileşime Geçiyorsun");
+        return true;
     }
 
     private bool TryGetCurrentTarget(out HoldOrPressInteractable interactable)

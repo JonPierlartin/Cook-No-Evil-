@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -19,14 +20,53 @@ public class PlayerInventory : NetworkBehaviour
     public readonly NetworkVariable<int> ActiveSlotIndex =
         new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
+    private static readonly List<PlayerInventory> Spawned = new();
+
     public override void OnNetworkSpawn()
     {
+        Spawned.Add(this);
+
         if (IsServer)
         {
             Slots.Clear();
             for (int i = 0; i < SlotCount; i++)
                 Slots.Add(EmptySlot);
         }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        Spawned.Remove(this);
+    }
+
+    // IInteractionGate uygulamalarinin sunucuda VE istemcide ayni cagriyla envanteri bulmasi icin.
+    // Sunucu: ConnectedClients (mevcut yol). Istemci: yalnizca KENDI envanteri — IsOwner ile;
+    // NetworkManager.LocalClient.PlayerObject ChangeOwnership'ten sonra (rejoin) guncellenmedigi
+    // icin kullanilmaz (bkz. HotbarUI notu).
+    public static PlayerInventory FindForClient(ulong clientId)
+    {
+        var networkManager = NetworkManager.Singleton;
+        if (networkManager == null)
+            return null;
+
+        if (networkManager.IsServer)
+        {
+            if (!networkManager.ConnectedClients.TryGetValue(clientId, out var client) || client.PlayerObject == null)
+                return null;
+
+            return client.PlayerObject.GetComponent<PlayerInventory>();
+        }
+
+        if (clientId != networkManager.LocalClientId)
+            return null;
+
+        foreach (var inventory in Spawned)
+        {
+            if (inventory.IsOwner)
+                return inventory;
+        }
+
+        return null;
     }
 
     public void SetActiveSlot(int slotIndex)

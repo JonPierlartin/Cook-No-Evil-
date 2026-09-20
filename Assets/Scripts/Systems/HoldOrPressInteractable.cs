@@ -31,6 +31,24 @@ public class HoldOrPressInteractable : MonoBehaviour
     private float _pressStartTime;
     private bool _completedThisPress;
     private ulong _interactorClientId;
+    private IInteractionGate[] _gates;
+
+    // Ayni nesnedeki TUM IInteractionGate'lere sorar; biri bile "hayir" derse sonuc hayirdir.
+    // Gate'i olmayan nesne herkese aciktir. Sunucu (RequestInteractServerRpc, istasyonlarin
+    // tamamlanma mantigi) ve istemci (crosshair) AYNI sorguyu kullanir — kural tek yerde yasar.
+    public bool CanInteract(ulong clientId, out string reason)
+    {
+        _gates ??= GetComponents<IInteractionGate>();
+
+        foreach (var gate in _gates)
+        {
+            if (!gate.CanInteract(clientId, out reason))
+                return false;
+        }
+
+        reason = null;
+        return true;
+    }
 
     public void BeginPress(ulong interactorClientId)
     {

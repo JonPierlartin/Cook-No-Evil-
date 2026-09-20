@@ -292,12 +292,14 @@ public class RoleManager : NetworkBehaviour
         OnLocalRoleAssigned?.Invoke(change.Value.Role);
     }
 
+    // Indeksli dongu: crosshair bunu her karede (IInteractionGate uzerinden) cagirabiliyor;
+    // foreach NetworkList enumerator'unu her cagrida heap'e kutulardi.
     public PlayerRole GetRole(ulong clientId)
     {
-        foreach (var entry in _assignedRoles)
+        for (int i = 0; i < _assignedRoles.Count; i++)
         {
-            if (entry.ClientId == clientId)
-                return entry.Role;
+            if (_assignedRoles[i].ClientId == clientId)
+                return _assignedRoles[i].Role;
         }
 
         return PlayerRole.None;
