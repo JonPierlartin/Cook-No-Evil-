@@ -90,6 +90,8 @@ public class PlayerController : NetworkBehaviour
         if (playerCamera != null)
             playerCamera.gameObject.SetActive(true);
 
+        SyncControllerToTransform();
+
         var playerMap = inputActions.FindActionMap("Player");
         playerMap.Enable();
         _moveAction = playerMap.FindAction("Move");
@@ -101,6 +103,13 @@ public class PlayerController : NetworkBehaviour
         // degismiyor" raporu icin — Player.log'da bu satirin varligi owner kamerasinin
         // gercekten devreye girdigini dogrular (bkz. PlayerSpawner'daki spawn log'u).
         Debug.Log($"[PlayerController] Owner kamerasi aktif, sahne kamerasi kapatildi (clientId={NetworkManager.LocalClientId}).");
+    }
+
+    // NGO prefab'i konumsuz olusturup sonra tasir; controller tasindigini bilmez, ilk Move() geri ceker.
+    private void SyncControllerToTransform()
+    {
+        _characterController.enabled = false;
+        _characterController.enabled = true;
     }
 
     private void ApplyNonOwnerState()
