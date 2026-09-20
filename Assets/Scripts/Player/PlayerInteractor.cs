@@ -25,21 +25,12 @@ public class PlayerInteractor : NetworkBehaviour
     [Tooltip("Sunucu yon dogrulamasi: oyuncu kokunun yatay forward'i ile hedefe olan yon arasindaki dot product bu esigin ustunde olmalidir (1 = tam karsida, 0 = 90 derece). NetworkTransform yalnizca yaw'i senkronize ettigi icin (pitch yerel, bkz. PlayerController) dogrulama sadece yatay duzlemde yapilabilir.")]
     [SerializeField, Range(0f, 1f)] private float aimDotThreshold = 0.5f;
 
-    [Tooltip("GECICI TEST ETKISI — gercek malzeme kaplari gelince kaldirilacak. Basarili bir etkilesimde bu malzeme, etkilesen oyuncunun envanterine sunucu tarafindan eklenir (K6 sunucu-otorite zincirinin gercek oyun durumunda dogrulanmasi icin).")]
-    [SerializeField] private IngredientType testInteractionItem;
-
-    private PlayerInventory _inventory;
     private InputAction _attackAction;
 
     // Sadece sunucuda anlamlidir: bu oyuncunun su an basili tuttugu hedef. Client'in kendi
     // kopyasinda bu alan hic kullanilmaz (RequestInteractServerRpc/RequestEndInteractServerRpc
     // govdeleri NGO tarafindan yalnizca sunucuda calistirilir).
     private HoldOrPressInteractable _serverPressedInteractable;
-
-    private void Awake()
-    {
-        _inventory = GetComponent<PlayerInventory>();
-    }
 
     public override void OnNetworkSpawn()
     {
@@ -172,19 +163,8 @@ public class PlayerInteractor : NetworkBehaviour
             return;
         }
 
-        // GECICI TEST ETKISI KONTROLU — gercek malzeme kaplari gelince kaldirilacak.
-        if (testInteractionItem != null && _inventory != null && !_inventory.HasFreeSlot())
-        {
-            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): envanterde bos slot yok.");
-            return;
-        }
-
         _serverPressedInteractable = interactable;
         interactable.BeginPress(senderId);
-
-        // GECICI TEST ETKISI — gercek malzeme kaplari gelince kaldirilacak.
-        if (testInteractionItem != null)
-            _inventory?.ServerTryAddItem(testInteractionItem.Id);
 
         var targetParams = new ClientRpcParams
         {

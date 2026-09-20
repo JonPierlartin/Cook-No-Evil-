@@ -12,6 +12,8 @@ public class BurgerAssemblyStation : NetworkBehaviour
     [SerializeField] private BurgerRecipe activeRecipe;
     [Tooltip("Id -> IngredientType cozumlemesi icin kayit defteri. DumbwaiterSystem kuruldugunda AYNI dizi Inspector'dan atanmali.")]
     [SerializeField] private IngredientType[] registeredIngredients;
+    [Tooltip("Bu istasyonu kullanabilecek roller. Bos birakilirsa herkes kullanabilir.")]
+    [SerializeField] private PlayerRole[] allowedRoles;
 
     public readonly NetworkList<int> PlacedIngredients = new();
 
@@ -38,8 +40,14 @@ public class BurgerAssemblyStation : NetworkBehaviour
         var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
         Debug.Log($"[BurgerAssemblyStation] HandleInteractionCompleted cagrildi (clientId={clientId}, role={role}).");
 
-        if (RoleManager.Instance == null || role != PlayerRole.Sef)
+        if (RoleManager.Instance == null)
             return;
+
+        if (!IsRoleAllowed(role))
+        {
+            Debug.LogWarning($"[BurgerAssemblyStation] reddetti (clientId={clientId}, rol={role}): rol izinli değil.");
+            return;
+        }
 
         if (NetworkManager == null || !NetworkManager.ConnectedClients.TryGetValue(clientId, out var client) || client.PlayerObject == null)
             return;
@@ -79,6 +87,11 @@ public class BurgerAssemblyStation : NetworkBehaviour
         // musteri/siparis sistemine gerek kalmadan art arda test edilebilir.
         if (IsRecipeComplete())
             PlacedIngredients.Clear();
+    }
+
+    private bool IsRoleAllowed(PlayerRole role)
+    {
+        return allowedRoles == null || allowedRoles.Length == 0 || System.Array.IndexOf(allowedRoles, role) >= 0;
     }
 
     private bool IsRecipeComplete()
