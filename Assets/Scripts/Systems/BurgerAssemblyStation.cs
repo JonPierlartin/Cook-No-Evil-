@@ -10,8 +10,8 @@ using UnityEngine;
 public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
 {
     [SerializeField] private BurgerRecipe activeRecipe;
-    [Tooltip("Id -> IngredientType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
-    [SerializeField] private IngredientRegistry registry;
+    [Tooltip("Id -> ItemType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
+    [SerializeField] private ItemRegistry registry;
     [Tooltip("Bu istasyonu kullanabilecek roller. Bos birakilirsa herkes kullanabilir.")]
     [SerializeField] private PlayerRole[] allowedRoles;
 
@@ -96,8 +96,8 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         }
 
         ingredientId = inventory.Slots[activeSlot];
-        var ingredientType = registry != null ? registry.Find(ingredientId) : null;
-        if (ingredientType == null)
+        var itemType = registry != null ? registry.Find(ingredientId) : null;
+        if (itemType == null)
         {
             reason = "malzeme kayıtlı değil";
             return false;
@@ -107,8 +107,8 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         // (kullanici karari) — sadece aktif tarifin (varyasyonu dahil) izin
         // verdigi malzemeler kabul edilir.
         bool isValid = PlacedIngredients.Count == 0
-            ? ingredientType.IsBread
-            : activeRecipe != null && activeRecipe.AllowsIngredient(ingredientType);
+            ? itemType.IsBread
+            : activeRecipe != null && activeRecipe.AllowsIngredient(itemType);
 
         if (!isValid)
         {

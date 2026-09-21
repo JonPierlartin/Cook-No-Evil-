@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7ebbdbed0eb2d541a9e261b6d86305e, type: 3}
-  m_Name: IngredientRegistry
-  m_EditorClassIdentifier: Assembly-CSharp::IngredientRegistry
+  m_Name: ItemRegistry
+  m_EditorClassIdentifier: Assembly-CSharp::ItemRegistry
   ingredients:
   - {fileID: 11400000, guid: 107e12c39a0c3a248bae42745159c596, type: 2}
   - {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}

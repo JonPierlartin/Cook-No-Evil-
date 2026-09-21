@@ -5,7 +5,7 @@ using UnityEngine;
 [Serializable]
 public struct IngredientRequirement
 {
-    public IngredientType Type;
+    public ItemType Type;
     public int Quantity;
 }
 
@@ -18,13 +18,13 @@ public class BurgerRecipe : ScriptableObject
     [SerializeField] private string recipeName;
     [SerializeField] private List<IngredientRequirement> requiredIngredients = new();
     [Tooltip("Bu varyasyonda tarifte olsa bile kullanilmasi yasak olan malzemeler (orn. sogansiz varyasyon).")]
-    [SerializeField] private List<IngredientType> excludedIngredients = new();
+    [SerializeField] private List<ItemType> excludedIngredients = new();
 
     public string RecipeName => recipeName;
     public IReadOnlyList<IngredientRequirement> RequiredIngredients => requiredIngredients;
-    public IReadOnlyList<IngredientType> ExcludedIngredients => excludedIngredients;
+    public IReadOnlyList<ItemType> ExcludedIngredients => excludedIngredients;
 
-    public bool AllowsIngredient(IngredientType type)
+    public bool AllowsIngredient(ItemType type)
     {
         if (excludedIngredients.Contains(type))
             return false;

@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 // kare hesabindan okunur — menzil ve CanInteract zaten "kullanilabilir"in icindedir. Sirtini
 // donunce hedef degistigi icin onizleme kendiliginden kaybolur.
 //
-// Sekil, aktif slottaki ogenin visualPrefab'idir (elde tutulanla AYNI gorsel); IngredientRegistry
+// Sekil, aktif slottaki ogenin visualPrefab'idir (elde tutulanla AYNI gorsel); ItemRegistry
 // uzerinden bulunur. Kopya yalnizca aktif oge DEGISINCE olusturulur; her karede yalnizca konum ve
 // gorunurluk guncellenir. Kopyada collider tutulmaz (crosshair'in nisan taramasi kendi onizlemesine
 // carpmasin). Tamamen yerel: yalnizca sahibin PlayerInteractor'i (PlayerInteractor.Local) icin calisir.
@@ -15,8 +15,8 @@ using UnityEngine.Rendering;
 [RequireComponent(typeof(PlayerInventory))]
 public class PlacementPreview : MonoBehaviour
 {
-    [Tooltip("Id -> IngredientType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
-    [SerializeField] private IngredientRegistry registry;
+    [Tooltip("Id -> ItemType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
+    [SerializeField] private ItemRegistry registry;
     [Tooltip("Onizleme kopyasinin tum renderer'larina uygulanan yesil yari saydam materyal.")]
     [SerializeField] private Material previewMaterial;
     [Tooltip("Onizleme kopyasinin duracagi katman. Etkilesim raycast maskesinde OLMAMALI (crosshair kendi onizlemesine carpmasin). Sef'in renderer'i (BlindVision_Renderer) bu katmani nabizli konturla ayri bir gecisle cizer; diger roller yesil yari saydami gorur.")]
@@ -70,11 +70,11 @@ public class PlacementPreview : MonoBehaviour
         _shownId = id;
 
         // Bos slot, kayitsiz id, gorseli olmayan oge veya atanmamis materyal: hata degil, onizleme yok.
-        var ingredientType = registry != null ? registry.Find(id) : null;
-        if (ingredientType == null || ingredientType.VisualPrefab == null || previewMaterial == null)
+        var itemType = registry != null ? registry.Find(id) : null;
+        if (itemType == null || itemType.VisualPrefab == null || previewMaterial == null)
             return;
 
-        _instance = Instantiate(ingredientType.VisualPrefab);
+        _instance = Instantiate(itemType.VisualPrefab);
         _instance.SetActive(false);
         PrepareGhost(_instance);
     }

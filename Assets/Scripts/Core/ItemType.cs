@@ -1,10 +1,9 @@
 using UnityEngine;
 
-// Malzeme turlerini tanimlayan veri modeli. Int sayac degil SO tabanli: ileride
-// birden fazla hamburger/malzeme turu eklenecegi icin (henuz GDD'de tanimli
-// degil) yapinin bastan genisletilebilir olmasi gerekiyor.
-[CreateAssetMenu(fileName = "IngredientType", menuName = "Cook No Evil/Ingredient Type")]
-public class IngredientType : ScriptableObject
+// Envanterde tasinabilen her ogenin turunu tanimlayan veri modeli: malzeme, bardak, dondurma kabi,
+// kese kagidi, hamburger... Int sayac degil SO tabanli: yeni tur eklemek yalnizca yeni bir asset'tir.
+[CreateAssetMenu(fileName = "ItemType", menuName = "Cook No Evil/Item Type")]
+public class ItemType : ScriptableObject
 {
     [Tooltip("PlayerInventory/NetworkList gibi ag uzerinden senkronize edilen alanlarda kullanilan kararli kimlik.")]
     [SerializeField] private int id;

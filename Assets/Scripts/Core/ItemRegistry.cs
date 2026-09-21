@@ -1,17 +1,17 @@
 using UnityEngine;
 
-// id -> IngredientType cozumlemesinin TEK yasadigi yer. PlayerInventory yalnizca int id tasir
+// id -> ItemType cozumlemesinin TEK yasadigi yer. PlayerInventory yalnizca int id tasir
 // (ag uzerinden); id'den oge turunu bulmasi gereken her tuketici (HotbarUI, BurgerAssemblyStation,
 // HeldItemVisual, PlacementPreview) Inspector'dan bu tek asset'e referans verir — kendi dizisini
-// tutmaz. Yeni bir IngredientType eklendiginde yalnizca burada kayit edilir.
-[CreateAssetMenu(fileName = "IngredientRegistry", menuName = "Cook No Evil/Ingredient Registry")]
-public class IngredientRegistry : ScriptableObject
+// tutmaz. Yeni bir ItemType eklendiginde yalnizca burada kayit edilir.
+[CreateAssetMenu(fileName = "ItemRegistry", menuName = "Cook No Evil/Item Registry")]
+public class ItemRegistry : ScriptableObject
 {
-    [Tooltip("Oyundaki tum malzeme turleri. Id'ler benzersiz olmali; -1 bos slot icin ayrilmistir.")]
-    [SerializeField] private IngredientType[] ingredients;
+    [Tooltip("Oyundaki tum oge turleri. Id'ler benzersiz olmali; -1 bos slot icin ayrilmistir.")]
+    [SerializeField] private ItemType[] ingredients;
 
     // Kayitli degilse (veya id bos slot ise) null doner.
-    public IngredientType Find(int id)
+    public ItemType Find(int id)
     {
         if (ingredients == null)
             return null;

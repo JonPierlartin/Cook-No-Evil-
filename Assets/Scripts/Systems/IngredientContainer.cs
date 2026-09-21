@@ -9,7 +9,7 @@ using UnityEngine;
 [RequireComponent(typeof(HoldOrPressInteractable))]
 public class IngredientContainer : NetworkBehaviour, IInteractionGate
 {
-    [SerializeField] private IngredientType ingredient;
+    [SerializeField] private ItemType ingredient;
     [Tooltip("Bu kabi kullanabilecek roller. Bos birakilirsa herkes alabilir.")]
     [SerializeField] private PlayerRole[] allowedRoles;
 

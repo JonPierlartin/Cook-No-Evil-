@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd982d1c9ae4344d9358a57f1b7e2c4, type: 3}
   m_Name: Ekmek
-  m_EditorClassIdentifier: Assembly-CSharp::IngredientType
+  m_EditorClassIdentifier: Assembly-CSharp::ItemType
   id: 0
   localizationKey: ingredient.ekmek
   icon: {fileID: 21300000, guid: 9741e9970bcd9594185e2449a76210b9, type: 3}

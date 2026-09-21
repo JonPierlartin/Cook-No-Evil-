@@ -12,8 +12,8 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInventory))]
 public class HeldItemVisual : NetworkBehaviour
 {
-    [Tooltip("Id -> IngredientType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
-    [SerializeField] private IngredientRegistry registry;
+    [Tooltip("Id -> ItemType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
+    [SerializeField] private ItemRegistry registry;
     [Tooltip("Birinci sahis tutma noktasi (oyuncu kamerasinin cocugu). Yalnizca sahip gorur.")]
     [SerializeField] private Transform firstPersonHoldPoint;
     [Tooltip("Ucuncu sahis tutma noktasi (govde gorselinin cocugu, el hizasi). Yalnizca diger oyuncular gorur.")]
@@ -73,11 +73,11 @@ public class HeldItemVisual : NetworkBehaviour
         _shownAnchor = anchor;
 
         // Bos slot, kayitsiz id, gorseli olmayan oge veya atanmamis nokta: hata degil, el bos.
-        var ingredientType = registry != null ? registry.Find(id) : null;
-        if (ingredientType == null || ingredientType.VisualPrefab == null || anchor == null)
+        var itemType = registry != null ? registry.Find(id) : null;
+        if (itemType == null || itemType.VisualPrefab == null || anchor == null)
             return;
 
-        _instance = Instantiate(ingredientType.VisualPrefab, anchor);
+        _instance = Instantiate(itemType.VisualPrefab, anchor);
     }
 
     private int GetActiveItemId()
