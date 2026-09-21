@@ -10,11 +10,14 @@ public class IngredientType : ScriptableObject
     [SerializeField] private int id;
     [SerializeField] private string localizationKey;
     [SerializeField] private Sprite icon;
+    [Tooltip("Hem elde tutulurken (GDD 4.1) hem yerlestirme onizlemesinde (GDD 4.1.2) kullanilan TEK gorsel. Collider tasimamali. Bos birakilirsa hicbir sey gosterilmez.")]
+    [SerializeField] private GameObject visualPrefab;
     [Tooltip("BurgerAssemblyStation'da ilk yerlestirilmesi zorunlu olan malzeme turu (ekmek).")]
     [SerializeField] private bool isBread;
 
     public int Id => id;
     public string LocalizationKey => localizationKey;
     public Sprite Icon => icon;
+    public GameObject VisualPrefab => visualPrefab;
     public bool IsBread => isBread;
 }

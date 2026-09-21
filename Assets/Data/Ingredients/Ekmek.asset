@@ -15,4 +15,5 @@ MonoBehaviour:
   id: 0
   localizationKey: ingredient.ekmek
   icon: {fileID: 21300000, guid: 9741e9970bcd9594185e2449a76210b9, type: 3}
+  visualPrefab: {fileID: 6684167163416274769, guid: c1db76746817ea74b86de94fa5ab3df9, type: 3}
   isBread: 1
