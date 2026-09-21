@@ -31,8 +31,11 @@ public class PlayerInteractor : NetworkBehaviour
 
     private InputAction _attackAction;
 
-    // Yalnizca yerel (owner) oyuncunun etkilesimcisi; CrosshairUI buradan okur.
+    // Yalnizca yerel (owner) oyuncunun etkilesimcisi; CrosshairUI ve PlacementPreview buradan okur.
     public static PlayerInteractor Local { get; private set; }
+    // Crosshair'in su an baktigi hedef (yoksa null) ve o hedef icin crosshair durumu — her karede
+    // TEK raycast'ten (TryGetCurrentTarget) uretilir.
+    public HoldOrPressInteractable CurrentTarget { get; private set; }
     public CrosshairState Feedback { get; private set; }
 
     // Sadece sunucuda anlamlidir: bu oyuncunun su an basili tuttugu hedef. Client'in kendi
@@ -101,6 +104,7 @@ public class PlayerInteractor : NetworkBehaviour
         if (Local == this)
             Local = null;
 
+        CurrentTarget = null;
         Feedback = CrosshairState.Neutral;
     }
 
@@ -123,12 +127,13 @@ public class PlayerInteractor : NetworkBehaviour
     // enabled yalnizca owner'da true (bkz. ApplyOwnershipState/ApplyNonOwnerState).
     private void Update()
     {
-        Feedback = ComputeFeedback();
+        CurrentTarget = TryGetCurrentTarget(out var target) ? target : null;
+        Feedback = ComputeFeedback(CurrentTarget);
     }
 
-    private CrosshairState ComputeFeedback()
+    private CrosshairState ComputeFeedback(HoldOrPressInteractable target)
     {
-        if (!TryGetCurrentTarget(out var target))
+        if (target == null)
             return CrosshairState.Neutral;
 
         return target.CanInteract(NetworkManager.LocalClientId, out _)

@@ -201,6 +201,7 @@ GameObject:
   - component: {fileID: 519519140415067332}
   - component: {fileID: 8056731680494412912}
   - component: {fileID: 7100000000000000005}
+  - component: {fileID: 7100000000000000006}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -505,3 +506,17 @@ MonoBehaviour:
   registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
   firstPersonHoldPoint: {fileID: 7100000000000000002}
   thirdPersonHoldPoint: {fileID: 7100000000000000004}
+--- !u!114 &7100000000000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4359626687582447755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ea0840d08fb47488c1cdb21b4a6979, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlacementPreview
+  registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
+  previewMaterial: {fileID: 2100000, guid: 52b183f0f3b6ca04082f2c1e4a306396, type: 2}
