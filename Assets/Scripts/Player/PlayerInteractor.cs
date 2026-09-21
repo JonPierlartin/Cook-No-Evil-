@@ -18,16 +18,30 @@ using UnityEngine.InputSystem;
 // GDD 4.1.2 (1) crosshair: ayni raycast (TryGetCurrentTarget) her karede de calisir ve sonuc
 // HoldOrPressInteractable.CanInteract sorgusuyla Feedback'e cevrilir. Bu SADECE gosterim
 // tahminidir — RPC gonderilmez; gercek karar, ayni sorguyu soran sunucudadir (K6).
+//
+// Menzil/yon: raycast yalnizca HEDEFI secer ("neye bakiyorum"); "yeterince yakin miyim / donuk
+// muyum" sorusunu istemcide (crosshair, onizleme) ve sunucuda AYNI fonksiyon cevaplar:
+// HoldOrPressInteractable.CheckReach. Istemcinin "olur" dedigini sunucu reddetmemeli: sunucu
+// ayni fonksiyona yalnizca daha genis esikler (tolerans) verir.
 [RequireComponent(typeof(NetworkObject))]
 public class PlayerInteractor : NetworkBehaviour
 {
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private Camera playerCamera;
+    [Tooltip("Goz noktasi (oyuncu kopyasindaki CameraPivot). Menzil/yon kontrolu hem istemcide hem sunucuda buradan olculur; goz yuksekligi kodda tutulmaz.")]
+    [SerializeField] private Transform cameraPivot;
+    [Tooltip("Goz noktasindan hedef collider'inin en yakin noktasina azami mesafe (m).")]
     [SerializeField] private float interactRange = 2.5f;
     [SerializeField] private LayerMask interactableLayer;
 
-    [Tooltip("Sunucu yon dogrulamasi: oyuncu kokunun yatay forward'i ile hedefe olan yon arasindaki dot product bu esigin ustunde olmalidir (1 = tam karsida, 0 = 90 derece). NetworkTransform yalnizca yaw'i senkronize ettigi icin (pitch yerel, bkz. PlayerController) dogrulama sadece yatay duzlemde yapilabilir.")]
+    [Tooltip("Yon esigi: gozun yatay bakis yonu ile goz -> hedefin en yakin noktasi yonu arasindaki dot product bu esigin ustunde olmalidir (1 = tam karsida, 0 = 90 derece). NetworkTransform yalnizca yaw'i senkronize ettigi icin (pitch yerel, bkz. PlayerController) kontrol sadece yatay duzlemde yapilir.")]
     [SerializeField, Range(0f, 1f)] private float aimDotThreshold = 0.5f;
+
+    [Header("Sunucu toleransi (ag gecikmesi payi — istemci bunu KULLANMAZ, her zaman daha katidir)")]
+    [Tooltip("Sunucu, menzile bu kadar (m) pay ekler.")]
+    [SerializeField, Min(0f)] private float serverRangeTolerance = 0.5f;
+    [Tooltip("Sunucu, yon esiginden bu kadar (dot birimi) dusuk bir degeri de kabul eder.")]
+    [SerializeField, Min(0f)] private float serverAimDotTolerance = 0.15f;
 
     private InputAction _attackAction;
 
@@ -226,34 +240,32 @@ public class PlayerInteractor : NetworkBehaviour
             return false;
         }
 
-        if (NetworkManager == null || !NetworkManager.ConnectedClients.TryGetValue(senderId, out var client) || client.PlayerObject == null)
+        // Bu RPC, cagiranin KENDI oyuncu objesindeki (sunucudaki kopya) PlayerInteractor'da calisir:
+        // goz noktasi o kopyanin CameraPivot'undan, yaw'i o kopyanin kokunden okunur (pitch
+        // senkronize degil; kontrol yatay). Istemcinin kullandigi AYNI fonksiyon, yalnizca
+        // tolerans eklenmis esiklerle.
+        if (cameraPivot == null)
         {
-            reason = "cagiran oyuncunun PlayerObject'i bulunamadi";
-            return false;
-        }
-
-        Transform playerRoot = client.PlayerObject.transform;
-        Vector3 toTarget = targetObject.transform.position - playerRoot.position;
-        float distance = toTarget.magnitude;
-
-        if (distance > interactRange)
-        {
-            reason = $"menzil disi ({distance:F2}m > {interactRange:F2}m)";
+            reason = "goz noktasi (CameraPivot) atanmamis";
             interactable = null;
             return false;
         }
 
-        // Yalnizca yatay duzlemde dogrulama: NetworkTransform oyuncu kokunde ve
-        // Owner-otoriteli, yani yaw senkronize edilir ama pitch edilmez (pitch
-        // PlayerController'da yerel olarak CameraPivot'a uygulanir) — sunucu istemcinin
-        // tam nisan vektorunu yeniden uretemez. Faz 0 icin yeterlidir (odalar ayridir).
-        Vector3 flatToTarget = new Vector3(toTarget.x, 0f, toTarget.z).normalized;
-        Vector3 flatForward = new Vector3(playerRoot.forward.x, 0f, playerRoot.forward.z).normalized;
-        float dot = Vector3.Dot(flatForward, flatToTarget);
+        var reach = interactable.CheckReach(
+            cameraPivot.position, transform.forward,
+            interactRange + serverRangeTolerance, aimDotThreshold - serverAimDotTolerance,
+            out float distance, out float aimDot);
 
-        if (dot < aimDotThreshold)
+        if (reach == ReachResult.OutOfRange)
         {
-            reason = $"yon disi (dot={dot:F2} < {aimDotThreshold:F2})";
+            reason = $"menzil disi ({distance:F2}m > {interactRange + serverRangeTolerance:F2}m)";
+            interactable = null;
+            return false;
+        }
+
+        if (reach == ReachResult.OutOfAim)
+        {
+            reason = $"yon disi (dot={aimDot:F2} < {aimDotThreshold - serverAimDotTolerance:F2})";
             interactable = null;
             return false;
         }
@@ -273,13 +285,23 @@ public class PlayerInteractor : NetworkBehaviour
     {
         interactable = null;
 
-        if (playerCamera == null)
+        if (playerCamera == null || cameraPivot == null)
             return false;
 
-        if (!Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hit, interactRange, interactableLayer))
+        // Tarama yalnizca HEDEFI secer (uzunluk sinirsiz; katman maskesi yalniz etkilesilebilirleri
+        // gecirir). "Yeterince yakin miyim / donuk muyum" sorusunu tarama DEGIL, sunucuyla ortak
+        // CheckReach cevaplar — istemcide tolerans YOK, sunucudan her zaman daha katidir.
+        if (!Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hit, Mathf.Infinity, interactableLayer))
             return false;
 
-        interactable = hit.collider.GetComponentInParent<HoldOrPressInteractable>();
-        return interactable != null;
+        var candidate = hit.collider.GetComponentInParent<HoldOrPressInteractable>();
+        if (candidate == null)
+            return false;
+
+        if (candidate.CheckReach(cameraPivot.position, transform.forward, interactRange, aimDotThreshold, out _, out _) != ReachResult.InReach)
+            return false;
+
+        interactable = candidate;
+        return true;
     }
 }

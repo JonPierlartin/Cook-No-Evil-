@@ -338,11 +338,14 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   playerCamera: {fileID: 1039527557412377949}
+  cameraPivot: {fileID: 2202784849687738564}
   interactRange: 2.5
   interactableLayer:
     serializedVersion: 2
     m_Bits: 256
   aimDotThreshold: 0.5
+  serverRangeTolerance: 0.5
+  serverAimDotTolerance: 0.15
 --- !u!114 &3199632351283314670
 MonoBehaviour:
   m_ObjectHideFlags: 0

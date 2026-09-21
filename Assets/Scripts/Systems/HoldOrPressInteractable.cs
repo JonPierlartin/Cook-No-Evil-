@@ -32,6 +32,51 @@ public class HoldOrPressInteractable : MonoBehaviour
     private bool _completedThisPress;
     private ulong _interactorClientId;
     private IInteractionGate[] _gates;
+    private Collider[] _colliders;
+
+    // "Yeterince yakin miyim ve hedefe donuk muyum?" sorusunun TEK cevap noktasi. Istemci
+    // (crosshair, yerlestirme onizlemesi) ve sunucu (RequestInteractServerRpc) AYNI fonksiyonu
+    // cagirir; iki farkli formul yoktur. Sunucu yalnizca esikleri (maxDistance, minAimDot)
+    // genisleterek tolerans ekler — istemci her zaman daha katidir.
+    //
+    // Olcu: gozden bu nesnenin collider'larinin EN YAKIN yuzey noktasina (pivota degil). Yon:
+    // gozun yatay bakis yonu ile goz -> en yakin nokta yonu arasindaki yatay dot product (pitch
+    // agdan senkronize edilmedigi icin yalnizca yatay). Not: Collider.ClosestPoint yalnizca Box,
+    // Sphere, Capsule ve convex MeshCollider ile calisir.
+    public ReachResult CheckReach(Vector3 eye, Vector3 forward, float maxDistance, float minAimDot, out float distance, out float aimDot)
+    {
+        _colliders ??= GetComponentsInChildren<Collider>();
+
+        Vector3 nearest = eye;
+        float nearestSqrDistance = float.PositiveInfinity;
+        foreach (var collider in _colliders)
+        {
+            if (collider == null || !collider.enabled)
+                continue;
+
+            Vector3 point = collider.ClosestPoint(eye);
+            float sqrDistance = (point - eye).sqrMagnitude;
+            if (sqrDistance < nearestSqrDistance)
+            {
+                nearestSqrDistance = sqrDistance;
+                nearest = point;
+            }
+        }
+
+        distance = Mathf.Sqrt(nearestSqrDistance);
+
+        Vector3 flatToPoint = new Vector3(nearest.x - eye.x, 0f, nearest.z - eye.z);
+        Vector3 flatForward = new Vector3(forward.x, 0f, forward.z);
+        // Goz collider'in icindeyse / tam ustundeyse yatay yon tanimsizdir: hedefe donuk sayilir.
+        aimDot = flatToPoint.sqrMagnitude > Mathf.Epsilon && flatForward.sqrMagnitude > Mathf.Epsilon
+            ? Vector3.Dot(flatForward.normalized, flatToPoint.normalized)
+            : 1f;
+
+        if (distance > maxDistance)
+            return ReachResult.OutOfRange;
+
+        return aimDot < minAimDot ? ReachResult.OutOfAim : ReachResult.InReach;
+    }
 
     // Ayni nesnedeki TUM IInteractionGate'lere sorar; biri bile "hayir" derse sonuc hayirdir.
     // Gate'i olmayan nesne herkese aciktir. Sunucu (RequestInteractServerRpc, istasyonlarin
