@@ -102,6 +102,7 @@ GameObject:
   - component: {fileID: 595459770272931733}
   - component: {fileID: 1039527557412377949}
   - component: {fileID: 6514338744912556988}
+  - component: {fileID: 7100000000000000007}
   m_Layer: 0
   m_Name: Player Camera
   m_TagString: Untagged
@@ -523,3 +524,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlacementPreview
   registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
   previewMaterial: {fileID: 2100000, guid: 52b183f0f3b6ca04082f2c1e4a306396, type: 2}
+--- !u!114 &7100000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2546504971561204063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81d3e795f226aa141b4fb63b653d3244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlindVisionCamera
+  blindVisionRendererIndex: 1
+  blindRole: 3
