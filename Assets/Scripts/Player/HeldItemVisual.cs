@@ -20,6 +20,7 @@ public class HeldItemVisual : NetworkBehaviour
 
     private PlayerInventory _inventory;
     private bool _isLocalOwner;
+    private bool _subscribed;
     private GameObject _instance;
     private ItemType _shownType;
     private Transform _shownAnchor;
@@ -29,24 +30,54 @@ public class HeldItemVisual : NetworkBehaviour
         _inventory = GetComponent<PlayerInventory>();
         _isLocalOwner = IsOwner;
 
-        _inventory.Slots.OnListChanged += HandleSlotsChanged;
-        _inventory.ActiveSlotIndex.OnValueChanged += HandleActiveSlotChanged;
-        Item.NetworkSpawned += HandleItemSpawned;
-        Item.NetworkDespawned += HandleItemDespawned;
-
+        Subscribe();
         Refresh();
     }
 
     public override void OnNetworkDespawn()
     {
-        _inventory.Slots.OnListChanged -= HandleSlotsChanged;
-        _inventory.ActiveSlotIndex.OnValueChanged -= HandleActiveSlotChanged;
-        Item.NetworkSpawned -= HandleItemSpawned;
-        Item.NetworkDespawned -= HandleItemDespawned;
+        Unsubscribe();
 
         ClearInstance();
         _shownType = null;
         _shownAnchor = null;
+    }
+
+    // Item.NetworkSpawned/NetworkDespawned STATIK: bu bilesen yok olurken OnNetworkDespawn garanti
+    // cagrilmaz (NGO kapanisi/yok etme sirasi), abonelik kalirsa sonraki her oge olayi yok olmus
+    // bileseni cagirir. Bu yuzden OnDestroy da (idempotent) aboneligi birakir.
+    public override void OnDestroy()
+    {
+        Unsubscribe();
+        base.OnDestroy();
+    }
+
+    private void Subscribe()
+    {
+        if (_subscribed)
+            return;
+
+        _subscribed = true;
+        _inventory.Slots.OnListChanged += HandleSlotsChanged;
+        _inventory.ActiveSlotIndex.OnValueChanged += HandleActiveSlotChanged;
+        Item.NetworkSpawned += HandleItemSpawned;
+        Item.NetworkDespawned += HandleItemDespawned;
+    }
+
+    private void Unsubscribe()
+    {
+        if (!_subscribed)
+            return;
+
+        _subscribed = false;
+        if (_inventory != null)
+        {
+            _inventory.Slots.OnListChanged -= HandleSlotsChanged;
+            _inventory.ActiveSlotIndex.OnValueChanged -= HandleActiveSlotChanged;
+        }
+
+        Item.NetworkSpawned -= HandleItemSpawned;
+        Item.NetworkDespawned -= HandleItemDespawned;
     }
 
     // Round-ici rejoin'de obje yeniden spawn edilmez, yalnizca sahiplik degisir (bkz.

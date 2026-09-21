@@ -1,18 +1,16 @@
 using UnityEngine;
 
-// GDD 4.1.2 (2): bir yerlestirme hedefi — elindeki nesnenin onizlemesinin (PlacementPreview) ve
-// konan nesnenin duracagi nokta. Pasif bir isaretleyicidir: onizlemenin gorunup gorunmeyecegini
-// bu bilesen DEGIL, crosshair'in mevcut durumu (PlayerInteractor.CurrentTarget + Feedback) belirler.
+// GDD 4.1.2 (2): bir yerlestirme hedefinin ISARETI — elindeki nesnenin onizlemesinin (PlacementPreview)
+// gorunecegi nokta, bu bilesenin bulundugu nesnenin KENDI transform'udur. Pasif bir isaretleyicidir:
+// onizlemenin gorunup gorunmeyecegini bu bilesen DEGIL, crosshair'in mevcut durumu
+// (PlayerInteractor.CurrentTarget + Feedback) ve varsa hedefin ItemSlot'u belirler.
 //
-// Hedefe nisan alinabilmesi icin (GDD 4.1.2: hedef secimi nisanla yapilir) bu bilesen bir
-// HoldOrPressInteractable ile ayni nesnede durur; birden fazla yuvali istasyonlarda her yuva
-// kendi PlacementTarget + HoldOrPressInteractable'ini tasir.
+// Yuvada (ItemSlot) bu nesne yuvanin NetworkObject'idir: konan oge ona TrySetParent ile baglanir ve K7
+// geregi parent duz bir Transform olamaz, o yuzden nokta ayri bir alanda tutulmaz. Yuvasiz hedefte
+// (orn. tuketen birlestirme tezgahi) bu bilesen, onizleme noktasini gosteren bos bir cocuk nesneye
+// konur; PlacementPreview hedefin cocuklarinda arar.
 [DisallowMultipleComponent]
-[RequireComponent(typeof(HoldOrPressInteractable))]
 public class PlacementTarget : MonoBehaviour
 {
-    [Tooltip("Onizlemenin (ve konan nesnenin) duracagi nokta — orn. tezgahin ust yuzu. Bos birakilirsa bu nesnenin kendi transform'u kullanilir.")]
-    [SerializeField] private Transform placementPoint;
-
-    public Transform PlacementPoint => placementPoint != null ? placementPoint : transform;
+    public Transform PlacementPoint => transform;
 }

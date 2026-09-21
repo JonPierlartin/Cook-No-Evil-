@@ -3,7 +3,8 @@ using UnityEngine.Rendering;
 
 // GDD 4.1.2 (2) Yerlestirme Onizlemesi: crosshair bir PlacementTarget'a bakarken VE o hedef icin
 // "kullanilabilir" iken, hedefin noktasinda elindeki nesnenin sekilde yesil yari saydam bir kopyasi
-// gorunur. Yeni kural yazilmaz: hedef ve durum PlayerInteractor'in mevcut (tek nisan taramali) her
+// gorunur. Hedef bir ItemSlot ise onizleme YALNIZCA yuva BOSKEN ve elindeki oge kabul ediliyorsa cikar:
+// dolu yuvada crosshair "kullanilabilir" (alma) olabilir ama konacak bir sey yoktur. Yeni kural yazilmaz: hedef ve durum PlayerInteractor'in mevcut (tek nisan taramali) her
 // kare hesabindan okunur — menzil ve CanInteract zaten "kullanilabilir"in icindedir. Sirtini
 // donunce hedef degistigi icin onizleme kendiliginden kaybolur.
 //
@@ -28,6 +29,7 @@ public class PlacementPreview : MonoBehaviour
     private bool _visible;
     private HoldOrPressInteractable _lastTarget;
     private PlacementTarget _placement;
+    private ItemSlot _slot;
     private int _previewLayer = -1;
 
     private void Awake()
@@ -107,11 +109,17 @@ public class PlacementPreview : MonoBehaviour
         {
             _lastTarget = target;
             _placement = null;
+            _slot = null;
             if (target != null)
-                target.TryGetComponent(out _placement);
+            {
+                // Yuvasiz hedefte PlacementTarget onizleme noktasini gosteren bir cocuk nesnede durabilir.
+                _placement = target.GetComponentInChildren<PlacementTarget>();
+                target.TryGetComponent(out _slot);
+            }
         }
 
-        bool show = _instance != null && _placement != null && _interactor.Feedback == CrosshairState.Usable;
+        bool show = _instance != null && _placement != null && _interactor.Feedback == CrosshairState.Usable
+            && (_slot == null || (_slot.IsEmpty && _slot.Accepts(_shownType)));
 
         if (show)
         {
@@ -132,6 +140,7 @@ public class PlacementPreview : MonoBehaviour
         _shownType = null;
         _lastTarget = null;
         _placement = null;
+        _slot = null;
     }
 
     private void DestroyInstance()

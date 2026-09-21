@@ -158,6 +158,20 @@ public class PlayerInventory : NetworkBehaviour
         return true;
     }
 
+    // Ogeyi BELIRLI bir slota yazar (yalnizca bos slota). ItemMover'in basarisiz koy islemini geri almasi
+    // icin: ogenin ALINDIGI slota geri donmesi gerekir, slot kurali burada uygulanmaz.
+    public bool ServerTrySetItemAt(int slotIndex, Item item)
+    {
+        if (!IsServer || item == null || !item.NetworkObject.IsSpawned)
+            return false;
+
+        if (slotIndex < 0 || slotIndex >= Slots.Count || !Slots[slotIndex].IsEmpty)
+            return false;
+
+        Slots[slotIndex] = ItemSlotEntry.For(item.NetworkObject);
+        return true;
+    }
+
     // "Oyuncunun su an sectigi ogeyi kullan" (BurgerAssemblyStation / PackagingStation). Ogeyi
     // slottan CIKARIR ama despawn ETMEZ — ogenin akibetine cagiran karar verir (tuketim: ItemMover.Despawn).
     public bool ServerTryTakeActiveItem(out Item item)
