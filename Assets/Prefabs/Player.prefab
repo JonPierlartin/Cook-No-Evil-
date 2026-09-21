@@ -341,9 +341,9 @@ MonoBehaviour:
   playerCamera: {fileID: 1039527557412377949}
   cameraPivot: {fileID: 2202784849687738564}
   interactRange: 2.5
-  interactableLayer:
+  aimMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 4294966747
   aimDotThreshold: 0.5
   serverRangeTolerance: 0.5
   serverAimDotTolerance: 0.15

@@ -32,7 +32,8 @@ public class PlayerInteractor : NetworkBehaviour
     [SerializeField] private Transform cameraPivot;
     [Tooltip("Goz noktasindan hedef collider'inin en yakin noktasina azami mesafe (m).")]
     [SerializeField] private float interactRange = 2.5f;
-    [SerializeField] private LayerMask interactableLayer;
+    [Tooltip("Nisan isininin carpacagi KATI katmanlar: oyuncular, duvarlar, dekor ve etkilesim hedefleri. Isin ilk carptigi collider bir etkilesim hedefine aitse hedef odur, degilse hedef YOKTUR (GDD 4.1.2: hedef gorunur olmali). Onizleme katmani (PlacementPreview), Ignore Raycast ve UI bu maskede OLMAMALI; trigger'lar zaten yok sayilir.")]
+    [SerializeField] private LayerMask aimMask;
 
     [Tooltip("Yon esigi: gozun yatay bakis yonu ile goz -> hedefin en yakin noktasi yonu arasindaki dot product bu esigin ustunde olmalidir (1 = tam karsida, 0 = 90 derece). NetworkTransform yalnizca yaw'i senkronize ettigi icin (pitch yerel, bkz. PlayerController) kontrol sadece yatay duzlemde yapilir.")]
     [SerializeField, Range(0f, 1f)] private float aimDotThreshold = 0.5f;
@@ -44,6 +45,7 @@ public class PlayerInteractor : NetworkBehaviour
     [SerializeField, Min(0f)] private float serverAimDotTolerance = 0.15f;
 
     private InputAction _attackAction;
+    private bool _warnedSelfHit;
 
     // Yalnizca yerel (owner) oyuncunun etkilesimcisi; CrosshairUI ve PlacementPreview buradan okur.
     public static PlayerInteractor Local { get; private set; }
@@ -288,11 +290,28 @@ public class PlayerInteractor : NetworkBehaviour
         if (playerCamera == null || cameraPivot == null)
             return false;
 
-        // Tarama yalnizca HEDEFI secer (uzunluk sinirsiz; katman maskesi yalniz etkilesilebilirleri
-        // gecirir). "Yeterince yakin miyim / donuk muyum" sorusunu tarama DEGIL, sunucuyla ortak
-        // CheckReach cevaplar — istemcide tolerans YOK, sunucudan her zaman daha katidir.
-        if (!Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hit, Mathf.Infinity, interactableLayer))
+        // Tarama yalnizca HEDEFI secer (uzunluk sinirsiz). Katman maskesi KATI nesneleri kapsar, yani
+        // isini ilk carptigi sey durdurur: onunde baska bir oyuncu/engel varsa hedef yoktur (GDD 4.1.2).
+        // "Yeterince yakin miyim / donuk muyum" sorusunu tarama DEGIL, sunucuyla ortak CheckReach
+        // cevaplar — istemcide tolerans YOK, sunucudan her zaman daha katidir. Sunucu engel kontrolu
+        // yapmaz (pitch senkronize degil); istemci daha kati olmak zorunda oldugundan bu kurala uyar.
+        if (!Physics.Raycast(playerCamera.transform.position, playerCamera.transform.forward, out var hit, Mathf.Infinity, aimMask, QueryTriggerInteraction.Ignore))
             return false;
+
+        // Yerel oyuncunun KENDI collider'i isini durdurmamali. Bunu Unity'nin belgelenmis kurali saglar: ray
+        // baslangici bir collider'in ICINDEYSE o collider algilanmaz; kamera (CameraPivot) kendi
+        // CharacterController kapsulunun icinde durur. Kural bozulursa (kapsul kucultulur, kamera disari
+        // tasinirsa) hedef sessizce kaybolmasin diye bir kez uyari basilir.
+        if (hit.collider.transform.IsChildOf(transform))
+        {
+            if (!_warnedSelfHit)
+            {
+                _warnedSelfHit = true;
+                Debug.LogWarning($"[PlayerInteractor] Nisan isini oyuncunun KENDI collider'ina ('{hit.collider.name}') carpti; kamera kendi collider'inin icinde olmali. Hedef secilemiyor.");
+            }
+
+            return false;
+        }
 
         var candidate = hit.collider.GetComponentInParent<HoldOrPressInteractable>();
         if (candidate == null)

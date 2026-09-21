@@ -9,6 +9,10 @@
 //   1 PreviewOutline : ayni geometriyi EKRAN UZAYINDA disari genisletip cizer, stencil'in dolu oldugu
 //                      (yani onizlemenin kendi ici) pikselleri atlar -> geriye yalnizca halka kalir.
 // Nabiz: cizgi kalinligi ve parlakligi zamanla atar (_PulseSpeed, _PulseAmplitude).
+// Derinlik: her iki gecis de sahne derinligine gore test edilir (ZTest LEqual) — onizleme, onundeki
+// nesnenin ARKASINDA kalir (GDD 4.1.2 "Hedef gorunur olmali"); kismi ortme piksel piksel dogru calisir.
+// _DepthBias (metre): onizlemenin oturdugu yuzey (tezgah) halkayi kesmesin diye geometri kameraya dogru
+// bu kadar kaydirilarak test edilir.
 // Not: genisletme, nesnenin pivotundan disari dogrudur — merkezli, dis bukey (convex) gorseller icin.
 Shader "CookNoEvil/BlindVisionPreviewOutline"
 {
@@ -18,6 +22,7 @@ Shader "CookNoEvil/BlindVisionPreviewOutline"
         _LineThickness ("Line Thickness (pixels)", Float) = 2
         _PulseSpeed ("Pulse Speed (Hz)", Float) = 1.5
         _PulseAmplitude ("Pulse Amplitude (0..1)", Range(0, 1)) = 0.6
+        _DepthBias ("Depth Bias (meters toward camera)", Float) = 0.25
     }
 
     SubShader
@@ -32,7 +37,18 @@ Shader "CookNoEvil/BlindVisionPreviewOutline"
             float _LineThickness;
             float _PulseSpeed;
             float _PulseAmplitude;
+            float _DepthBias;
         CBUFFER_END
+
+        // Derinlik testi icin geometriyi kameraya dogru _DepthBias metre kaydirir: onizlemenin oturdugu
+        // yuzey (ve yuzeye gomulu kisimlar) halkayi kesmez; gercek bir engel (oyuncu vb.) ise cok daha
+        // onde oldugu icin onizlemeyi yine orter.
+        float4 BiasedClipPosition(float3 positionOS)
+        {
+            float3 positionWS = TransformObjectToWorld(positionOS);
+            float3 toCamera = normalize(GetCameraPositionWS() - positionWS);
+            return TransformWorldToHClip(positionWS + toCamera * _DepthBias);
+        }
 
         struct Attributes
         {
@@ -52,7 +68,7 @@ Shader "CookNoEvil/BlindVisionPreviewOutline"
             Name "PreviewMask"
             Tags { "LightMode" = "SRPDefaultUnlit" }
 
-            ZTest Always
+            ZTest LEqual
             ZWrite Off
             ColorMask 0
             Cull Off
@@ -70,7 +86,7 @@ Shader "CookNoEvil/BlindVisionPreviewOutline"
             Varyings VertMask(Attributes input)
             {
                 Varyings output;
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.positionCS = BiasedClipPosition(input.positionOS.xyz);
                 output.brightness = 0;
                 return output;
             }
@@ -88,7 +104,7 @@ Shader "CookNoEvil/BlindVisionPreviewOutline"
             Name "PreviewOutline"
             Tags { "LightMode" = "SRPDefaultUnlit" }
 
-            ZTest Always
+            ZTest LEqual
             ZWrite Off
             Cull Off
             Blend Off
@@ -107,7 +123,7 @@ Shader "CookNoEvil/BlindVisionPreviewOutline"
                 float pulse = sin(_Time.y * _PulseSpeed * TWO_PI);      // -1..1
                 float widthPixels = max(_LineThickness * (1.0 + _PulseAmplitude * pulse), 0.0);
 
-                float4 clip = TransformObjectToHClip(input.positionOS.xyz);
+                float4 clip = BiasedClipPosition(input.positionOS.xyz);
                 float4 clipCenter = TransformObjectToHClip(float3(0.0, 0.0, 0.0));
 
                 // Pivottan disari yon, piksel uzayinda; genisletme piksel cinsinden sabit kalinlik verir.
