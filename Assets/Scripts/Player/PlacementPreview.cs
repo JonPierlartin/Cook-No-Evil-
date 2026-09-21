@@ -19,6 +19,8 @@ public class PlacementPreview : MonoBehaviour
     [SerializeField] private IngredientRegistry registry;
     [Tooltip("Onizleme kopyasinin tum renderer'larina uygulanan yesil yari saydam materyal.")]
     [SerializeField] private Material previewMaterial;
+    [Tooltip("Onizleme kopyasinin duracagi katman. Etkilesim raycast maskesinde OLMAMALI (crosshair kendi onizlemesine carpmasin). Sef'in renderer'i (BlindVision_Renderer) bu katmani nabizli konturla ayri bir gecisle cizer; diger roller yesil yari saydami gorur.")]
+    [SerializeField] private string previewLayerName;
 
     private PlayerInteractor _interactor;
     private PlayerInventory _inventory;
@@ -27,11 +29,16 @@ public class PlacementPreview : MonoBehaviour
     private bool _visible;
     private HoldOrPressInteractable _lastTarget;
     private PlacementTarget _placement;
+    private int _previewLayer = -1;
 
     private void Awake()
     {
         _interactor = GetComponent<PlayerInteractor>();
         _inventory = GetComponent<PlayerInventory>();
+
+        _previewLayer = LayerMask.NameToLayer(previewLayerName);
+        if (_previewLayer < 0)
+            Debug.LogWarning($"[PlacementPreview] '{previewLayerName}' katmani bulunamadi; onizleme varsayilan katmanda kalacak (Sef'te nabizli kontur cizilmez).");
     }
 
     private void OnDisable()
@@ -74,6 +81,12 @@ public class PlacementPreview : MonoBehaviour
 
     private void PrepareGhost(GameObject ghost)
     {
+        if (_previewLayer >= 0)
+        {
+            foreach (var child in ghost.GetComponentsInChildren<Transform>(true))
+                child.gameObject.layer = _previewLayer;
+        }
+
         foreach (var collider in ghost.GetComponentsInChildren<Collider>(true))
             Destroy(collider);
 

@@ -524,6 +524,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlacementPreview
   registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
   previewMaterial: {fileID: 2100000, guid: 52b183f0f3b6ca04082f2c1e4a306396, type: 2}
+  previewLayerName: PlacementPreview
 --- !u!114 &7100000000000000007
 MonoBehaviour:
   m_ObjectHideFlags: 0
