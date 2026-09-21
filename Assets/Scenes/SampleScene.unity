@@ -1437,10 +1437,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BurgerAssemblyStation
   ShowTopMostFoldoutHeaderGroup: 1
   activeRecipe: {fileID: 11400000, guid: 5282c8839fdac6e46a970cd4bbe4d9e6, type: 2}
-  registeredIngredients:
-  - {fileID: 11400000, guid: 107e12c39a0c3a248bae42745159c596, type: 2}
-  - {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}
-  - {fileID: 11400000, guid: 89d4a98bd8feec74db6683d87a13088f, type: 2}
+  registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
   allowedRoles: 03000000
 --- !u!114 &374928207
 MonoBehaviour:
@@ -3649,10 +3646,7 @@ MonoBehaviour:
   - {fileID: 434701062}
   - {fileID: 89567484}
   - {fileID: 780959969}
-  registeredIngredients:
-  - {fileID: 11400000, guid: 107e12c39a0c3a248bae42745159c596, type: 2}
-  - {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}
-  - {fileID: 11400000, guid: 89d4a98bd8feec74db6683d87a13088f, type: 2}
+  registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   activeColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &1384697463

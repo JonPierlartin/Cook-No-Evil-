@@ -12,8 +12,8 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInventory))]
 public class HeldItemVisual : NetworkBehaviour
 {
-    [Tooltip("Id -> IngredientType cozumlemesi icin kayit defteri. HotbarUI ve BurgerAssemblyStation'daki dizilerle AYNI icerikte olmali (tek IngredientRegistry'ye tasinacak).")]
-    [SerializeField] private IngredientType[] registeredIngredients;
+    [Tooltip("Id -> IngredientType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
+    [SerializeField] private IngredientRegistry registry;
     [Tooltip("Birinci sahis tutma noktasi (oyuncu kamerasinin cocugu). Yalnizca sahip gorur.")]
     [SerializeField] private Transform firstPersonHoldPoint;
     [Tooltip("Ucuncu sahis tutma noktasi (govde gorselinin cocugu, el hizasi). Yalnizca diger oyuncular gorur.")]
@@ -73,7 +73,7 @@ public class HeldItemVisual : NetworkBehaviour
         _shownAnchor = anchor;
 
         // Bos slot, kayitsiz id, gorseli olmayan oge veya atanmamis nokta: hata degil, el bos.
-        var ingredientType = FindIngredientType(id);
+        var ingredientType = registry != null ? registry.Find(id) : null;
         if (ingredientType == null || ingredientType.VisualPrefab == null || anchor == null)
             return;
 
@@ -95,19 +95,5 @@ public class HeldItemVisual : NetworkBehaviour
             Destroy(_instance);
 
         _instance = null;
-    }
-
-    private IngredientType FindIngredientType(int id)
-    {
-        if (id == PlayerInventory.EmptySlot || registeredIngredients == null)
-            return null;
-
-        foreach (var ingredient in registeredIngredients)
-        {
-            if (ingredient != null && ingredient.Id == id)
-                return ingredient;
-        }
-
-        return null;
     }
 }

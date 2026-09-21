@@ -12,7 +12,7 @@ public class HotbarUI : MonoBehaviour
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private Image[] slotIcons;
     [SerializeField] private Image[] slotBackgrounds;
-    [SerializeField] private IngredientType[] registeredIngredients;
+    [SerializeField] private IngredientRegistry registry;
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color activeColor = Color.yellow;
 
@@ -83,7 +83,7 @@ public class HotbarUI : MonoBehaviour
         for (int i = 0; i < slotIcons.Length && i < _inventory.Slots.Count; i++)
         {
             int ingredientId = _inventory.Slots[i];
-            var ingredientType = FindIngredientType(ingredientId);
+            var ingredientType = registry != null ? registry.Find(ingredientId) : null;
 
             if (slotIcons[i] != null)
             {
@@ -95,19 +95,5 @@ public class HotbarUI : MonoBehaviour
             if (slotBackgrounds != null && i < slotBackgrounds.Length && slotBackgrounds[i] != null)
                 slotBackgrounds[i].color = i == activeIndex ? activeColor : normalColor;
         }
-    }
-
-    private IngredientType FindIngredientType(int id)
-    {
-        if (id == PlayerInventory.EmptySlot || registeredIngredients == null)
-            return null;
-
-        foreach (var ingredient in registeredIngredients)
-        {
-            if (ingredient != null && ingredient.Id == id)
-                return ingredient;
-        }
-
-        return null;
     }
 }

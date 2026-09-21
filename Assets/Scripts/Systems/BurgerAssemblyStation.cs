@@ -10,8 +10,8 @@ using UnityEngine;
 public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
 {
     [SerializeField] private BurgerRecipe activeRecipe;
-    [Tooltip("Id -> IngredientType cozumlemesi icin kayit defteri. DumbwaiterSystem kuruldugunda AYNI dizi Inspector'dan atanmali.")]
-    [SerializeField] private IngredientType[] registeredIngredients;
+    [Tooltip("Id -> IngredientType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
+    [SerializeField] private IngredientRegistry registry;
     [Tooltip("Bu istasyonu kullanabilecek roller. Bos birakilirsa herkes kullanabilir.")]
     [SerializeField] private PlayerRole[] allowedRoles;
 
@@ -96,7 +96,7 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         }
 
         ingredientId = inventory.Slots[activeSlot];
-        var ingredientType = FindIngredientType(ingredientId);
+        var ingredientType = registry != null ? registry.Find(ingredientId) : null;
         if (ingredientType == null)
         {
             reason = "malzeme kayıtlı değil";
@@ -144,19 +144,5 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         }
 
         return true;
-    }
-
-    private IngredientType FindIngredientType(int id)
-    {
-        if (registeredIngredients == null)
-            return null;
-
-        foreach (var ingredient in registeredIngredients)
-        {
-            if (ingredient != null && ingredient.Id == id)
-                return ingredient;
-        }
-
-        return null;
     }
 }
