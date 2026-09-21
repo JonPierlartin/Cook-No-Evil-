@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // id -> ItemType cozumlemesinin TEK yasadigi yer. PlayerInventory yalnizca int id tasir
@@ -24,4 +25,52 @@ public class ItemRegistry : ScriptableObject
 
         return null;
     }
+
+#if UNITY_EDITOR
+    private bool _validationQueued;
+
+    // Kayit defteri her degistiginde (ve script yenilemesinde) itemPrefab dogrulamasi calisir. AssetDatabase
+    // erisimi OnValidate icinde riskli oldugu icin bir sonraki editor turuna ertelenir; birden cok tetik tek
+    // dogrulamaya iner. Saglikli durumda hicbir sey basmaz.
+    private void OnValidate()
+    {
+        if (_validationQueued)
+            return;
+
+        _validationQueued = true;
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            _validationQueued = false;
+            if (this != null)
+                ValidateItemPrefabs();
+        };
+    }
+
+    // Her turun itemPrefab'i icin ag kabugu kurallarini denetler ve sorun basina bir UYARI basar.
+    // Sorun sayisini dondurur. Inspector'da kayit defterinin sag-tik menusunden de calistirilabilir.
+    [ContextMenu("Öğe prefab'larını doğrula")]
+    public int ValidateItemPrefabs()
+    {
+        if (ingredients == null)
+            return 0;
+
+        int warnings = 0;
+        var issues = new List<string>();
+        foreach (var itemType in ingredients)
+        {
+            if (itemType == null)
+                continue;
+
+            issues.Clear();
+            itemType.CollectItemPrefabIssues(issues);
+            foreach (var issue in issues)
+            {
+                Debug.LogWarning($"[ItemRegistry] '{itemType.name}': {issue}", itemType);
+                warnings++;
+            }
+        }
+
+        return warnings;
+    }
+#endif
 }
