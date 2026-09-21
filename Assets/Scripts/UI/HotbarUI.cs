@@ -6,13 +6,14 @@ using UnityEngine.UI;
 // Her zaman gorunur 4-slotluk hotbar HUD'u. Local player'in PlayerInventory'si
 // ancak PlayerSpawner tarafindan spawn edildikten SONRA var oldugu icin (sahne
 // baslangicinda henuz yok), Update()'te lazy-resolve edilir — bulununca bir
-// dahaki karede referans elde tutulur, tekrar aranmaz.
+// dahaki karede referans elde tutulur, tekrar aranmaz. Slot icerigi her karede yerel olarak, replike
+// slot listesi + spawn edilmis ogelerden okunur (PlayerInventory.TryGetItem): oge listeden gec gelirse
+// ikon oge spawn olur olmaz kendiliginden belirir; ag uzerinden hicbir sey gonderilmez.
 public class HotbarUI : MonoBehaviour
 {
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private Image[] slotIcons;
     [SerializeField] private Image[] slotBackgrounds;
-    [SerializeField] private ItemRegistry registry;
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color activeColor = Color.yellow;
 
@@ -82,8 +83,7 @@ public class HotbarUI : MonoBehaviour
 
         for (int i = 0; i < slotIcons.Length && i < _inventory.Slots.Count; i++)
         {
-            int ingredientId = _inventory.Slots[i];
-            var itemType = registry != null ? registry.Find(ingredientId) : null;
+            var itemType = _inventory.TryGetItem(i, out var item) ? item.Type : null;
 
             if (slotIcons[i] != null)
             {

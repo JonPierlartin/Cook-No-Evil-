@@ -10,8 +10,6 @@ using UnityEngine;
 public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
 {
     [SerializeField] private BurgerRecipe activeRecipe;
-    [Tooltip("Id -> ItemType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
-    [SerializeField] private ItemRegistry registry;
     [Tooltip("Bu istasyonu kullanabilecek roller. Bos birakilirsa herkes kullanabilir.")]
     [SerializeField] private PlayerRole[] allowedRoles;
 
@@ -40,16 +38,20 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
         Debug.Log($"[BurgerAssemblyStation] HandleInteractionCompleted cagrildi (clientId={clientId}, role={role}).");
 
-        if (!TryEvaluate(clientId, out var inventory, out int ingredientId, out var reason))
+        if (!TryEvaluate(clientId, out var inventory, out var itemType, out var reason))
         {
             Debug.LogWarning($"[BurgerAssemblyStation] reddetti (clientId={clientId}, rol={role}): {reason}.");
             return;
         }
 
-        if (!inventory.ServerTryRemoveActiveItem(out _))
+        // Sira: ONCE slottan cikarilir, SONRA despawn edilir (slot hicbir an despawn olmus bir ogeyi
+        // gostermez). Tezgah malzemeyi yalnizca tur numarasi olarak tutar (PlacedIngredients) — bu adimda
+        // oge tezgaha parent edilmez, yok edilir (parent/yuva Adim 4.2'de).
+        if (!inventory.ServerTryTakeActiveItem(out var item))
             return;
 
-        PlacedIngredients.Add(ingredientId);
+        PlacedIngredients.Add(itemType.Id);
+        ItemMover.Despawn(item);
 
         // Test edilebilirlik icin: tarif tamamlaninca otomatik sifirlanir, boylece
         // musteri/siparis sistemine gerek kalmadan art arda test edilebilir.
@@ -64,10 +66,10 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         return TryEvaluate(clientId, out _, out _, out reason);
     }
 
-    private bool TryEvaluate(ulong clientId, out PlayerInventory inventory, out int ingredientId, out string reason)
+    private bool TryEvaluate(ulong clientId, out PlayerInventory inventory, out ItemType itemType, out string reason)
     {
         inventory = null;
-        ingredientId = PlayerInventory.EmptySlot;
+        itemType = null;
 
         if (RoleManager.Instance == null)
         {
@@ -88,18 +90,16 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
             return false;
         }
 
-        int activeSlot = inventory.ActiveSlotIndex.Value;
-        if (activeSlot < 0 || activeSlot >= inventory.Slots.Count || inventory.Slots[activeSlot] == PlayerInventory.EmptySlot)
+        if (!inventory.TryGetActiveItem(out var item))
         {
             reason = "elde malzeme yok";
             return false;
         }
 
-        ingredientId = inventory.Slots[activeSlot];
-        var itemType = registry != null ? registry.Find(ingredientId) : null;
+        itemType = item.Type;
         if (itemType == null)
         {
-            reason = "malzeme kayıtlı değil";
+            reason = "öğenin türü atanmamış";
             return false;
         }
 

@@ -6,14 +6,13 @@ using UnityEngine;
 // birinci sahis noktasinda (kameranin cocugu), diger oyuncular ucuncu sahis noktasinda
 // (govdenin cocugu) gorur — sahip icin ucuncu sahis noktasi kullanilmaz, yani cift gorunum yok.
 //
-// Tamamen yerel ve replike veriden calisir: PlayerInventory.Slots ve ActiveSlotIndex zaten
-// herkese replike; buradan ag uzerinden hicbir sey gonderilmez. Gorsel yalnizca gosterilecek
-// oge (veya tutma noktasi) DEGISINCE yeniden olusturulur, her karede degil.
+// Tamamen yerel ve replike veriden calisir: PlayerInventory.Slots, ActiveSlotIndex ve spawn edilmis
+// ogeler zaten herkese replike; buradan ag uzerinden hicbir sey gonderilmez. Gorsel yalnizca
+// gosterilecek ogenin turu (veya tutma noktasi) DEGISINCE yeniden olusturulur, her karede degil.
+// Slot listesi ogeden ONCE gelebilir: oge bu istemcide spawn/despawn olunca da yeniden bakilir.
 [RequireComponent(typeof(PlayerInventory))]
 public class HeldItemVisual : NetworkBehaviour
 {
-    [Tooltip("Id -> ItemType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
-    [SerializeField] private ItemRegistry registry;
     [Tooltip("Birinci sahis tutma noktasi (oyuncu kamerasinin cocugu). Yalnizca sahip gorur.")]
     [SerializeField] private Transform firstPersonHoldPoint;
     [Tooltip("Ucuncu sahis tutma noktasi (govde gorselinin cocugu, el hizasi). Yalnizca diger oyuncular gorur.")]
@@ -22,7 +21,7 @@ public class HeldItemVisual : NetworkBehaviour
     private PlayerInventory _inventory;
     private bool _isLocalOwner;
     private GameObject _instance;
-    private int _shownId = PlayerInventory.EmptySlot;
+    private ItemType _shownType;
     private Transform _shownAnchor;
 
     public override void OnNetworkSpawn()
@@ -32,6 +31,8 @@ public class HeldItemVisual : NetworkBehaviour
 
         _inventory.Slots.OnListChanged += HandleSlotsChanged;
         _inventory.ActiveSlotIndex.OnValueChanged += HandleActiveSlotChanged;
+        Item.NetworkSpawned += HandleItemSpawned;
+        Item.NetworkDespawned += HandleItemDespawned;
 
         Refresh();
     }
@@ -40,9 +41,11 @@ public class HeldItemVisual : NetworkBehaviour
     {
         _inventory.Slots.OnListChanged -= HandleSlotsChanged;
         _inventory.ActiveSlotIndex.OnValueChanged -= HandleActiveSlotChanged;
+        Item.NetworkSpawned -= HandleItemSpawned;
+        Item.NetworkDespawned -= HandleItemDespawned;
 
         ClearInstance();
-        _shownId = PlayerInventory.EmptySlot;
+        _shownType = null;
         _shownAnchor = null;
     }
 
@@ -56,37 +59,35 @@ public class HeldItemVisual : NetworkBehaviour
         Refresh();
     }
 
-    private void HandleSlotsChanged(NetworkListEvent<int> change) => Refresh();
+    private void HandleSlotsChanged(NetworkListEvent<ItemSlotEntry> change) => Refresh();
 
     private void HandleActiveSlotChanged(int previous, int current) => Refresh();
 
-    private void Refresh()
+    // Liste ogeden once gelmisse (aktif slot dolu ama oge henuz yok) el simdilik bos gorunur; oge
+    // spawn olunca burasi tamamlar. Baska ogeler icin de tetiklenir — Refresh degisiklik yoksa hicbir
+    // sey yapmaz, bu yuzden ucuzdur.
+    private void HandleItemSpawned(Item item) => Refresh();
+
+    // Despawn olayi oge HALA SpawnedObjects'teyken tetiklenir; bu yuzden yok edilen oge cozumden dislanir.
+    private void HandleItemDespawned(Item item) => Refresh(ignoredItem: item);
+
+    private void Refresh(Item ignoredItem = null)
     {
         var anchor = _isLocalOwner ? firstPersonHoldPoint : thirdPersonHoldPoint;
-        int id = GetActiveItemId();
+        var itemType = _inventory.TryGetActiveItem(out var item) && item != ignoredItem ? item.Type : null;
 
-        if (id == _shownId && anchor == _shownAnchor)
+        if (itemType == _shownType && anchor == _shownAnchor)
             return;
 
         ClearInstance();
-        _shownId = id;
+        _shownType = itemType;
         _shownAnchor = anchor;
 
-        // Bos slot, kayitsiz id, gorseli olmayan oge veya atanmamis nokta: hata degil, el bos.
-        var itemType = registry != null ? registry.Find(id) : null;
+        // Bos slot, gorseli olmayan oge veya atanmamis nokta: hata degil, el bos.
         if (itemType == null || itemType.VisualPrefab == null || anchor == null)
             return;
 
         _instance = Instantiate(itemType.VisualPrefab, anchor);
-    }
-
-    private int GetActiveItemId()
-    {
-        int index = _inventory.ActiveSlotIndex.Value;
-        if (index < 0 || index >= _inventory.Slots.Count)
-            return PlayerInventory.EmptySlot;
-
-        return _inventory.Slots[index];
     }
 
     private void ClearInstance()

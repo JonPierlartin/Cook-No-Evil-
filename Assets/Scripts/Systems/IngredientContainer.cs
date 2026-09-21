@@ -30,7 +30,8 @@ public class IngredientContainer : NetworkBehaviour, IInteractionGate
         _interactable.OnInteractionCompleted -= HandleInteractionCompleted;
     }
 
-    // Kural TEK yerde (GDD 4.1.2, 6.3): malzeme atanmis, rol izinli, envanterde bos slot var.
+    // Kural TEK yerde (GDD 4.1.2, 6.3): malzeme atanmis ve spawn edilebilir (itemPrefab dolu), rol izinli,
+    // envanterde bos slot var.
     // Sunucu bunu tamamlanmada, crosshair her karede (istemcide) sorar.
     public bool CanInteract(ulong clientId, out string reason)
     {
@@ -44,6 +45,13 @@ public class IngredientContainer : NetworkBehaviour, IInteractionGate
         if (ingredient == null)
         {
             reason = "malzeme atanmamış";
+            return false;
+        }
+
+        // Bu tur henuz gercek bir oge olarak spawn edilemiyor (orn. Kofte): alinamaz, crosshair "engelli".
+        if (ingredient.ItemPrefab == null)
+        {
+            reason = "malzemenin öğe prefab'ı yok";
             return false;
         }
 
@@ -82,7 +90,17 @@ public class IngredientContainer : NetworkBehaviour, IInteractionGate
             return;
         }
 
-        inventory.ServerTryAddItem(ingredient.Id);
+        // Sira: ONCE oge dogar, SONRA slota yazilir. Slot yazimi basarisiz olursa oge hemen despawn
+        // edilir — sahipsiz oge kalmaz. (Kapi ayni cagrida bos slot dogruladi; basarisizlik bir hatadir.)
+        var item = ItemMover.SpawnCarried(ingredient, transform.position);
+        if (item == null)
+            return;
+
+        if (!inventory.ServerTryAddItem(item))
+        {
+            Debug.LogError($"[IngredientContainer] '{name}': oge slota yazilamadi (clientId={clientId}); oge geri alindi.");
+            ItemMover.Despawn(item);
+        }
     }
 
     private bool IsRoleAllowed(PlayerRole role)

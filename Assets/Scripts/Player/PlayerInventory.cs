@@ -2,25 +2,25 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-// Generic 4-slotlu envanter — tum roller icin AYNI kavram (eskiden planlanan
-// Komi'ye-ozel 3-durumlu CarryState enum'i yerine gecti). Slot degerleri
-// ItemType.Id referansidir, -1 bos slot demektir. Sadece server yazar;
-// ItemHandoffSlot/PackagingStation/BurgerAssemblyStation gibi istasyonlarin
-// ServerRpc'leri basarili oldugunda bu API'yi cagirir. ActiveSlotIndex ise
-// sadece sahibinin (owner) etkiledigi bir secim oldugu icin
-// NetworkVariableWritePermission.Owner ile dogrudan client tarafindan yazilir.
+// Generic slotlu envanter — tum roller icin AYNI kavram. Slotlar GERCEK OGELERIN (Item, sunucu sahipli
+// NetworkObject) kimligini tutar (ItemSlotEntry; bos slot = 0). Turu/durumu ogenin kendisi tasir; burada
+// tur numarasi tutulmaz. Slot listesini yalnizca sunucu yazar; ActiveSlotIndex ise yalnizca sahibinin
+// etkiledigi bir secim oldugu icin NetworkVariableWritePermission.Owner ile dogrudan client tarafindan
+// yazilir. Ogenin dogumu/olumu burada DEGIL, ItemMover'dadir.
 [RequireComponent(typeof(NetworkObject))]
 public class PlayerInventory : NetworkBehaviour
 {
-    public const int SlotCount = 4;
-    public const int EmptySlot = -1;
+    [Tooltip("Slot sayisi (GDD 4.1: 4). Hotbar UI'sinin slot sayisiyla eslesmeli.")]
+    [SerializeField] private int slotCount = 4;
 
-    public readonly NetworkList<int> Slots = new();
+    public readonly NetworkList<ItemSlotEntry> Slots = new();
 
     public readonly NetworkVariable<int> ActiveSlotIndex =
         new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private static readonly List<PlayerInventory> Spawned = new();
+
+    public int SlotCount => slotCount;
 
     public override void OnNetworkSpawn()
     {
@@ -29,14 +29,30 @@ public class PlayerInventory : NetworkBehaviour
         if (IsServer)
         {
             Slots.Clear();
-            for (int i = 0; i < SlotCount; i++)
-                Slots.Add(EmptySlot);
+            for (int i = 0; i < slotCount; i++)
+                Slots.Add(default);
         }
     }
 
     public override void OnNetworkDespawn()
     {
         Spawned.Remove(this);
+
+        // Oyuncu nesnesi GERCEKTEN despawn oluyorsa (oyuncu ayrildi ve nesnesi silindi) elindeki ogeler
+        // sahipsiz kalmasin. Ag kapanirken (Shutdown) NGO tum nesneleri zaten despawn eder; orada
+        // ItemMover'i cagirmak yarisa girer ve sahte hata basar — bu yuzden ShutdownInProgress ile ayrilir.
+        var manager = NetworkManager.Singleton;
+        if (!IsServer || manager == null || manager.ShutdownInProgress)
+            return;
+
+        for (int i = 0; i < Slots.Count; i++)
+        {
+            if (!TryGetItem(i, out var item))
+                continue;
+
+            Slots[i] = default;
+            ItemMover.Despawn(item);
+        }
     }
 
     // IInteractionGate uygulamalarinin sunucuda VE istemcide ayni cagriyla envanteri bulmasi icin.
@@ -71,65 +87,94 @@ public class PlayerInventory : NetworkBehaviour
 
     public void SetActiveSlot(int slotIndex)
     {
-        if (!IsOwner || slotIndex < 0 || slotIndex >= SlotCount)
+        if (!IsOwner || slotIndex < 0 || slotIndex >= slotCount)
             return;
 
         ActiveSlotIndex.Value = slotIndex;
     }
 
-    // Salt-okunur uygunluk kontrolu — mutasyon yapmaz, sadece bos slot var mi bakar.
-    public bool HasFreeSlot()
+    // Slottaki ogeyi SpawnedObjects'ten cozer. Sunucuda ve istemcide AYNI fonksiyon. Slot bos, oge bu
+    // makinede (henuz) spawn olmamis veya Item bileseni yoksa false doner — istisna atmaz. Liste
+    // ogeden once gelebildigi icin "false" istemcide gecici bir durum olabilir; cagiranlar bunu hata
+    // saymaz, oge gelince yeniden sorar.
+    public bool TryGetItem(int slot, out Item item)
     {
-        for (int i = 0; i < Slots.Count; i++)
-        {
-            if (Slots[i] == EmptySlot)
-                return true;
-        }
+        item = null;
 
-        return false;
-    }
-
-    public bool ServerTryAddItem(int ingredientId)
-    {
-        if (!IsServer)
+        if (slot < 0 || slot >= Slots.Count)
             return false;
 
-        for (int i = 0; i < Slots.Count; i++)
-        {
-            if (Slots[i] != EmptySlot)
-                continue;
-
-            Slots[i] = ingredientId;
-            return true;
-        }
-
-        return false;
-    }
-
-    public bool ServerTryRemoveItem(int slotIndex)
-    {
-        if (!IsServer || slotIndex < 0 || slotIndex >= Slots.Count || Slots[slotIndex] == EmptySlot)
+        var entry = Slots[slot];
+        if (entry.IsEmpty)
             return false;
 
-        Slots[slotIndex] = EmptySlot;
+        var manager = NetworkManager.Singleton;
+        if (manager == null || manager.SpawnManager == null)
+            return false;
+
+        if (!manager.SpawnManager.SpawnedObjects.TryGetValue(entry.NetworkObjectId, out var networkObject) || networkObject == null)
+            return false;
+
+        return networkObject.TryGetComponent(out item);
+    }
+
+    public bool TryGetActiveItem(out Item item) => TryGetItem(ActiveSlotIndex.Value, out item);
+
+    // Salt-okunur uygunluk kontrolu — ServerTryAddItem'in hedef slot aramasiyla AYNI fonksiyonu kullanir,
+    // yani "bos slot var" dedigi her yerde ekleme gercekten basarir (crosshair yalan soylemez).
+    public bool HasFreeSlot() => FindTargetSlot() >= 0;
+
+    // GDD 4.1 "Alinan ogenin hangi slota girdigi": SECILI slot bossa oraya; doluysa secili slottan
+    // SONRAKI ilk bos slota, sona gelince basa sararak. Secili slot degismez. Hic bos slot yoksa -1.
+    private int FindTargetSlot()
+    {
+        int count = Slots.Count;
+        if (count == 0)
+            return -1;
+
+        int selected = Mathf.Clamp(ActiveSlotIndex.Value, 0, count - 1);
+        for (int step = 0; step < count; step++)
+        {
+            int index = (selected + step) % count;
+            if (Slots[index].IsEmpty)
+                return index;
+        }
+
+        return -1;
+    }
+
+    // Spawn edilmis, Carried bir ogeyi envantere yazar. Basarisizsa false — cagiran, spawn ettigi
+    // ogeyi hemen ItemMover ile despawn etmekten sorumludur (sahipsiz oge kalmasin).
+    public bool ServerTryAddItem(Item item)
+    {
+        if (!IsServer || item == null || !item.NetworkObject.IsSpawned)
+            return false;
+
+        int target = FindTargetSlot();
+        if (target < 0)
+            return false;
+
+        Slots[target] = ItemSlotEntry.For(item.NetworkObject);
         return true;
     }
 
-    // BurgerAssemblyStation/PackagingStation gibi "oyuncunun su an sectigi
-    // malzemeyi kullan" davranisi icin uygunluk metodu.
-    public bool ServerTryRemoveActiveItem(out int ingredientId)
+    // "Oyuncunun su an sectigi ogeyi kullan" (BurgerAssemblyStation / PackagingStation). Ogeyi
+    // slottan CIKARIR ama despawn ETMEZ — ogenin akibetine cagiran karar verir (tuketim: ItemMover.Despawn).
+    public bool ServerTryTakeActiveItem(out Item item)
     {
-        ingredientId = EmptySlot;
+        item = null;
 
         if (!IsServer)
             return false;
 
         int index = ActiveSlotIndex.Value;
-        if (index < 0 || index >= Slots.Count || Slots[index] == EmptySlot)
+        if (!TryGetItem(index, out item))
+        {
+            item = null;
             return false;
+        }
 
-        ingredientId = Slots[index];
-        Slots[index] = EmptySlot;
+        Slots[index] = default;
         return true;
     }
 }

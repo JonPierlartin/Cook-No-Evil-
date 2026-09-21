@@ -19,6 +19,12 @@ public class Item : NetworkBehaviour
     public readonly NetworkVariable<ItemPresence> Presence =
         new(ItemPresence.Carried, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    // Bir oge bu istemcide spawn/despawn oldugunda tetiklenir. Envanter listesi ogeden ONCE gelebilir
+    // (iki mesaj bagimsiz islenir); elde tutulan ogeyi olay-surumlu cizen tuketiciler (HeldItemVisual)
+    // gec gelen ogeyi buradan yakalar. Despawn olayi, oge hala SpawnedObjects'teyken tetiklenir.
+    public static event System.Action<Item> NetworkSpawned;
+    public static event System.Action<Item> NetworkDespawned;
+
     private Renderer[] _renderers;
 
     public ItemType Type => type;
@@ -33,11 +39,13 @@ public class Item : NetworkBehaviour
     {
         ApplyPresence(Presence.Value);
         Presence.OnValueChanged += HandlePresenceChanged;
+        NetworkSpawned?.Invoke(this);
     }
 
     public override void OnNetworkDespawn()
     {
         Presence.OnValueChanged -= HandlePresenceChanged;
+        NetworkDespawned?.Invoke(this);
     }
 
     private void HandlePresenceChanged(ItemPresence previous, ItemPresence current) => ApplyPresence(current);

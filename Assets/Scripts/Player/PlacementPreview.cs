@@ -7,16 +7,15 @@ using UnityEngine.Rendering;
 // kare hesabindan okunur — menzil ve CanInteract zaten "kullanilabilir"in icindedir. Sirtini
 // donunce hedef degistigi icin onizleme kendiliginden kaybolur.
 //
-// Sekil, aktif slottaki ogenin visualPrefab'idir (elde tutulanla AYNI gorsel); ItemRegistry
-// uzerinden bulunur. Kopya yalnizca aktif oge DEGISINCE olusturulur; her karede yalnizca konum ve
-// gorunurluk guncellenir. Kopyada collider tutulmaz (crosshair'in nisan taramasi kendi onizlemesine
+// Sekil, aktif slottaki ogenin turunun visualPrefab'idir (elde tutulanla AYNI gorsel); tur, aktif
+// slottaki gercek ogeden (PlayerInventory.TryGetActiveItem -> Item.Type) okunur. Her karede sorulur, bu
+// yuzden ogeden once gelen slot listesi oge spawn olunca kendiliginden tamamlanir. Kopya yalnizca
+// aktif ogenin TURU DEGISINCE olusturulur; her karede yalnizca konum ve gorunurluk guncellenir. Kopyada collider tutulmaz (crosshair'in nisan taramasi kendi onizlemesine
 // carpmasin). Tamamen yerel: yalnizca sahibin PlayerInteractor'i (PlayerInteractor.Local) icin calisir.
 [RequireComponent(typeof(PlayerInteractor))]
 [RequireComponent(typeof(PlayerInventory))]
 public class PlacementPreview : MonoBehaviour
 {
-    [Tooltip("Id -> ItemType cozumlemesi icin TEK kayit defteri (tum tuketicilerle ortak asset).")]
-    [SerializeField] private ItemRegistry registry;
     [Tooltip("Onizleme kopyasinin tum renderer'larina uygulanan yesil yari saydam materyal.")]
     [SerializeField] private Material previewMaterial;
     [Tooltip("Onizleme kopyasinin duracagi katman. Etkilesim raycast maskesinde OLMAMALI (crosshair kendi onizlemesine carpmasin). Sef'in renderer'i (BlindVision_Renderer) bu katmani nabizli konturla ayri bir gecisle cizer; diger roller yesil yari saydami gorur.")]
@@ -25,7 +24,7 @@ public class PlacementPreview : MonoBehaviour
     private PlayerInteractor _interactor;
     private PlayerInventory _inventory;
     private GameObject _instance;
-    private int _shownId = PlayerInventory.EmptySlot;
+    private ItemType _shownType;
     private bool _visible;
     private HoldOrPressInteractable _lastTarget;
     private PlacementTarget _placement;
@@ -62,15 +61,14 @@ public class PlacementPreview : MonoBehaviour
 
     private void SyncShownItem()
     {
-        int id = GetActiveItemId();
-        if (id == _shownId)
+        var itemType = _inventory.TryGetActiveItem(out var item) ? item.Type : null;
+        if (itemType == _shownType)
             return;
 
         DestroyInstance();
-        _shownId = id;
+        _shownType = itemType;
 
-        // Bos slot, kayitsiz id, gorseli olmayan oge veya atanmamis materyal: hata degil, onizleme yok.
-        var itemType = registry != null ? registry.Find(id) : null;
+        // Bos slot, gorseli olmayan oge veya atanmamis materyal: hata degil, onizleme yok.
         if (itemType == null || itemType.VisualPrefab == null || previewMaterial == null)
             return;
 
@@ -128,19 +126,10 @@ public class PlacementPreview : MonoBehaviour
         _instance.SetActive(show);
     }
 
-    private int GetActiveItemId()
-    {
-        int index = _inventory.ActiveSlotIndex.Value;
-        if (index < 0 || index >= _inventory.Slots.Count)
-            return PlayerInventory.EmptySlot;
-
-        return _inventory.Slots[index];
-    }
-
     private void Clear()
     {
         DestroyInstance();
-        _shownId = PlayerInventory.EmptySlot;
+        _shownType = null;
         _lastTarget = null;
         _placement = null;
     }
