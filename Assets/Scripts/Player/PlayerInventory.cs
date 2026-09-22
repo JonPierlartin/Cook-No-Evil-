@@ -118,21 +118,26 @@ public class PlayerInventory : NetworkBehaviour
         return networkObject.TryGetComponent(out item);
     }
 
+    // Yalnizca GORUNUM icin (hotbar, elde tutulan gorsel, yerlestirme onizlemesinin sekli, ucuncu
+    // sahis gorunumu): replike ActiveSlotIndex'ten okur. Etkilesim KARARI veren hicbir kod yolu
+    // (gate, ItemMover, istasyon tamamlanma mantigi) bunu CAGIRMAZ — o yollarda slot, RPC'nin
+    // tasidigi InteractionContext.SlotIndex'ten gelir (bkz. dosya basi notu ve InteractionContext.cs).
     public bool TryGetActiveItem(out Item item) => TryGetItem(ActiveSlotIndex.Value, out item);
 
     // Salt-okunur uygunluk kontrolu — ServerTryAddItem'in hedef slot aramasiyla AYNI fonksiyonu kullanir,
     // yani "bos slot var" dedigi her yerde ekleme gercekten basarir (crosshair yalan soylemez).
-    public bool HasFreeSlot() => FindTargetSlot() >= 0;
+    // selectedSlot: etkilesim baglamindaki (veya istemcide yerel) secili slot — arama oradan baslar.
+    public bool HasFreeSlot(int selectedSlot) => FindTargetSlot(selectedSlot) >= 0;
 
     // GDD 4.1 "Alinan ogenin hangi slota girdigi": SECILI slot bossa oraya; doluysa secili slottan
     // SONRAKI ilk bos slota, sona gelince basa sararak. Secili slot degismez. Hic bos slot yoksa -1.
-    private int FindTargetSlot()
+    private int FindTargetSlot(int selectedSlot)
     {
         int count = Slots.Count;
         if (count == 0)
             return -1;
 
-        int selected = Mathf.Clamp(ActiveSlotIndex.Value, 0, count - 1);
+        int selected = Mathf.Clamp(selectedSlot, 0, count - 1);
         for (int step = 0; step < count; step++)
         {
             int index = (selected + step) % count;
@@ -145,12 +150,13 @@ public class PlayerInventory : NetworkBehaviour
 
     // Spawn edilmis, Carried bir ogeyi envantere yazar. Basarisizsa false — cagiran, spawn ettigi
     // ogeyi hemen ItemMover ile despawn etmekten sorumludur (sahipsiz oge kalmasin).
-    public bool ServerTryAddItem(Item item)
+    // selectedSlot: etkilesim baglamindaki secili slot (bkz. HasFreeSlot).
+    public bool ServerTryAddItem(Item item, int selectedSlot)
     {
         if (!IsServer || item == null || !item.NetworkObject.IsSpawned)
             return false;
 
-        int target = FindTargetSlot();
+        int target = FindTargetSlot(selectedSlot);
         if (target < 0)
             return false;
 
@@ -172,23 +178,24 @@ public class PlayerInventory : NetworkBehaviour
         return true;
     }
 
-    // "Oyuncunun su an sectigi ogeyi kullan" (BurgerAssemblyStation / PackagingStation). Ogeyi
-    // slottan CIKARIR ama despawn ETMEZ — ogenin akibetine cagiran karar verir (tuketim: ItemMover.Despawn).
-    public bool ServerTryTakeActiveItem(out Item item)
+    // "Etkilesim baglamindaki slottaki ogeyi kullan" (BurgerAssemblyStation / ItemMover.PlaceInSlot).
+    // Ogeyi slottan CIKARIR ama despawn ETMEZ — ogenin akibetine cagiran karar verir (tuketim:
+    // ItemMover.Despawn). ActiveSlotIndex OKUNMAZ — slot, cagirandan (InteractionContext.SlotIndex)
+    // gelir; aksi halde sahibin yazdigi NetworkVariable ile bu cagri arasinda sira garantisi olmazdi.
+    public bool ServerTryTakeItemAt(int slotIndex, out Item item)
     {
         item = null;
 
         if (!IsServer)
             return false;
 
-        int index = ActiveSlotIndex.Value;
-        if (!TryGetItem(index, out item))
+        if (!TryGetItem(slotIndex, out item))
         {
             item = null;
             return false;
         }
 
-        Slots[index] = default;
+        Slots[slotIndex] = default;
         return true;
     }
 }

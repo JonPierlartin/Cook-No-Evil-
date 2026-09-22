@@ -15,22 +15,25 @@ public class HoldOrPressInteractable : MonoBehaviour
     [SerializeField] private float holdDuration = 2.5f;
 
     // Ham basma/birakma — orn. Diyafon'un "basili tutuldugu surece kanal acik" davranisi icin.
-    // Tum event'ler etkilesimi baslatan oyuncunun clientId'sini tasir (CLAUDE.md NGO notu —
-    // etkilesim olaylari kimlik tasimak zorundadir; aksi halde dinleyen taraf, sunucunun kendi
-    // yerel cagrisinda varsayilan/yanlis bir SenderClientId'ye dusebilir).
-    public event Action<ulong> OnPressBegin;
-    public event Action<ulong> OnPressEnd;
+    // Tum event'ler etkilesimi baslatan oyuncunun BAGLAMINI (InteractionContext: clientId + o anki
+    // secili slot) tasir (CLAUDE.md NGO notu — etkilesim olaylari kimlik tasimak zorundadir; aksi
+    // halde dinleyen taraf, sunucunun kendi yerel cagrisinda varsayilan/yanlis bir SenderClientId'ye
+    // dusebilir). Slotun da baglamda tasinmasinin sebebi: ActiveSlotIndex (NetworkVariable) ile
+    // ardindan gonderilen bu olay arasinda sira garantisi yok — dinleyenler ASLA ActiveSlotIndex.Value
+    // okumamali, BeginPress'e o an gelen context.SlotIndex'i kullanmalidir.
+    public event Action<InteractionContext> OnPressBegin;
+    public event Action<InteractionContext> OnPressEnd;
 
     // Press: BeginPress ile aninda tamamlanir. Hold: holdDuration dolunca tamamlanir.
-    public event Action<ulong> OnInteractionCompleted;
+    public event Action<InteractionContext> OnInteractionCompleted;
     // Sadece Hold: sure dolmadan birakilirsa tetiklenir.
-    public event Action<ulong> OnInteractionCancelled;
+    public event Action<InteractionContext> OnInteractionCancelled;
 
     public bool IsPressed { get; private set; }
 
     private float _pressStartTime;
     private bool _completedThisPress;
-    private ulong _interactorClientId;
+    private InteractionContext _context;
     private IInteractionGate[] _gates;
     private Collider[] _colliders;
 
@@ -81,13 +84,13 @@ public class HoldOrPressInteractable : MonoBehaviour
     // Ayni nesnedeki TUM IInteractionGate'lere sorar; biri bile "hayir" derse sonuc hayirdir.
     // Gate'i olmayan nesne herkese aciktir. Sunucu (RequestInteractServerRpc, istasyonlarin
     // tamamlanma mantigi) ve istemci (crosshair) AYNI sorguyu kullanir — kural tek yerde yasar.
-    public bool CanInteract(ulong clientId, out string reason)
+    public bool CanInteract(InteractionContext context, out string reason)
     {
         _gates ??= GetComponents<IInteractionGate>();
 
         foreach (var gate in _gates)
         {
-            if (!gate.CanInteract(clientId, out reason))
+            if (!gate.CanInteract(context, out reason))
                 return false;
         }
 
@@ -95,7 +98,7 @@ public class HoldOrPressInteractable : MonoBehaviour
         return true;
     }
 
-    public void BeginPress(ulong interactorClientId)
+    public void BeginPress(InteractionContext context)
     {
         if (IsPressed)
             return;
@@ -103,13 +106,13 @@ public class HoldOrPressInteractable : MonoBehaviour
         IsPressed = true;
         _completedThisPress = false;
         _pressStartTime = Time.time;
-        _interactorClientId = interactorClientId;
-        OnPressBegin?.Invoke(_interactorClientId);
+        _context = context;
+        OnPressBegin?.Invoke(_context);
 
         if (interactionType == InteractionType.Press)
         {
             _completedThisPress = true;
-            OnInteractionCompleted?.Invoke(_interactorClientId);
+            OnInteractionCompleted?.Invoke(_context);
         }
     }
 
@@ -119,10 +122,10 @@ public class HoldOrPressInteractable : MonoBehaviour
             return;
 
         IsPressed = false;
-        OnPressEnd?.Invoke(_interactorClientId);
+        OnPressEnd?.Invoke(_context);
 
         if (interactionType == InteractionType.Hold && !_completedThisPress)
-            OnInteractionCancelled?.Invoke(_interactorClientId);
+            OnInteractionCancelled?.Invoke(_context);
     }
 
     private void Update()
@@ -133,7 +136,7 @@ public class HoldOrPressInteractable : MonoBehaviour
         if (Time.time - _pressStartTime >= holdDuration)
         {
             _completedThisPress = true;
-            OnInteractionCompleted?.Invoke(_interactorClientId);
+            OnInteractionCompleted?.Invoke(_context);
         }
     }
 }

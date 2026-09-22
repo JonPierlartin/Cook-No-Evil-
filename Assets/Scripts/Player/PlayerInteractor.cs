@@ -23,7 +23,15 @@ using UnityEngine.InputSystem;
 // muyum" sorusunu istemcide (crosshair, onizleme) ve sunucuda AYNI fonksiyon cevaplar:
 // HoldOrPressInteractable.CheckReach. Istemcinin "olur" dedigini sunucu reddetmemeli: sunucu
 // ayni fonksiyona yalnizca daha genis esikler (tolerans) verir.
+//
+// Duzeltme "etkilesime tiklama anindaki secili slotu tasi" (22 Eyl 2026): sahibin yazdigi
+// PlayerInventory.ActiveSlotIndex (NetworkVariable) ile ardindan gonderilen bu RPC arasinda SIRA
+// GARANTISI YOK (bkz. CLAUDE.md NGO tuzaklari) — bu yuzden RPC, tiklama anindaki secili slotu
+// KENDI parametresi olarak tasir; sunucu bu deger + dogrulanmis SenderClientId'den bir
+// InteractionContext kurar ve etkilesim yolunun TAMAMI (gate'ler, ItemMover, istasyonlarin
+// tamamlanma mantigi) bu baglami kullanir, ActiveSlotIndex'i bir daha HIC OKUMAZ.
 [RequireComponent(typeof(NetworkObject))]
+[RequireComponent(typeof(PlayerInventory))]
 public class PlayerInteractor : NetworkBehaviour
 {
     [SerializeField] private InputActionAsset inputActions;
@@ -46,6 +54,7 @@ public class PlayerInteractor : NetworkBehaviour
 
     private InputAction _attackAction;
     private bool _warnedSelfHit;
+    private PlayerInventory _inventory;
 
     // Yalnizca yerel (owner) oyuncunun etkilesimcisi; CrosshairUI ve PlacementPreview buradan okur.
     public static PlayerInteractor Local { get; private set; }
@@ -58,6 +67,11 @@ public class PlayerInteractor : NetworkBehaviour
     // kopyasinda bu alan hic kullanilmaz (RequestInteractServerRpc/RequestEndInteractServerRpc
     // govdeleri NGO tarafindan yalnizca sunucuda calistirilir).
     private HoldOrPressInteractable _serverPressedInteractable;
+
+    private void Awake()
+    {
+        _inventory = GetComponent<PlayerInventory>();
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -158,7 +172,10 @@ public class PlayerInteractor : NetworkBehaviour
         if (target == null)
             return CrosshairState.Neutral;
 
-        return target.CanInteract(NetworkManager.LocalClientId, out _)
+        // Sunucunun kuracagi BAGLAMIN AYNISI, yerelden: bu makine sahibin kendisi oldugu icin
+        // ActiveSlotIndex.Value burada HER ZAMAN GUNCELDIR (kendi yazdigi deger, ag gecikmesi yok).
+        var context = new InteractionContext(NetworkManager.LocalClientId, _inventory.ActiveSlotIndex.Value);
+        return target.CanInteract(context, out _)
             ? CrosshairState.Usable
             : CrosshairState.Blocked;
     }
@@ -191,7 +208,9 @@ public class PlayerInteractor : NetworkBehaviour
             return;
         }
 
-        RequestInteractServerRpc(targetNetworkObject);
+        // Tiklama ANINDAKI yerel secili slot: sunucuya ayrica NetworkVariable senkronundan degil,
+        // bu RPC'nin kendi parametresiyle gider (bkz. dosya basi notu).
+        RequestInteractServerRpc(targetNetworkObject, _inventory.ActiveSlotIndex.Value);
     }
 
     private void HandleAttackCanceled(InputAction.CallbackContext context)
@@ -202,8 +221,11 @@ public class PlayerInteractor : NetworkBehaviour
     // Sunucu, cagiranin kimligini ServerRpcParams'tan okur ve gecerliligi (hedef spawn
     // edilmis mi, HoldOrPressInteractable tasiyor mu, menzil ve yon uygun mu) TAMAMEN
     // kendi tarafinda dogrular. Istemcinin hesapladigi hicbir sonuc parametresi YOKTUR.
+    // slotIndex, istemcinin tiklama anindaki yerel secili slotudur — sunucu bunu yalnizca ARALIK
+    // icin dogrular (K6: "sonuca sunucu karar verir" — HANGI slotun secili oldugu bir sonuc degil,
+    // bir NIYET verisidir; hedefin kendisi zaten ayrica dogrulanir).
     [ServerRpc]
-    private void RequestInteractServerRpc(NetworkObjectReference targetRef, ServerRpcParams rpcParams = default)
+    private void RequestInteractServerRpc(NetworkObjectReference targetRef, int slotIndex, ServerRpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
 
@@ -225,14 +247,29 @@ public class PlayerInteractor : NetworkBehaviour
             return;
         }
 
-        if (!TryValidateTarget(senderId, targetRef, out var interactable, out var reason))
+        var inventory = PlayerInventory.FindForClient(senderId);
+        if (inventory == null)
+        {
+            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): oyuncu envanteri bulunamadı.");
+            return;
+        }
+
+        if (slotIndex < 0 || slotIndex >= inventory.SlotCount)
+        {
+            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): geçersiz slot ({slotIndex}).");
+            return;
+        }
+
+        var context = new InteractionContext(senderId, slotIndex);
+
+        if (!TryValidateTarget(context, targetRef, out var interactable, out var reason))
         {
             Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): {reason}");
             return;
         }
 
         _serverPressedInteractable = interactable;
-        interactable.BeginPress(senderId);
+        interactable.BeginPress(context);
     }
 
     [ServerRpc]
@@ -245,7 +282,7 @@ public class PlayerInteractor : NetworkBehaviour
         _serverPressedInteractable = null;
     }
 
-    private bool TryValidateTarget(ulong senderId, NetworkObjectReference targetRef, out HoldOrPressInteractable interactable, out string reason)
+    private bool TryValidateTarget(InteractionContext context, NetworkObjectReference targetRef, out HoldOrPressInteractable interactable, out string reason)
     {
         interactable = null;
         reason = string.Empty;
@@ -294,7 +331,7 @@ public class PlayerInteractor : NetworkBehaviour
         }
 
         // Rol / envanter / istasyon kurallari: crosshair'in istemcide sordugu SORGUNUN AYNISI.
-        if (!interactable.CanInteract(senderId, out var gateReason))
+        if (!interactable.CanInteract(context, out var gateReason))
         {
             reason = gateReason;
             interactable = null;

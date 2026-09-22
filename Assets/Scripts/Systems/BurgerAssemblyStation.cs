@@ -33,21 +33,22 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
     }
 
     // GECICI TESHIS — Adim 6'da kaldirilacak.
-    private void HandleInteractionCompleted(ulong clientId)
+    private void HandleInteractionCompleted(InteractionContext context)
     {
-        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
-        Debug.Log($"[BurgerAssemblyStation] HandleInteractionCompleted cagrildi (clientId={clientId}, role={role}).");
+        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(context.ClientId) : PlayerRole.None;
+        Debug.Log($"[BurgerAssemblyStation] HandleInteractionCompleted cagrildi (clientId={context.ClientId}, role={role}).");
 
-        if (!TryEvaluate(clientId, out var inventory, out var itemType, out var reason))
+        if (!TryEvaluate(context, out var inventory, out var itemType, out var reason))
         {
-            Debug.LogWarning($"[BurgerAssemblyStation] reddetti (clientId={clientId}, rol={role}): {reason}.");
+            Debug.LogWarning($"[BurgerAssemblyStation] reddetti (clientId={context.ClientId}, rol={role}): {reason}.");
             return;
         }
 
         // Sira: ONCE slottan cikarilir, SONRA despawn edilir (slot hicbir an despawn olmus bir ogeyi
         // gostermez). Tezgah malzemeyi yalnizca tur numarasi olarak tutar (PlacedIngredients) — bu adimda
-        // oge tezgaha parent edilmez, yok edilir (parent/yuva Adim 4.2'de).
-        if (!inventory.ServerTryTakeActiveItem(out var item))
+        // oge tezgaha parent edilmez, yok edilir (parent/yuva Adim 4.2'de). Slot, ActiveSlotIndex DEGIL,
+        // baglamdan (bkz. InteractionContext.cs) — tiklama anindaki secili slot budur.
+        if (!inventory.ServerTryTakeItemAt(context.SlotIndex, out var item))
             return;
 
         PlacedIngredients.Add(itemType.Id);
@@ -59,14 +60,14 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
             PlacedIngredients.Clear();
     }
 
-    // Kural TEK yerde (GDD 4.1.2, 6.3, 6.7.3): rol izinli, elde (aktif slot) bir malzeme var ve
+    // Kural TEK yerde (GDD 4.1.2, 6.3, 6.7.3): rol izinli, elde (baglam slotunda) bir malzeme var ve
     // tezgah onu su an kabul ediyor. Sunucu bunu tamamlanmada, crosshair her karede (istemcide) sorar.
-    public bool CanInteract(ulong clientId, out string reason)
+    public bool CanInteract(InteractionContext context, out string reason)
     {
-        return TryEvaluate(clientId, out _, out _, out reason);
+        return TryEvaluate(context, out _, out _, out reason);
     }
 
-    private bool TryEvaluate(ulong clientId, out PlayerInventory inventory, out ItemType itemType, out string reason)
+    private bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out ItemType itemType, out string reason)
     {
         inventory = null;
         itemType = null;
@@ -77,20 +78,21 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
             return false;
         }
 
-        if (!IsRoleAllowed(RoleManager.Instance.GetRole(clientId)))
+        if (!IsRoleAllowed(RoleManager.Instance.GetRole(context.ClientId)))
         {
             reason = "rol izinli değil";
             return false;
         }
 
-        inventory = PlayerInventory.FindForClient(clientId);
+        inventory = PlayerInventory.FindForClient(context.ClientId);
         if (inventory == null)
         {
             reason = "oyuncu envanteri bulunamadı";
             return false;
         }
 
-        if (!inventory.TryGetActiveItem(out var item))
+        // ActiveSlotIndex (NetworkVariable) DEGIL — context.SlotIndex (bkz. InteractionContext.cs).
+        if (!inventory.TryGetItem(context.SlotIndex, out var item))
         {
             reason = "elde malzeme yok";
             return false;

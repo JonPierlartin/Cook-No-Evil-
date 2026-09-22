@@ -64,26 +64,26 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
     }
 
     // Kural TEK yerde (GDD "Yuva ile etkilesim"); sunucu tamamlanmada, crosshair her karede sorar. SWAP YOK:
-    //  - bos yuva : rol izinli + aktif slotta oge var + turu kabul ediliyor
+    //  - bos yuva : rol izinli + BAGLAM slotunda oge var + turu kabul ediliyor
     //  - dolu yuva: rol izinli + envanterde bos slot var (elindeki ogenin durumu onemsiz)
-    public bool CanInteract(ulong clientId, out string reason)
+    public bool CanInteract(InteractionContext context, out string reason)
     {
-        return TryEvaluate(clientId, out _, out _, out reason);
+        return TryEvaluate(context, out _, out _, out reason);
     }
 
-    private bool TryEvaluate(ulong clientId, out PlayerInventory inventory, out Item occupant, out string reason)
+    private bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out Item occupant, out string reason)
     {
         inventory = null;
         occupant = null;
 
-        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
+        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(context.ClientId) : PlayerRole.None;
         if (!IsRoleAllowed(role))
         {
             reason = "rol izinli değil";
             return false;
         }
 
-        inventory = PlayerInventory.FindForClient(clientId);
+        inventory = PlayerInventory.FindForClient(context.ClientId);
         if (inventory == null)
         {
             reason = "oyuncu envanteri bulunamadı";
@@ -92,7 +92,7 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
 
         if (TryGetOccupant(out occupant))
         {
-            if (!inventory.HasFreeSlot())
+            if (!inventory.HasFreeSlot(context.SlotIndex))
             {
                 reason = "boş slot yok";
                 return false;
@@ -102,7 +102,9 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
             return true;
         }
 
-        if (!inventory.TryGetActiveItem(out var held))
+        // ActiveSlotIndex (NetworkVariable) DEGIL — context.SlotIndex, RPC'nin tasidigi tiklama
+        // anindaki secili slot (bkz. InteractionContext.cs).
+        if (!inventory.TryGetItem(context.SlotIndex, out var held))
         {
             reason = "elde öğe yok";
             return false;
@@ -118,21 +120,21 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
         return true;
     }
 
-    private void HandleInteractionCompleted(ulong clientId)
+    private void HandleInteractionCompleted(InteractionContext context)
     {
         if (!IsServer)
             return;
 
-        if (!TryEvaluate(clientId, out var inventory, out var occupant, out var reason))
+        if (!TryEvaluate(context, out var inventory, out var occupant, out var reason))
         {
-            Debug.LogWarning($"[ItemSlot] '{name}' reddetti (clientId={clientId}): {reason}.");
+            Debug.LogWarning($"[ItemSlot] '{name}' reddetti (clientId={context.ClientId}): {reason}.");
             return;
         }
 
         if (occupant != null)
-            ItemMover.TakeFromSlot(this, inventory);
+            ItemMover.TakeFromSlot(this, inventory, context.SlotIndex);
         else
-            ItemMover.PlaceInSlot(this, inventory);
+            ItemMover.PlaceInSlot(this, inventory, context.SlotIndex);
     }
 
     private bool IsRoleAllowed(PlayerRole role)

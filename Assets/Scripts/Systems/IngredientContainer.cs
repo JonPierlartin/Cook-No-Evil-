@@ -33,12 +33,12 @@ public class IngredientContainer : NetworkBehaviour, IInteractionGate
     // Kural TEK yerde (GDD 4.1.2, 6.3): malzeme atanmis ve spawn edilebilir (itemPrefab dolu), rol izinli,
     // envanterde bos slot var.
     // Sunucu bunu tamamlanmada, crosshair her karede (istemcide) sorar.
-    public bool CanInteract(ulong clientId, out string reason)
+    public bool CanInteract(InteractionContext context, out string reason)
     {
-        return TryEvaluate(clientId, out _, out reason);
+        return TryEvaluate(context, out _, out reason);
     }
 
-    private bool TryEvaluate(ulong clientId, out PlayerInventory inventory, out string reason)
+    private bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out string reason)
     {
         inventory = null;
 
@@ -55,21 +55,21 @@ public class IngredientContainer : NetworkBehaviour, IInteractionGate
             return false;
         }
 
-        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
+        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(context.ClientId) : PlayerRole.None;
         if (!IsRoleAllowed(role))
         {
             reason = "rol izinli değil";
             return false;
         }
 
-        inventory = PlayerInventory.FindForClient(clientId);
+        inventory = PlayerInventory.FindForClient(context.ClientId);
         if (inventory == null)
         {
             reason = "oyuncu envanteri bulunamadı";
             return false;
         }
 
-        if (!inventory.HasFreeSlot())
+        if (!inventory.HasFreeSlot(context.SlotIndex))
         {
             reason = "boş slot yok";
             return false;
@@ -79,14 +79,14 @@ public class IngredientContainer : NetworkBehaviour, IInteractionGate
         return true;
     }
 
-    private void HandleInteractionCompleted(ulong clientId)
+    private void HandleInteractionCompleted(InteractionContext context)
     {
         if (!IsServer)
             return;
 
-        if (!TryEvaluate(clientId, out var inventory, out var reason))
+        if (!TryEvaluate(context, out var inventory, out var reason))
         {
-            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={clientId}): {reason}.");
+            Debug.LogWarning($"[IngredientContainer] '{name}' reddetti (clientId={context.ClientId}): {reason}.");
             return;
         }
 
@@ -96,9 +96,9 @@ public class IngredientContainer : NetworkBehaviour, IInteractionGate
         if (item == null)
             return;
 
-        if (!inventory.ServerTryAddItem(item))
+        if (!inventory.ServerTryAddItem(item, context.SlotIndex))
         {
-            Debug.LogError($"[IngredientContainer] '{name}': oge slota yazilamadi (clientId={clientId}); oge geri alindi.");
+            Debug.LogError($"[IngredientContainer] '{name}': oge slota yazilamadi (clientId={context.ClientId}); oge geri alindi.");
             ItemMover.Despawn(item);
         }
     }

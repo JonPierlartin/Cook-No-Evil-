@@ -5,9 +5,13 @@
 //  - istemci: crosshair, her karede yerel replike veriden (yalnizca GOSTERIM, tahmin).
 // Uygulamalar hem sunucuda hem istemcide calisabilecek, yalnizca replike veriyi okuyan ve
 // durum DEGISTIRMEYEN kod olmak zorundadir; her karede cagrilabildigi icin allocation yapmamalidir.
+//
+// InteractionContext (clientId + o anki secili slot) TEK deger olarak tasinir — "kim" ve "hangi
+// slot" ayri ayri parametre olarak GECMEZ, cunku ikisi birlikte tek bir etkilesim niyetini
+// tanimlar (bkz. InteractionContext dosya basi notu).
 public interface IInteractionGate
 {
     // reason: reddedilirse SABIT bir metin (interpolasyon yok -> allocation yok). Yalnizca
     // sunucu logu icindir; oyuncuya/UI'a ASLA gosterilmez (GDD 4.1.2: "Engelli" sebebini gostermez).
-    bool CanInteract(ulong clientId, out string reason);
+    bool CanInteract(InteractionContext context, out string reason);
 }

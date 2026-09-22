@@ -66,12 +66,15 @@ public static class ItemMover
         return true;
     }
 
-    // Oyuncunun AKTIF slotundaki ogeyi yuvaya koyar: slottan al -> yuvanin pozuna yerlestir ->
-    // TrySetParent(yuva) -> Presence = Placed. Oge yuvaya parent edilir (K7: yuva bir NetworkObject'tir),
-    // yani doluluk artik parent iliskisidir (ItemSlot.TryGetOccupant). Kural denetimi (rol, tur, doluluk)
-    // ItemSlot'un gate'indedir; burada yalnizca mekanik ve savunmaci kontroller vardir.
-    // Basarisizlikta oge AYNI slota geri konur, Presence = Carried, koşulsuz LogError.
-    public static bool PlaceInSlot(ItemSlot slot, PlayerInventory inventory)
+    // Etkilesim baglamindaki (slotIndex) slottaki ogeyi yuvaya koyar: slottan al -> yuvanin pozuna
+    // yerlestir -> TrySetParent(yuva) -> Presence = Placed. Oge yuvaya parent edilir (K7: yuva bir
+    // NetworkObject'tir), yani doluluk artik parent iliskisidir (ItemSlot.TryGetOccupant). Kural
+    // denetimi (rol, tur, doluluk) ItemSlot'un gate'indedir; burada yalnizca mekanik ve savunmaci
+    // kontroller vardir. slotIndex CAGIRANDAN (InteractionContext.SlotIndex) gelir — ActiveSlotIndex
+    // NetworkVariable'i BURADA OKUNMAZ (sahibin yazdigi deger ile bu cagri arasinda sira garantisi
+    // yok, bkz. InteractionContext.cs). Basarisizlikta oge AYNI slota geri konur, Presence = Carried,
+    // koşulsuz LogError.
+    public static bool PlaceInSlot(ItemSlot slot, PlayerInventory inventory, int slotIndex)
     {
         if (!IsServerRunning("PlaceInSlot"))
             return false;
@@ -88,10 +91,9 @@ public static class ItemMover
             return false;
         }
 
-        int slotIndex = inventory.ActiveSlotIndex.Value;
-        if (!inventory.ServerTryTakeActiveItem(out var item))
+        if (!inventory.ServerTryTakeItemAt(slotIndex, out var item))
         {
-            Debug.LogError($"[ItemMover] '{slot.name}': aktif slotta (index {slotIndex}) oge yok.", slot);
+            Debug.LogError($"[ItemMover] '{slot.name}': baglam slotunda (index {slotIndex}) oge yok.", slot);
             return false;
         }
 
@@ -116,8 +118,9 @@ public static class ItemMover
 
     // Yuvadaki ogeyi oyuncunun envanterine alir: envanterde yer var mi -> TryRemoveParent -> Presence =
     // Carried -> slot kuraliyla (PlayerInventory.ServerTryAddItem) envantere ekle. Basarisizlikta oge
-    // yuvada KALIR (gerekiyorsa geri parent edilir), koşulsuz LogError.
-    public static bool TakeFromSlot(ItemSlot slot, PlayerInventory inventory)
+    // yuvada KALIR (gerekiyorsa geri parent edilir), koşulsuz LogError. slotIndex CAGIRANDAN
+    // (InteractionContext.SlotIndex) gelir — GDD 4.1 slot kurali oradan baslar.
+    public static bool TakeFromSlot(ItemSlot slot, PlayerInventory inventory, int slotIndex)
     {
         if (!IsServerRunning("TakeFromSlot"))
             return false;
@@ -134,7 +137,7 @@ public static class ItemMover
             return false;
         }
 
-        if (!inventory.HasFreeSlot())
+        if (!inventory.HasFreeSlot(slotIndex))
         {
             Debug.LogError($"[ItemMover] '{slot.name}': envanterde bos slot yok; oge yuvada kaldi.", slot);
             return false;
@@ -148,7 +151,7 @@ public static class ItemMover
 
         item.Presence.Value = ItemPresence.Carried;
 
-        if (!inventory.ServerTryAddItem(item))
+        if (!inventory.ServerTryAddItem(item, slotIndex))
         {
             Debug.LogError($"[ItemMover] '{item.name}' envantere yazilamadi; '{slot.name}' yuvasina geri konuyor.", slot);
 
