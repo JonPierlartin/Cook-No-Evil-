@@ -13,6 +13,15 @@ public class RoleManager : NetworkBehaviour
 
     public const int MaxPlayers = 3;
 
+    [Tooltip("Katilma sirasina gore rol dagitimi (SequentialRoleAssignmentStrategy). Varsayilani " +
+        "bugunku sira (Sef, Komi, Kasiyer). BU BIR LOBI ROL SECIMI DEGILDIR (oyuncuya UI yok) — " +
+        "yalnizca test amacli: host MPPM'de her zaman ilk katilan oldugu icin sirayla hep Sef " +
+        "oluyor, Sef'e ozel istasyonlarin ISTEMCI yolu test edilemiyordu (bkz. CLAUDE.md Temizlik " +
+        "Borcu). Rejoin eslestirmesi SteamId uzerinden yapildigi icin (bkz. FindFrozenEntryIndex) " +
+        "bu siradan ETKILENMEZ.")]
+    [SerializeField]
+    private PlayerRole[] testRoleJoinOrder = { PlayerRole.Sef, PlayerRole.Komi, PlayerRole.Kasiyer };
+
     // Raw metin degil, UIStrings tablosundaki bir anahtar: NetworkManager.DisconnectReason
     // ile agdan gectigi icin locale'den bagimsiz kalmali; ceviri SteamLobbyManager/
     // LobbyUIController tarafinda yapilir.
@@ -53,7 +62,7 @@ public class RoleManager : NetworkBehaviour
         }
 
         Instance = this;
-        _strategy = new SequentialRoleAssignmentStrategy();
+        _strategy = new SequentialRoleAssignmentStrategy(testRoleJoinOrder);
     }
 
     private void Start()
@@ -283,6 +292,24 @@ public class RoleManager : NetworkBehaviour
     // otoriteye konsolide edildi) — o metod rol sayisini kontrol etmek icin bu property'i
     // okuyor, RoleManager rol ATAMA mantigina karismiyor.
     public int AssignedRoleCount => _assignedRoles.Count;
+
+    // Round baslarken (PlayerSpawner) o ana kadar SADECE atanmis (henuz spawn edilmemis) her
+    // rolu dolasabilmek icin. Indeksli erisim: foreach NetworkList enumerator'unu heap'e kutulardi
+    // (bkz. GetRole'daki ayni gerekce).
+    public bool TryGetAssignedRoleAt(int index, out ulong clientId, out PlayerRole role)
+    {
+        if (index < 0 || index >= _assignedRoles.Count)
+        {
+            clientId = 0;
+            role = PlayerRole.None;
+            return false;
+        }
+
+        var entry = _assignedRoles[index];
+        clientId = entry.ClientId;
+        role = entry.Role;
+        return true;
+    }
 
     private void HandleAssignedRolesChanged(NetworkListEvent<ClientRoleEntry> change)
     {

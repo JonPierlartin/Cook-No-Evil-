@@ -149,6 +149,12 @@ public class PlayerInteractor : NetworkBehaviour
 
     private CrosshairState ComputeFeedback(HoldOrPressInteractable target)
     {
+        // Round aktif degilken (lobi) etkilesim yok — sunucunun RequestInteractServerRpc'de
+        // uyguladigi AYNI kontrol (asagida). Crosshair bunu atlarsa "kullanilabilir" gosterip
+        // sunucu reddeder, geri bildirim yalan soylemis olur (K6).
+        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
+            return CrosshairState.Neutral;
+
         if (target == null)
             return CrosshairState.Neutral;
 
@@ -162,11 +168,17 @@ public class PlayerInteractor : NetworkBehaviour
     // govdesinde belirlenir.
     private void HandleAttackStarted(InputAction.CallbackContext context)
     {
+        // Round aktif degilken (lobi) etkilesim yok — asil yetki asagidaki
+        // RequestInteractServerRpc icindeki sunucu-taraf kontrolundedir (K6 geregi), bu
+        // sadece gereksiz bir RPC gonderimini onleyen ON-kontroldur.
+        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
+            return;
+
         // "Oyun durduruldu" (round sirasinda bir oyuncu koptugunda, bkz. GameLoopManager)
         // TUM oyuncular icin gecerli — sadece kopan oyuncunun kendi objesi degil. Bu, gereksiz
         // bir RPC gonderimini onlemek icin sadece bir ON-kontroldur; asil yetki asagidaki
         // RequestInteractServerRpc icindeki sunucu-taraf kontrolundedir (K6 geregi).
-        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
+        if (GameLoopManager.Instance.IsGamePaused)
             return;
 
         if (!TryGetCurrentTarget(out var target))
@@ -195,10 +207,19 @@ public class PlayerInteractor : NetworkBehaviour
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
 
-        // Sunucu-taraf pause kontrolu (K6 geregi — "Dogrulamalar sunucu tarafinda yapilir,
-        // UI kontroluyle degil"): istemcideki on-kontrol (HandleAttackStarted) bypass edilse
-        // bile sunucu, round durdurulmusken hicbir yeni etkilesimi kabul etmez.
-        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
+        // Sunucu-taraf round kontrolu (K6 geregi — "Dogrulamalar sunucu tarafinda yapilir, UI
+        // kontroluyle degil"): istemcideki on-kontroller (HandleAttackStarted) bypass edilse
+        // bile sunucu, round aktif degilken (lobi) veya durdurulmusken hicbir yeni etkilesimi
+        // kabul etmez. Crosshair'in kullandigi ComputeFeedback ile AYNI kosul (paylasilan
+        // GameLoopManager.Instance.IsRoundActive) — istemci "kullanilabilir" derken sunucu
+        // reddetmez.
+        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
+        {
+            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): round aktif degil.");
+            return;
+        }
+
+        if (GameLoopManager.Instance.IsGamePaused)
         {
             Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): oyun durduruldu.");
             return;
