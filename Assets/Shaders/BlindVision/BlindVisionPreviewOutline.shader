@@ -12,8 +12,14 @@
 // Derinlik: her iki gecis de sahne derinligine gore test edilir (ZTest LEqual) — onizleme, onundeki
 // nesnenin ARKASINDA kalir (GDD 4.1.2 "Hedef gorunur olmali"); kismi ortme piksel piksel dogru calisir.
 // _DepthBias (metre): onizlemenin oturdugu yuzey (tezgah) halkayi kesmesin diye geometri kameraya dogru
-// bu kadar kaydirilarak test edilir.
-// Not: genisletme, nesnenin pivotundan disari dogrudur — merkezli, dis bukey (convex) gorseller icin.
+// bu kadar kaydirilarak test edilir. Deger 0,02 — Duzeltme "Sef'in yuvadaki ince nesneleri tam gormesi"
+// (22 Eyl 2026) adiminda olcumle secildi: oge pivotu tabana alindiktan sonra (artik tezgaha gomulu
+// degil, ustunde duruyor) 0,01'den itibaren piksel karsilastirmasi 0,25 ile ozdesti; 0,005 yetersizdi.
+// 0,02 pratik etkilesim menzilinin (PlayerInteractor.interactRange = 2,5 m) tamaminda payli.
+// Not: genisletme merkezi nesnenin SINIR KUTUSU MERKEZIDIR, pivot degil — bu, pivotun (0,0,0) tabanda
+// durdugu ITEM prefab'inda ayri bir "Mesh" cocugunun kendi (0,0,0) noktasinin mesh'in bounds merkezine
+// denk gelmesinden (yer tutucu Cylinder/Sphere mesh'leri merkezli) DOGAL olarak saglanir — shader hicbir
+// bounds hesabi yapmaz, TransformObjectToHClip(0,0,0) cagirdigi "object" zaten Mesh cocugudur.
 Shader "CookNoEvil/BlindVisionPreviewOutline"
 {
     Properties
@@ -22,7 +28,7 @@ Shader "CookNoEvil/BlindVisionPreviewOutline"
         _LineThickness ("Line Thickness (pixels)", Float) = 2
         _PulseSpeed ("Pulse Speed (Hz)", Float) = 1.5
         _PulseAmplitude ("Pulse Amplitude (0..1)", Range(0, 1)) = 0.6
-        _DepthBias ("Depth Bias (meters toward camera)", Float) = 0.25
+        _DepthBias ("Depth Bias (meters toward camera)", Float) = 0.02
     }
 
     SubShader

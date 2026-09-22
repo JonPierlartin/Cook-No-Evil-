@@ -25,7 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _DepthBias: 0.25
+    - _DepthBias: 0.02
     - _LineThickness: 2
     - _PulseAmplitude: 0.6
     - _PulseSpeed: 1.5

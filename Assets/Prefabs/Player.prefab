@@ -360,6 +360,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventory
   ShowTopMostFoldoutHeaderGroup: 1
+  slotCount: 4
 --- !u!114 &519519140415067332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -377,7 +378,6 @@ MonoBehaviour:
   cameraPivot: {fileID: 2202784849687738564}
   playerCamera: {fileID: 1039527557412377949}
   moveSpeed: 5
-  sprintMultiplier: 1.6
   mouseSensitivity: 0.12
   minPitch: -80
   maxPitch: 80
@@ -457,7 +457,7 @@ Transform:
   m_GameObject: {fileID: 7100000000000000001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.28, y: -0.2, z: 0.7}
+  m_LocalPosition: {x: 0.28, y: -0.25, z: 0.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -488,7 +488,7 @@ Transform:
   m_GameObject: {fileID: 7100000000000000003}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.4, y: 0.2, z: 0.55}
+  m_LocalPosition: {x: 0.4, y: 0.15, z: 0.55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -507,7 +507,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeldItemVisual
   ShowTopMostFoldoutHeaderGroup: 1
-  registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
   firstPersonHoldPoint: {fileID: 7100000000000000002}
   thirdPersonHoldPoint: {fileID: 7100000000000000004}
 --- !u!114 &7100000000000000006
@@ -522,7 +521,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95ea0840d08fb47488c1cdb21b4a6979, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacementPreview
-  registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
   previewMaterial: {fileID: 2100000, guid: 52b183f0f3b6ca04082f2c1e4a306396, type: 2}
   previewLayerName: PlacementPreview
 --- !u!114 &7100000000000000007
