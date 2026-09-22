@@ -10,6 +10,11 @@ using UnityEngine;
 // ogeler zaten herkese replike; buradan ag uzerinden hicbir sey gonderilmez. Gorsel yalnizca
 // gosterilecek ogenin turu (veya tutma noktasi) DEGISINCE yeniden olusturulur, her karede degil.
 // Slot listesi ogeden ONCE gelebilir: oge bu istemcide spawn/despawn olunca da yeniden bakilir.
+//
+// Faz rengi (GDD 5.2.1, K2d "Komi, Sef'in elindeki kofteyi gorebilmeli"): elde tutulan KOPYA,
+// kaynak ogenin ServerProgress'ine (varsa) DOGRUDAN abone olur ve ItemPhaseColoring ile (Item
+// Phase Visual'in dunya gorselinde kullandigi AYNI kural) boyanir — kopya kaynak NetworkObject'in
+// cocugu olmadigi icin ItemPhaseVisual'i miras almaz, kendi aboneligini yonetmek zorundadir.
 [RequireComponent(typeof(PlayerInventory))]
 public class HeldItemVisual : NetworkBehaviour
 {
@@ -22,8 +27,10 @@ public class HeldItemVisual : NetworkBehaviour
     private bool _isLocalOwner;
     private bool _subscribed;
     private GameObject _instance;
+    private Renderer[] _instanceRenderers;
     private ItemType _shownType;
     private Transform _shownAnchor;
+    private ServerProgress _shownProgress;
 
     public override void OnNetworkSpawn()
     {
@@ -39,6 +46,7 @@ public class HeldItemVisual : NetworkBehaviour
         Unsubscribe();
 
         ClearInstance();
+        DetachPhaseSubscription();
         _shownType = null;
         _shownAnchor = null;
     }
@@ -105,20 +113,68 @@ public class HeldItemVisual : NetworkBehaviour
     private void Refresh(Item ignoredItem = null)
     {
         var anchor = _isLocalOwner ? firstPersonHoldPoint : thirdPersonHoldPoint;
-        var itemType = _inventory.TryGetActiveItem(out var item) && item != ignoredItem ? item.Type : null;
+        bool hasItem = _inventory.TryGetActiveItem(out var item) && item != ignoredItem;
+        var resolvedItem = hasItem ? item : null;
+        var itemType = hasItem ? item.Type : null;
 
         if (itemType == _shownType && anchor == _shownAnchor)
+        {
+            // Tur/nokta ayni ama TUTULAN OGE ORNEGI degismis olabilir (orn. ayni turden baska bir
+            // ogeye gecildi) — gorseli yeniden olusturmadan yalnizca faz rengi aboneligini guncelle.
+            RebindPhaseSubscription(resolvedItem);
             return;
+        }
 
         ClearInstance();
         _shownType = itemType;
         _shownAnchor = anchor;
+        RebindPhaseSubscription(resolvedItem);
 
         // Bos slot, gorseli olmayan oge veya atanmamis nokta: hata degil, el bos.
         if (itemType == null || itemType.VisualPrefab == null || anchor == null)
             return;
 
         _instance = Instantiate(itemType.VisualPrefab, anchor);
+        _instanceRenderers = _instance.GetComponentsInChildren<Renderer>(true);
+        ApplyPhaseColorToInstance();
+    }
+
+    // Kaynak ogenin ServerProgress'i (varsa) degisince abonelik gunceller; ayni kaynaksa (ikisi de
+    // ayni referans veya ikisi de null) hicbir sey yapmaz.
+    private void RebindPhaseSubscription(Item item)
+    {
+        var progress = item != null ? item.GetComponent<ServerProgress>() : null;
+        if (progress == _shownProgress)
+            return;
+
+        if (_shownProgress != null)
+            _shownProgress.PhaseIndex.OnValueChanged -= HandleShownPhaseChanged;
+
+        _shownProgress = progress;
+
+        if (_shownProgress != null)
+        {
+            _shownProgress.PhaseIndex.OnValueChanged += HandleShownPhaseChanged;
+            ApplyPhaseColorToInstance();
+        }
+    }
+
+    private void DetachPhaseSubscription()
+    {
+        if (_shownProgress != null)
+            _shownProgress.PhaseIndex.OnValueChanged -= HandleShownPhaseChanged;
+
+        _shownProgress = null;
+    }
+
+    private void HandleShownPhaseChanged(int previous, int current) => ApplyPhaseColorToInstance();
+
+    private void ApplyPhaseColorToInstance()
+    {
+        if (_instanceRenderers == null || _shownProgress == null || _shownType == null)
+            return;
+
+        ItemPhaseColoring.Apply(_instanceRenderers, _shownType, _shownProgress.PhaseIndex.Value);
     }
 
     private void ClearInstance()
@@ -127,5 +183,6 @@ public class HeldItemVisual : NetworkBehaviour
             Destroy(_instance);
 
         _instance = null;
+        _instanceRenderers = null;
     }
 }

@@ -17,6 +17,10 @@ public class ItemType : ScriptableObject
     [SerializeField] private GameObject itemPrefab;
     [Tooltip("BurgerAssemblyStation'da ilk yerlestirilmesi zorunlu olan malzeme turu (ekmek).")]
     [SerializeField] private bool isBread;
+    [Tooltip("Yalnizca itemPrefab'inda ServerProgress olan turler icin anlamlidir: ServerProgress." +
+        "Profile ile AYNI SIRADA, ayni uzunlukta faz basina renk (GDD 5.2.1: Cig/Pismis/Yanmis icin " +
+        "yer tutucu renkler). ServerProgress tasimayan turlerde bos birakilir, kullanilmaz.")]
+    [SerializeField] private Color[] phaseColors;
 
     public int Id => id;
     public string LocalizationKey => localizationKey;
@@ -24,6 +28,7 @@ public class ItemType : ScriptableObject
     public GameObject VisualPrefab => visualPrefab;
     public GameObject ItemPrefab => itemPrefab;
     public bool IsBread => isBread;
+    public Color[] PhaseColors => phaseColors;
 
 #if UNITY_EDITOR
     // Editor dogrulamasi (bkz. ItemRegistry): itemPrefab doluysa ag kabugu kurallarini denetler, her
