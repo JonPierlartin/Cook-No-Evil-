@@ -1,19 +1,25 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 // Şef'in masasındaki hamburger birleştirme (GDD 6.7.3). İstasyon TARİF DOĞRULAMASI YAPMAZ — yanlış
 // malzeme (marul yerine domates) konabilmeli, hatanın kendisi oyunun konusu; yalnızca KATEGORİ SIRASI
-// denetlenir. Konan her malzeme replike PlacedIngredients listesine bir katman olarak yazılır ve
-// BurgerStackVisual bunu her istemcide tezgahın üstünde görünür bir yığın olarak çizer (geri bildirim).
+// ve ekmeğin iki parçalı kuralı denetlenir. Konan her malzeme replike PlacedIngredients listesine bir
+// katman olarak yazılır ve BurgerStackVisual bunu her istemcide tezgahın üstünde görünür bir yığın
+// olarak çizer (geri bildirim).
 //
-// GEÇİCİ (Adım 6b'de değişecek): ikinci ekmek (üst ekmek) konunca yığın temizlenir ve HİÇBİR ÖĞE
-// ÜRETİLMEZ. 6b'de tamamlanan hamburger tek bir öğe olarak envantere girecek (GDD 6.7.3).
+// Ekmek iki parçadır, tek envanter öğesidir: BOŞ yığına konan bütün ekmek ALT ekmektir — envanterden
+// düşmez, elde YARIM kalır (BreadHalf); DOLU yığına yalnızca YARIM ekmek üst olarak konur ve hamburger
+// tamamlanır: yığındaki katmanlar (+ üst ekmek) tek bir Hamburger öğesine kopyalanır, öğe Şef'in
+// envanterine girer, yığın temizlenir.
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(HoldOrPressInteractable))]
 public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
 {
     [Tooltip("Id -> ItemType (yığın katmanları tür id'si tutar; kategori ve görsel buradan çözülür).")]
     [SerializeField] private ItemRegistry registry;
+    [Tooltip("Tamamlanınca üretilen öğenin türü (Hamburger; itemPrefab'ında BurgerAssembly olmalı).")]
+    [SerializeField] private ItemType hamburgerType;
     [Tooltip("Bu istasyonu kullanabilecek roller. Bos birakilirsa herkes kullanabilir.")]
     [SerializeField] private PlayerRole[] allowedRoles;
 
@@ -43,45 +49,97 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         if (!IsServer)
             return;
 
-        if (!TryEvaluate(context, out var inventory, out var itemType, out var reason))
+        if (!TryEvaluate(context, out var inventory, out var item, out var reason))
         {
             Debug.LogWarning($"[BurgerAssemblyStation] reddetti (clientId={context.ClientId}): {reason}.");
+            return;
+        }
+
+        var itemType = item.Type;
+        bool isBread = itemType.Category == ItemCategory.Ekmek;
+
+        if (isBread && PlacedIngredients.Count == 0)
+        {
+            // ALT ekmek: ogeyi TUKETME — elde yarim kalir; yiginin tabani olarak katman yazilir.
+            item.GetComponent<BreadHalf>().ServerMarkHalved();
+            PlacedIngredients.Add(new BurgerLayerEntry(itemType.Id, 0));
+            return;
+        }
+
+        if (isBread)
+        {
+            CompleteBurger(context, inventory, item);
             return;
         }
 
         // Sira: ONCE slottan cikarilir, SONRA despawn edilir (slot hicbir an despawn olmus bir ogeyi
         // gostermez). Tezgah malzemeyi ag nesnesi olarak TUTMAZ, yalnizca katman kaydi yazar. Slot,
         // ActiveSlotIndex DEGIL, baglamdan (bkz. InteractionContext.cs) — tiklama anindaki secili slot.
-        if (!inventory.ServerTryTakeItemAt(context.SlotIndex, out var item))
+        if (!inventory.ServerTryTakeItemAt(context.SlotIndex, out var taken))
             return;
 
         // Koyulan ogenin fazi (orn. ciglik) kaydedilir: yigin ciglik rengini gosterir.
-        int phaseIndex = item.TryGetComponent(out ServerProgress progress) ? progress.PhaseIndex.Value : 0;
-
-        if (itemType.Category == ItemCategory.Ekmek && PlacedIngredients.Count > 0)
-        {
-            // GECICI: ust ekmek yigini tamamlar; simdilik yalnizca temizlenir, hicbir oge uretilmez (6b).
-            PlacedIngredients.Clear();
-        }
-        else
-        {
-            PlacedIngredients.Add(new BurgerLayerEntry(itemType.Id, phaseIndex));
-        }
-
-        ItemMover.Despawn(item);
+        int phaseIndex = taken.TryGetComponent(out ServerProgress progress) ? progress.PhaseIndex.Value : 0;
+        PlacedIngredients.Add(new BurgerLayerEntry(itemType.Id, phaseIndex));
+        ItemMover.Despawn(taken);
     }
 
-    // Kural TEK yerde (GDD 4.1.2, 6.3, 6.7.3): rol izinli, baglam slotunda bir malzeme var ve kategori
-    // sirasina uyuyor. Sunucu bunu tamamlanmada, crosshair her karede (istemcide) sorar.
+    // UST ekmek (yarim ekmek): hamburger ogesi dogar, yigin katmanlari (+ ust ekmek) ogeye kopyalanir.
+    // Sira: hamburger DOGAR -> katmanlar yazilir -> yarim ekmek slottan alinir -> hamburger, baglamdaki
+    // slottan baslayan GDD 4.1 slot kuraliyla envantere girer (ekmegin az once bosalan slotu, secili
+    // slot zaten oradadir) -> yigin temizlenir -> ekmek despawn edilir. Herhangi bir adim basarisiz olursa
+    // geri alinir: yarim hamburger ortada kalmaz, ekmek yerinde durur.
+    private void CompleteBurger(InteractionContext context, PlayerInventory inventory, Item topBread)
+    {
+        var burger = ItemMover.SpawnCarried(hamburgerType, transform.position);
+        if (burger == null)
+            return;
+
+        if (!burger.TryGetComponent(out BurgerAssembly assembly))
+        {
+            Debug.LogError($"[BurgerAssemblyStation] '{hamburgerType.name}' itemPrefab'inda BurgerAssembly yok.", hamburgerType);
+            ItemMover.Despawn(burger);
+            return;
+        }
+
+        var layers = new List<BurgerLayerEntry>(PlacedIngredients.Count + 1);
+        foreach (var layer in PlacedIngredients)
+            layers.Add(layer);
+
+        layers.Add(new BurgerLayerEntry(topBread.Type.Id, 0));
+        assembly.ServerSetLayers(layers);
+
+        if (!inventory.ServerTryTakeItemAt(context.SlotIndex, out var takenBread))
+        {
+            Debug.LogError($"[BurgerAssemblyStation] ust ekmek slottan alinamadi (clientId={context.ClientId}); hamburger geri alindi.");
+            ItemMover.Despawn(burger);
+            return;
+        }
+
+        if (!inventory.ServerTryAddItem(burger, context.SlotIndex))
+        {
+            Debug.LogError($"[BurgerAssemblyStation] hamburger envantere yazilamadi (clientId={context.ClientId}); ekmek geri kondu.");
+            inventory.ServerTrySetItemAt(context.SlotIndex, takenBread);
+            ItemMover.Despawn(burger);
+            return;
+        }
+
+        PlacedIngredients.Clear();
+        ItemMover.Despawn(takenBread);
+    }
+
+    // Kural TEK yerde (GDD 4.1.2, 6.3, 6.7.3): rol izinli, baglam slotunda bir malzeme var, kategori
+    // sirasina ve ekmegin iki parcali kuralina uyuyor. Sunucu bunu tamamlanmada, crosshair her karede
+    // (istemcide) sorar.
     public bool CanInteract(InteractionContext context, out string reason)
     {
         return TryEvaluate(context, out _, out _, out reason);
     }
 
-    private bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out ItemType itemType, out string reason)
+    private bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out Item item, out string reason)
     {
         inventory = null;
-        itemType = null;
+        item = null;
 
         if (RoleManager.Instance == null)
         {
@@ -103,13 +161,13 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         }
 
         // ActiveSlotIndex (NetworkVariable) DEGIL — context.SlotIndex (bkz. InteractionContext.cs).
-        if (!inventory.TryGetItem(context.SlotIndex, out var item))
+        if (!inventory.TryGetItem(context.SlotIndex, out item))
         {
             reason = "elde malzeme yok";
             return false;
         }
 
-        itemType = item.Type;
+        var itemType = item.Type;
         if (itemType == null)
         {
             reason = "öğenin türü atanmamış";
@@ -120,6 +178,54 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         {
             reason = "malzeme bu sırada konamaz";
             return false;
+        }
+
+        if (itemType.Category == ItemCategory.Ekmek)
+            return TryEvaluateBread(context, inventory, item, out reason);
+
+        reason = null;
+        return true;
+    }
+
+    // Ekmegin iki parcali kurali (GDD 6.7.3): bos yigina yalnizca BUTUN ekmek (alt); dolu yigina
+    // yalnizca YARIM ekmek (ust) — butun ekmek ust olamaz, yarim ekmek alt olamaz. Ust ekmek
+    // hamburgeri tamamlar: hamburger turu spawn edilebilir olmali ve envanterde (ekmegin kendi slotu
+    // disinda) bos slot bulunmali — yarim hamburger ortada kalmaz. Envanterin doluluğu Şef'in kendi
+    // bilgisi, durum sizintisi degil.
+    private bool TryEvaluateBread(InteractionContext context, PlayerInventory inventory, Item item, out string reason)
+    {
+        if (!item.TryGetComponent(out BreadHalf bread))
+        {
+            reason = "ekmek yarılanamıyor";
+            return false;
+        }
+
+        bool stackEmpty = PlacedIngredients.Count == 0;
+        if (stackEmpty && bread.IsHalved.Value)
+        {
+            reason = "yarım ekmek alt ekmek olamaz";
+            return false;
+        }
+
+        if (!stackEmpty && !bread.IsHalved.Value)
+        {
+            reason = "üst ekmek yarılanmış olmalı";
+            return false;
+        }
+
+        if (!stackEmpty)
+        {
+            if (hamburgerType == null || hamburgerType.ItemPrefab == null)
+            {
+                reason = "hamburger türü atanmamış";
+                return false;
+            }
+
+            if (!inventory.HasFreeSlot(context.SlotIndex))
+            {
+                reason = "boş slot yok";
+                return false;
+            }
         }
 
         reason = null;

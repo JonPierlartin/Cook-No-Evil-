@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8257044937679197670}
   - component: {fileID: 4410281178193623955}
   - component: {fileID: 3230670982771554109}
+  - component: {fileID: 2511845659534275303}
   m_Layer: 0
   m_Name: Ekmek_Item
   m_TagString: Untagged
@@ -74,6 +75,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   ShowTopMostFoldoutHeaderGroup: 1
   type: {fileID: 11400000, guid: 107e12c39a0c3a248bae42745159c596, type: 2}
+--- !u!114 &2511845659534275303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8505585916998070737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe9b7f841bcf5c348b5b21b3b4b7d037, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BreadHalf
+  ShowTopMostFoldoutHeaderGroup: 1
+  worldVisualRoot: {fileID: 382152199108067952}
+  halvedHeightScale: 0.5
 --- !u!1001 &3104729202270102033
 PrefabInstance:
   m_ObjectHideFlags: 0

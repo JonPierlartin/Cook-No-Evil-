@@ -29,8 +29,10 @@ public class HeldItemVisual : NetworkBehaviour
     private GameObject _instance;
     private Renderer[] _instanceRenderers;
     private ItemType _shownType;
+    private Item _shownItem;
     private Transform _shownAnchor;
     private ServerProgress _shownProgress;
+    private IItemVisualSource _shownSource;
 
     public override void OnNetworkSpawn()
     {
@@ -47,7 +49,9 @@ public class HeldItemVisual : NetworkBehaviour
 
         ClearInstance();
         DetachPhaseSubscription();
+        DetachVisualSource();
         _shownType = null;
+        _shownItem = null;
         _shownAnchor = null;
     }
 
@@ -110,34 +114,63 @@ public class HeldItemVisual : NetworkBehaviour
     // Despawn olayi oge HALA SpawnedObjects'teyken tetiklenir; bu yuzden yok edilen oge cozumden dislanir.
     private void HandleItemDespawned(Item item) => Refresh(ignoredItem: item);
 
-    private void Refresh(Item ignoredItem = null)
+    // force: gorsel kaynagi (yarim ekmek, hamburger katmanlari) ayni ogede DEGISTI — ayni oge/nokta olsa
+    // da gorsel yeniden uretilir.
+    private void Refresh(Item ignoredItem = null, bool force = false)
     {
         var anchor = _isLocalOwner ? firstPersonHoldPoint : thirdPersonHoldPoint;
         bool hasItem = _inventory.TryGetActiveItem(out var item) && item != ignoredItem;
         var resolvedItem = hasItem ? item : null;
         var itemType = hasItem ? item.Type : null;
 
-        if (itemType == _shownType && anchor == _shownAnchor)
-        {
-            // Tur/nokta ayni ama TUTULAN OGE ORNEGI degismis olabilir (orn. ayni turden baska bir
-            // ogeye gecildi) — gorseli yeniden olusturmadan yalnizca faz rengi aboneligini guncelle.
-            RebindPhaseSubscription(resolvedItem);
+        if (!force && resolvedItem == _shownItem && anchor == _shownAnchor)
             return;
-        }
 
         ClearInstance();
         _shownType = itemType;
+        _shownItem = resolvedItem;
         _shownAnchor = anchor;
         RebindPhaseSubscription(resolvedItem);
+        RebindVisualSource(resolvedItem);
 
-        // Bos slot, gorseli olmayan oge veya atanmamis nokta: hata degil, el bos.
-        if (itemType == null || itemType.VisualPrefab == null || anchor == null)
+        if (resolvedItem == null || anchor == null)
             return;
 
-        _instance = Instantiate(itemType.VisualPrefab, anchor);
+        // Ogenin kendi gorsel kaynagi varsa (yarim ekmek, hamburger) onu kullan; yoksa turun visualPrefab'i.
+        // Gorseli olmayan oge hata degil: el bos gorunur.
+        if (_shownSource != null)
+            _instance = _shownSource.CreateVisual(anchor);
+        else if (itemType.VisualPrefab != null)
+            _instance = Instantiate(itemType.VisualPrefab, anchor);
+
+        if (_instance == null)
+            return;
+
         _instanceRenderers = _instance.GetComponentsInChildren<Renderer>(true);
         ApplyPhaseColorToInstance();
     }
+
+    private void RebindVisualSource(Item item)
+    {
+        var source = item != null ? item.GetComponent<IItemVisualSource>() : null;
+        if (source == _shownSource)
+            return;
+
+        DetachVisualSource();
+        _shownSource = source;
+        if (_shownSource != null)
+            _shownSource.VisualChanged += HandleSourceVisualChanged;
+    }
+
+    private void DetachVisualSource()
+    {
+        if (_shownSource != null)
+            _shownSource.VisualChanged -= HandleSourceVisualChanged;
+
+        _shownSource = null;
+    }
+
+    private void HandleSourceVisualChanged() => Refresh(force: true);
 
     // Kaynak ogenin ServerProgress'i (varsa) degisince abonelik gunceller; ayni kaynaksa (ikisi de
     // ayni referans veya ikisi de null) hicbir sey yapmaz.

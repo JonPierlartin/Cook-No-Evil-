@@ -26,6 +26,9 @@ public class PlacementPreview : MonoBehaviour
     private PlayerInventory _inventory;
     private GameObject _instance;
     private ItemType _shownType;
+    private Item _shownItem;
+    private IItemVisualSource _shownSource;
+    private int _shownVersion;
     private bool _visible;
     private HoldOrPressInteractable _lastTarget;
     private PlacementTarget _placement;
@@ -63,18 +66,37 @@ public class PlacementPreview : MonoBehaviour
 
     private void SyncShownItem()
     {
-        var itemType = _inventory.TryGetActiveItem(out var item) ? item.Type : null;
-        if (itemType == _shownType)
+        var item = _inventory.TryGetActiveItem(out var active) ? active : null;
+
+        // Ogenin kendi gorsel kaynagi varsa (yarim ekmek, hamburger) onizleme O HALI gosterir (GDD 4.1.2 (2)):
+        // oge degisince VEYA kaynagin surumu artinca yeniden uretilir.
+        if (item != _shownItem)
+        {
+            _shownSource = item != null ? item.GetComponent<IItemVisualSource>() : null;
+            _shownVersion = -1;
+        }
+
+        int version = _shownSource != null ? _shownSource.VisualVersion : 0;
+        if (item == _shownItem && version == _shownVersion)
             return;
 
         DestroyInstance();
-        _shownType = itemType;
+        _shownItem = item;
+        _shownVersion = version;
+        _shownType = item != null ? item.Type : null;
 
         // Bos slot, gorseli olmayan oge veya atanmamis materyal: hata degil, onizleme yok.
-        if (itemType == null || itemType.VisualPrefab == null || previewMaterial == null)
+        if (item == null || previewMaterial == null)
             return;
 
-        _instance = Instantiate(itemType.VisualPrefab);
+        if (_shownSource != null)
+            _instance = _shownSource.CreateVisual(null);
+        else if (_shownType != null && _shownType.VisualPrefab != null)
+            _instance = Instantiate(_shownType.VisualPrefab);
+
+        if (_instance == null)
+            return;
+
         _instance.SetActive(false);
         PrepareGhost(_instance);
     }
@@ -138,6 +160,8 @@ public class PlacementPreview : MonoBehaviour
     {
         DestroyInstance();
         _shownType = null;
+        _shownItem = null;
+        _shownSource = null;
         _lastTarget = null;
         _placement = null;
         _slot = null;

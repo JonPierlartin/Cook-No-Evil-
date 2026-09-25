@@ -48,6 +48,14 @@ public class Item : NetworkBehaviour
         NetworkDespawned?.Invoke(this);
     }
 
+    // Gorseli calisma zamaninda olusturulan/degisen ogeler (BurgerAssembly) renderer'lari yeniden
+    // toplatir; boylece yeni renderer'lar da Presence'a (Carried iken gizli, Placed iken acik) uyar.
+    public void RefreshWorldVisual()
+    {
+        _renderers = GetComponentsInChildren<Renderer>(true);
+        ApplyPresence(Presence.Value);
+    }
+
     private void HandlePresenceChanged(ItemPresence previous, ItemPresence current) => ApplyPresence(current);
 
     private void ApplyPresence(ItemPresence presence)

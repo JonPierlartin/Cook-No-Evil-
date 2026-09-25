@@ -1438,6 +1438,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BurgerAssemblyStation
   ShowTopMostFoldoutHeaderGroup: 1
   registry: {fileID: 11400000, guid: e6837ec4abcbfb04aaead32586a42c5d, type: 2}
+  hamburgerType: {fileID: 11400000, guid: 92177b9961bae5f44b21c7e7321775fe, type: 2}
   allowedRoles: 03000000
 --- !u!114 &374928207
 MonoBehaviour:
