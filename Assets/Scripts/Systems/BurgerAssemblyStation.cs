@@ -1,21 +1,27 @@
 using Unity.Netcode;
 using UnityEngine;
 
-// Sef'in masasindaki hamburger birlestirme. Bilincli kapsam genisletmesi (GDD'de
-// tanimli degildi) — SADECE tarif veri modelini ve masadaki malzeme dogrulama
-// mantigini kapsar; musteri/siparis/NPC/kuyruk sistemi KURULMUYOR. activeRecipe
-// test icin Inspector'dan sabit secilir, gercek bir siparis kaynagina baglanmaz.
+// Şef'in masasındaki hamburger birleştirme (GDD 6.7.3). İstasyon TARİF DOĞRULAMASI YAPMAZ — yanlış
+// malzeme (marul yerine domates) konabilmeli, hatanın kendisi oyunun konusu; yalnızca KATEGORİ SIRASI
+// denetlenir. Konan her malzeme replike PlacedIngredients listesine bir katman olarak yazılır ve
+// BurgerStackVisual bunu her istemcide tezgahın üstünde görünür bir yığın olarak çizer (geri bildirim).
+//
+// GEÇİCİ (Adım 6b'de değişecek): ikinci ekmek (üst ekmek) konunca yığın temizlenir ve HİÇBİR ÖĞE
+// ÜRETİLMEZ. 6b'de tamamlanan hamburger tek bir öğe olarak envantere girecek (GDD 6.7.3).
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(HoldOrPressInteractable))]
 public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
 {
-    [SerializeField] private BurgerRecipe activeRecipe;
+    [Tooltip("Id -> ItemType (yığın katmanları tür id'si tutar; kategori ve görsel buradan çözülür).")]
+    [SerializeField] private ItemRegistry registry;
     [Tooltip("Bu istasyonu kullanabilecek roller. Bos birakilirsa herkes kullanabilir.")]
     [SerializeField] private PlayerRole[] allowedRoles;
 
-    public readonly NetworkList<int> PlacedIngredients = new();
+    public readonly NetworkList<BurgerLayerEntry> PlacedIngredients = new();
 
     private HoldOrPressInteractable _interactable;
+
+    public ItemRegistry Registry => registry;
 
     private void Awake()
     {
@@ -32,36 +38,41 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         _interactable.OnInteractionCompleted -= HandleInteractionCompleted;
     }
 
-    // GECICI TESHIS — Adim 6'da kaldirilacak.
     private void HandleInteractionCompleted(InteractionContext context)
     {
-        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(context.ClientId) : PlayerRole.None;
-        Debug.Log($"[BurgerAssemblyStation] HandleInteractionCompleted cagrildi (clientId={context.ClientId}, role={role}).");
+        if (!IsServer)
+            return;
 
         if (!TryEvaluate(context, out var inventory, out var itemType, out var reason))
         {
-            Debug.LogWarning($"[BurgerAssemblyStation] reddetti (clientId={context.ClientId}, rol={role}): {reason}.");
+            Debug.LogWarning($"[BurgerAssemblyStation] reddetti (clientId={context.ClientId}): {reason}.");
             return;
         }
 
         // Sira: ONCE slottan cikarilir, SONRA despawn edilir (slot hicbir an despawn olmus bir ogeyi
-        // gostermez). Tezgah malzemeyi yalnizca tur numarasi olarak tutar (PlacedIngredients) — bu adimda
-        // oge tezgaha parent edilmez, yok edilir (parent/yuva Adim 4.2'de). Slot, ActiveSlotIndex DEGIL,
-        // baglamdan (bkz. InteractionContext.cs) — tiklama anindaki secili slot budur.
+        // gostermez). Tezgah malzemeyi ag nesnesi olarak TUTMAZ, yalnizca katman kaydi yazar. Slot,
+        // ActiveSlotIndex DEGIL, baglamdan (bkz. InteractionContext.cs) — tiklama anindaki secili slot.
         if (!inventory.ServerTryTakeItemAt(context.SlotIndex, out var item))
             return;
 
-        PlacedIngredients.Add(itemType.Id);
-        ItemMover.Despawn(item);
+        // Koyulan ogenin fazi (orn. ciglik) kaydedilir: yigin ciglik rengini gosterir.
+        int phaseIndex = item.TryGetComponent(out ServerProgress progress) ? progress.PhaseIndex.Value : 0;
 
-        // Test edilebilirlik icin: tarif tamamlaninca otomatik sifirlanir, boylece
-        // musteri/siparis sistemine gerek kalmadan art arda test edilebilir.
-        if (IsRecipeComplete())
+        if (itemType.Category == ItemCategory.Ekmek && PlacedIngredients.Count > 0)
+        {
+            // GECICI: ust ekmek yigini tamamlar; simdilik yalnizca temizlenir, hicbir oge uretilmez (6b).
             PlacedIngredients.Clear();
+        }
+        else
+        {
+            PlacedIngredients.Add(new BurgerLayerEntry(itemType.Id, phaseIndex));
+        }
+
+        ItemMover.Despawn(item);
     }
 
-    // Kural TEK yerde (GDD 4.1.2, 6.3, 6.7.3): rol izinli, elde (baglam slotunda) bir malzeme var ve
-    // tezgah onu su an kabul ediyor. Sunucu bunu tamamlanmada, crosshair her karede (istemcide) sorar.
+    // Kural TEK yerde (GDD 4.1.2, 6.3, 6.7.3): rol izinli, baglam slotunda bir malzeme var ve kategori
+    // sirasina uyuyor. Sunucu bunu tamamlanmada, crosshair her karede (istemcide) sorar.
     public bool CanInteract(InteractionContext context, out string reason)
     {
         return TryEvaluate(context, out _, out _, out reason);
@@ -105,16 +116,9 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
             return false;
         }
 
-        // Ilk yerlestirme kesinlikle ekmek olmali; sonrasi icin sira kurali yok
-        // (kullanici karari) — sadece aktif tarifin (varyasyonu dahil) izin
-        // verdigi malzemeler kabul edilir.
-        bool isValid = PlacedIngredients.Count == 0
-            ? itemType.IsBread
-            : activeRecipe != null && activeRecipe.AllowsIngredient(itemType);
-
-        if (!isValid)
+        if (!IsCategoryAllowedNext(itemType.Category))
         {
-            reason = "malzeme bu tezgaha konamaz";
+            reason = "malzeme bu sırada konamaz";
             return false;
         }
 
@@ -122,29 +126,47 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         return true;
     }
 
+    // KATEGORI SIRASI — tek yer (GDD 6.7.3): Alt ekmek -> Protein -> Garnitur -> Sos -> Ust ekmek.
+    // Kategori ICINDE sira serbest; garnitur ve sos birden fazla kez konabilir (esit sira serbest).
+    // Tarif dogrulamasi YOK: yalnizca sira. Bos yigina yalnizca ekmek (alt ekmek) konur; dolu yigina
+    // konan ekmek UST ekmektir (sira 4, her seyden sonra). Kategorisi Yok olan tur hicbir zaman konmaz.
+    private bool IsCategoryAllowedNext(ItemCategory next)
+    {
+        if (next == ItemCategory.Yok)
+            return false;
+
+        if (PlacedIngredients.Count == 0)
+            return next == ItemCategory.Ekmek;
+
+        int lastRank = RankOfLayer(PlacedIngredients.Count - 1);
+        return lastRank >= 0 && RankOfNew(next) >= lastRank;
+    }
+
+    // Yigindaki katmanin sirasi. Dizin 0 her zaman alt ekmektir (sira 0); registry'de bulunamayan
+    // katman -1 (sonraki hicbir seyin konmasina izin vermez — savunmaci, olmamali).
+    private int RankOfLayer(int index)
+    {
+        if (index == 0)
+            return 0;
+
+        var type = registry != null ? registry.Find(PlacedIngredients[index].TypeId) : null;
+        return type != null ? RankOfNew(type.Category) : -1;
+    }
+
+    private static int RankOfNew(ItemCategory category)
+    {
+        return category switch
+        {
+            ItemCategory.Protein => 1,
+            ItemCategory.Garnitur => 2,
+            ItemCategory.Sos => 3,
+            ItemCategory.Ekmek => 4, // dolu yigina konan ekmek = ust ekmek
+            _ => -1
+        };
+    }
+
     private bool IsRoleAllowed(PlayerRole role)
     {
         return allowedRoles == null || allowedRoles.Length == 0 || System.Array.IndexOf(allowedRoles, role) >= 0;
-    }
-
-    private bool IsRecipeComplete()
-    {
-        if (activeRecipe == null)
-            return false;
-
-        foreach (var requirement in activeRecipe.RequiredIngredients)
-        {
-            int have = 0;
-            foreach (int placedId in PlacedIngredients)
-            {
-                if (placedId == requirement.Type.Id)
-                    have++;
-            }
-
-            if (have < requirement.Quantity)
-                return false;
-        }
-
-        return true;
     }
 }

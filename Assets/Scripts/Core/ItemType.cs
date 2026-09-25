@@ -15,8 +15,8 @@ public class ItemType : ScriptableObject
     [SerializeField] private GameObject visualPrefab;
     [Tooltip("Bu ogeyi dunyada temsil eden AG KABUGU: kokte NetworkObject + Item (type = bu tur), cocuk olarak visualPrefab. Sunucu bunu spawn eder; NetworkManager'in prefab listesinde kayitli olmali. Collider ve ic ice NetworkObject tasimamali. Bos birakilirsa bu tur spawn edilemez.")]
     [SerializeField] private GameObject itemPrefab;
-    [Tooltip("BurgerAssemblyStation'da ilk yerlestirilmesi zorunlu olan malzeme turu (ekmek).")]
-    [SerializeField] private bool isBread;
+    [Tooltip("Hamburger birlestirmedeki kategori (GDD 6.7.3): siralama kurali buna dayanir. Birlestirmeye girmeyen turler Yok.")]
+    [SerializeField] private ItemCategory category;
     [Tooltip("Yalnizca itemPrefab'inda ServerProgress olan turler icin anlamlidir: ServerProgress." +
         "Profile ile AYNI SIRADA, ayni uzunlukta faz basina renk (GDD 5.2.1: Cig/Pismis/Yanmis icin " +
         "yer tutucu renkler). ServerProgress tasimayan turlerde bos birakilir, kullanilmaz.")]
@@ -27,7 +27,7 @@ public class ItemType : ScriptableObject
     public Sprite Icon => icon;
     public GameObject VisualPrefab => visualPrefab;
     public GameObject ItemPrefab => itemPrefab;
-    public bool IsBread => isBread;
+    public ItemCategory Category => category;
     public Color[] PhaseColors => phaseColors;
 
 #if UNITY_EDITOR
