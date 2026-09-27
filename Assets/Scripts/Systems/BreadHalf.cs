@@ -59,7 +59,7 @@ public class BreadHalf : NetworkBehaviour, IItemVisualSource
     private void ApplyWorldScale()
     {
         if (worldVisualRoot != null)
-            worldVisualRoot.localScale = new Vector3(1f, IsHalved.Value ? halvedHeightScale : 1f, 1f);
+            ApplyHalvedScale(worldVisualRoot);
     }
 
     public GameObject CreateVisual(Transform parent)
@@ -69,12 +69,16 @@ public class BreadHalf : NetworkBehaviour, IItemVisualSource
             return null;
 
         var visual = Instantiate(prefab, parent);
-        if (IsHalved.Value)
-        {
-            var scale = visual.transform.localScale;
-            visual.transform.localScale = new Vector3(scale.x, scale.y * halvedHeightScale, scale.z);
-        }
-
+        ApplyHalvedScale(visual.transform);
         return visual;
+    }
+
+    // D5: dunya gorseli (ApplyWorldScale) ve kopyalar (CreateVisual) AYNI tek formulden gecer — iki
+    // ayri yerde ayni matematigi yazmak zamanla ayrisma riski tasir. Kok tabanda oldugu icin (K2d) Y
+    // olcegini kucultmek tabani sabit tutar, tepe iner; X/Z HER ZAMAN 1 (visualPrefab kokunun kendi
+    // yerel olcegi zaten (1,1,1) olmali).
+    private void ApplyHalvedScale(Transform root)
+    {
+        root.localScale = new Vector3(1f, IsHalved.Value ? halvedHeightScale : 1f, 1f);
     }
 }

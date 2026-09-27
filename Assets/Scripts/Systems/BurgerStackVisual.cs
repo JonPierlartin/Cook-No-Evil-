@@ -42,7 +42,9 @@ public class BurgerStackVisual : NetworkBehaviour
         BurgerStackBuilder.Clear(_layers);
         float height = BurgerStackBuilder.Build(_station.PlacedIngredients, _station.Registry, stackRoot, _layers);
 
+        // height artik stackRoot'un YEREL Y ekseninde (D5, bkz. BurgerStackBuilder); dunya noktasina
+        // TransformPoint ile cevrilir — stackRoot donuk/olcekli olsa da dogru sonuc verir.
         if (placementPoint != null)
-            placementPoint.position = stackRoot.position + stackRoot.up * height;
+            placementPoint.position = stackRoot.TransformPoint(new Vector3(0f, height, 0f));
     }
 }

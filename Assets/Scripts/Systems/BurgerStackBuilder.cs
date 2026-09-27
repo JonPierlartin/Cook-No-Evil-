@@ -4,31 +4,48 @@ using UnityEngine;
 
 // Bir katman listesini (BurgerLayerEntry) verilen kökün üstüne görünür bir yığın olarak dizen TEK
 // yardımcı: birleştirme tezgahındaki yığın (BurgerStackVisual) ve tamamlanan hamburgerin görseli
-// (BurgerAssembly) aynı kuralı kullanır. Katman için ağ nesnesi spawn edilmez, collider eklenmez.
-// Her katman türün visualPrefab'ından üretilir; prefab kökü tabanda olduğu için (K2d) katmanın tabanı
-// bir öncekinin ölçülen sınır kutusu yüksekliği toplanarak üstüne oturur. Köftenin pişmişlik rengi
-// (faz) ItemPhaseColoring ile uygulanır.
+// (BurgerAssembly, hem dünya görseli hem elde/önizleme kopyası) aynı kuralı kullanır. Katman için ağ
+// nesnesi spawn edilmez, collider eklenmez. Her katman türün visualPrefab'ından üretilir; prefab kökü
+// tabanda olduğu için (K2d) katmanın tabanı bir öncekinin ölçülen yüksekliği toplanarak üstüne oturur.
+// Köftenin pişmişlik rengi (faz) ItemPhaseColoring ile uygulanır.
+//
+// D5 (25 Eyl 2026): olcum ve yerlesim ROOT'UN KENDI YEREL uzayinda yapilir, world-space DEGIL. root
+// hangi ebeveynin altinda kurulursa kurulsun (elde tutma noktasi, onizleme koku, yuva) — o ebeveyn
+// donuk/olcekli olsa BILE (orn. birinci sahis tutma noktasi PlayerController'in uyguladigi kamera
+// pitch'iyle her kare doner) katmanlar bosluksuz/ortusmesiz dizilir. Onceki surum world-space
+// `root.up * height` ile yerlestirip world-eksenine-hizali `Renderer.bounds.size.y` ile olcuyordu; bu
+// ikisi yalnizca root donusu tam olarak world Y ile hizaliyken tutarliydi — pitch'li ankorde bir
+// katman kalinligi kadar (~0,10-0,16 birim) ortusme/bosluk uretiyordu (olculdu, bkz. commit govdesi).
 public static class BurgerStackBuilder
 {
-    // Katmanları root'un altına dizer, oluşan nesneleri created'a ekler, toplam yüksekliği döndürür.
+    // Katmanları root'un altına dizer, oluşan nesneleri created'a ekler, toplam yüksekliği (root'un
+    // yerel Y ekseninde) döndürür.
     public static float Build(NetworkList<BurgerLayerEntry> layers, ItemRegistry registry, Transform root, List<GameObject> created)
     {
-        float height = 0f;
+        float top = 0f;
         for (int i = 0; i < layers.Count; i++)
         {
             var type = registry != null ? registry.Find(layers[i].TypeId) : null;
             if (type == null || type.VisualPrefab == null)
                 continue;
 
-            var layer = Object.Instantiate(type.VisualPrefab, root.position + root.up * height, root.rotation, root);
+            // Once ROOT'A GORE kimlik donusumde kur (world pozisyon/rotasyon degil) — root'un kendisi
+            // donuk/olcekli olsa da katman root ile AYNI yerel eksende durur.
+            var layer = Object.Instantiate(type.VisualPrefab, root);
+            layer.transform.localPosition = Vector3.zero;
+            layer.transform.localRotation = Quaternion.identity;
+
             var renderers = layer.GetComponentsInChildren<Renderer>(true);
             ItemPhaseColoring.Apply(renderers, type, layers[i].PhaseIndex);
             created.Add(layer);
 
-            height += MeasureHeight(renderers);
+            MeasureLocalRange(root, renderers, out float minY, out float maxY);
+            // Katmanin tabani (minY, K2d'de ~0 ama varsayilmaz) tam "top"a otursun.
+            layer.transform.localPosition = new Vector3(0f, top - minY, 0f);
+            top += maxY - minY;
         }
 
-        return height;
+        return top;
     }
 
     public static void Clear(List<GameObject> created)
@@ -49,15 +66,35 @@ public static class BurgerStackBuilder
         created.Clear();
     }
 
-    private static float MeasureHeight(Renderer[] renderers)
+    // Renderer'larin (world-eksenine-hizali) sinir kutusu koselerini root'un YEREL uzayina tasiyip
+    // oradaki Y araligini olcer. root donuk olsa bile katmanin root'a gore GERCEK dikey kaplamini
+    // verir; yalnizca world Y okumak (eski surum) root donukken yanlis sonuc uretiyordu.
+    private static void MeasureLocalRange(Transform root, Renderer[] renderers, out float minY, out float maxY)
     {
-        if (renderers.Length == 0)
-            return 0f;
+        minY = float.PositiveInfinity;
+        maxY = float.NegativeInfinity;
 
-        var bounds = renderers[0].bounds;
-        for (int i = 1; i < renderers.Length; i++)
-            bounds.Encapsulate(renderers[i].bounds);
+        foreach (var renderer in renderers)
+        {
+            var bounds = renderer.bounds;
+            var center = bounds.center;
+            var extents = bounds.extents;
 
-        return bounds.size.y;
+            for (int xi = -1; xi <= 1; xi += 2)
+            for (int yi = -1; yi <= 1; yi += 2)
+            for (int zi = -1; zi <= 1; zi += 2)
+            {
+                var corner = center + new Vector3(extents.x * xi, extents.y * yi, extents.z * zi);
+                float localY = root.InverseTransformPoint(corner).y;
+                if (localY < minY) minY = localY;
+                if (localY > maxY) maxY = localY;
+            }
+        }
+
+        if (float.IsPositiveInfinity(minY))
+        {
+            minY = 0f;
+            maxY = 0f;
+        }
     }
 }
