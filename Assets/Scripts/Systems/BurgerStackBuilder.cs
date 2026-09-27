@@ -38,8 +38,11 @@ public static class BurgerStackBuilder
             if (layer == null)
                 continue;
 
-            // Destroy kare sonuna ertelenir; yeni yigin ayni karede kurulacagi icin eskiyi hemen gizle.
+            // Destroy kare sonuna ertelenir; yeni yigin ayni karede kurulacagi icin eskiyi hemen gizle ve
+            // kokten ayir — ayni karede GetComponentsInChildren (Item.RefreshWorldVisual) silinmeyi bekleyen
+            // renderer'lari toplarsa kare sonunda yok olmus referans tutar (MissingReferenceException).
             layer.SetActive(false);
+            layer.transform.SetParent(null, false);
             Object.Destroy(layer);
         }
 
