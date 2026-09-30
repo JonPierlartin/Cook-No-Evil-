@@ -6148,6 +6148,7 @@ GameObject:
   - component: {fileID: 1261920749}
   - component: {fileID: 1261920751}
   - component: {fileID: 1261920750}
+  - component: {fileID: 1261920752}
   m_Layer: 0
   m_Name: Izgara
   m_TagString: Untagged
@@ -7035,7 +7036,7 @@ MonoBehaviour:
     m_FontStyle: 1
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 64
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -7236,3 +7237,15 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1261920752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1261920746}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9bfd78bd4b762c4cadd6a66b831ac79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoleAwareAudioRange

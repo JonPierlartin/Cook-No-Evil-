@@ -5,8 +5,10 @@ using UnityEngine;
 // IVoiceProvider ile calisan, AudioSource entegreli, rol tabanli sesli sohbet yonetimi (GDD 10.4):
 //  - Kasiyer (dilsiz): mikrofonu sunucu tarafinda susturulur (paketi hic relay edilmez).
 //  - Komi (sagir): HICBIR oyuncunun sesini duymaz — Faz 0 karari (GDD 11.2). Sef->Komi gibberish Faz 0.5.
-//    Susturma AudioSource.mute ile yapilir, ana ses seviyesinden bagimsizdir (K3). Oyun efektleri
-//    (orn. izgara cizirtisi) bundan etkilenmez; onlar mesafeyle zayiflar (GDD 4.1.3).
+//    "Sagir mi" karari DeafHearing'dedir (tek yer). Gelen paket hic cozulmez/calinmaz: ses
+//    VoiceStreamPlayer'da OnAudioFilterRead ile enjekte edildigi icin AudioSource.mute'a guvenilmez
+//    (30 Eyl testi: mute ile Komi oyunculari net duyuyordu). Ana ses seviyesinden bagimsizdir (K3).
+//    Oyun efektleri (GDD 4.1.3) DeafHearing + RoleAwareAudioRange ile ayrica bogulur/daralir.
 // Bu kisitlamalar yalnizca round aktifken uygulanir; lobide herkes normal konusup duyabilir.
 // Bilinen eksik (K4): konusmaci AudioSource'lari gercek oyuncu konumunda degil (Faz 0 plani, VoIP adimi).
 [RequireComponent(typeof(NetworkObject))]
@@ -126,6 +128,10 @@ public class VoIPController : NetworkBehaviour
         if (senderId == NetworkManager.Singleton.LocalClientId)
             return;
 
+        // Sagir dinleyici hicbir oyuncunun sesini duymaz: paket cozulmez, hoparlore yazilmaz (bkz. dosya basi).
+        if (DeafHearing.IsLocalListenerDeaf)
+            return;
+
         var player = GetOrCreateSpeakerPlayer(senderId);
         _voiceProvider.DecompressAndEnqueue(player.Source, compressedData);
     }
@@ -153,8 +159,7 @@ public class VoIPController : NetworkBehaviour
     private void ApplyRoleBasedAudioSettings(AudioSource source)
     {
         // Round durumu ve/veya rol degismis olabilir: her cagrida sifirdan dogru kurulum yapilir.
-        source.mute = false;
-
+        // (Komi'nin sagirligi burada DEGIL, ReceiveVoiceClientRpc'de paket duzeyinde uygulanir.)
         if (!IsRoundActive)
         {
             // Lobide (round aktif degilken) hic kimsenin sesi kisitlanmaz.
@@ -164,11 +169,6 @@ public class VoIPController : NetworkBehaviour
 
         switch (_localRole)
         {
-            case PlayerRole.Komi:
-                // Sagir: hicbir oyuncunun sesini duymaz (bkz. dosya basi).
-                source.mute = true;
-                break;
-
             case PlayerRole.Sef:
                 // Kor icin abartili 3D Uzamsal Ses (Hyper-Spatial Audio).
                 source.spatialBlend = 1f;
