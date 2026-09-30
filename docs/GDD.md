@@ -285,6 +285,10 @@ Hareket kısıtı yok — kısıtlar tamamen duyusal ve bilgiye erişimle ilgili
 
 **Envanter:** Her rol aynı anda **4 öğe** taşıyabilir (4 slotlu hotbar, 1-4 tuşlarıyla seçim). Şef bu sayede ekmeği ve köfteyi aynı anda taşıyıp hamburgeri kesintisiz birleştirebilir.
 
+**Alınan öğe hangi slota girer (netleşti ✓, 21 Eyl 2026):** Bir kaptan veya yuvadan alınan öğe **seçili slota** girer. Seçili slot doluysa, **seçili slottan sonraki ilk boş slota** girer; sona gelince başa sarar (örn. 3. slot seçili ve dolu → 4. slot; 4. de doluysa → 1. slot → 2. slot). Seçili slot değişmez. Hiç boş slot yoksa alma gerçekleşmez (crosshair "engelli"). *Gerekçe:* oyuncu baktığı slotu doldurmayı bekler; seçili slot boşken öğenin başka bir slota gitmesi elin boş kalmasına ve "aldım mı?" belirsizliğine yol açar.
+
+**Elde tutulan nesne görünür (netleşti ✓).** Oyuncunun o an seçili slotundaki öğe **elinde** görünür. Sahibi onu birinci şahıs görünümde ekranın alt kısmında görür; diğer oyuncular onu karakterin elinde görür. Seçili slot boşsa eli boştur. Her öğenin kendine ait bir görseli vardır ve bu görsel hem elde tutarken hem de yerleştirme önizlemesinde (§4.1.2 ②) kullanılır. *Gerekçe:* Komi, pencereden Şef'in elinde ne tuttuğunu görebilmelidir (§5.1.2, §6.7.3) — "elinde yanlış malzeme var" uyarısı buna dayanır.
+
 #### 4.1.1 Şef'in Görüşü — Kontur Render (netleşti ✓)
 Şef dünyayı yalnızca **siyah zemin üzerinde beyaz kontur çizgileri** olarak görür (referans: Bombanana). Dolgu yok, renk yok, gölge yok, doku yok — sadece nesnelerin kenar çizgileri ve silueti.
 
@@ -310,15 +314,119 @@ Komi tamamen sağır değildir — **çok dar bir yarıçapta**, aşırı boğuk
 - **Duymaz:** uzaktaki hiçbir şey. Mutfaktaki ızgarada pişen etin cızırtısı Komi'ye ulaşmaz (mesafe yeter).
 - **Şef'in sesi:** duyar ama anlamaz — bkz. §10.4.
 
-#### 4.1.2 Etkileşim Vurgusu (Highlight) — Çift Görsel (netleşti ✓)
-Oyuncu bir nesneye bakıp etkileşime girebildiğinde nesne vurgulanır. **Tek bir "vurgulu" durumu vardır ama iki farklı görsel karşılığı olur:**
-- **Kasiyer / Komi (normal render):** standart renk/emissive vurgu (örn. Komi dondurmaya parçacık eklerken hedefin yeşil parlaması).
-- **Şef (kontur render):** renk işe yaramaz — hedefin **kontur çizgisi kalınlaşır / parlar / nabız gibi atar**. Şef'in dünyası zaten çizgilerden oluştuğu için bu mükemmel okunur.
+#### 4.1.2 Etkileşim Geri Bildirimi — İki Ayrı Sistem (netleşti ✓)
 
-Bu sistem mevcut kodda **hiç yok** — sıfırdan kurulacak (mevcut `PlayerInteractor` yalnızca ham raycast etkileşimi yapıyor, görsel geri bildirim üretmiyor).
+Oyuncunun "şu an neyle etkileşebilirim" ve "elimdekini nereye koyabilirim" sorularını **iki ayrı
+sistem** yanıtlar. İkisi de **crosshair'a bağlıdır** — yani oyuncunun o an baktığı hedefe göre
+çalışır — ama farklı şeyi gösterirler ve birbirinin yerine geçmezler.
 
-**Etkileşim menzili bir playtest parametresidir (netleşti ✓).** GDD sabit bir değer tanımlamaz; Inspector'dan ayarlanabilir kalır (şu anki değer 2,5 m) ve ilk playtest'te belirlenir. Menzil değeri tasarım kararı olarak değil, denge parametresi olarak ele alınır.
+*(Önceki sürümlerde ikisi tek bir "highlight" başlığı altında toplanmış, sonra ② bakış yönünden
+bağımsız bir çerçeve olarak tanımlanmıştı. İkisi de 21 Eyl 2026'da düzeltildi; aşağıdaki tanım
+esastır.)*
 
+---
+
+##### ① Crosshair Geri Bildirimi — "şu an tıklayabilir miyim?"
+
+Ekranın ortasındaki nişangah, oyuncunun o an baktığı nesneye göre durum değiştirir. **Nesnenin
+kendisi boyanmaz/vurgulanmaz.**
+
+| Durum | Ne zaman | Anlamı |
+|---|---|---|
+| **Nötr** | Menzil içinde etkileşilebilir bir hedef yok | "Burada bir şey yok" |
+| **Kullanılabilir** | Hedef var **ve** oyuncu onu şu an kullanabiliyor | "Tıklayabilirsin" |
+| **Engelli** | Hedef var **ama** oyuncu şu an kullanamıyor | "Burada bir şey var, ama şu an olmaz" |
+
+"Engelli" durumuna yol açan tipik sebepler: rol o istasyona izinli değil (§6.3), envanter dolu,
+elindeki nesne o istasyona konamıyor, hedef meşgul.
+
+> **Bağlayıcı kısıt:** "Engelli" durumu **sebebini göstermez** ve Şef'e durum bilgisi sızdıracak
+> şekilde kullanılamaz (§4.1.1 — "durum asla okunmaz").
+
+**Şef için:** Crosshair ekran üstü bir arayüz öğesidir, kontur render'ın etkilediği dünya katmanında
+değildir — Şef onu görür. Yalnızca "burada bir şey var" der; ne olduğunu ve hangi durumda olduğunu
+söylemez.
+
+---
+
+##### ② Yerleştirme Önizlemesi — "elimdekini buraya koyarsam nasıl duracak?"
+
+**Yuva ile etkileşim (netleşti ✓, 22 Eyl 2026).** Bir yerleştirme hedefi (yuva) tek öğe alır.
+- **Boş yuvaya** sol tık: elindeki (seçili slottaki) öğe yuvaya konur — öğe o yuvaya uygunsa.
+- **Dolu yuvaya** sol tık: yuvadaki öğe envantere alınır (§4.1 slot kuralıyla). Envanterde boş slot
+  yoksa crosshair "engelli".
+- **Yer değiştirme (swap) yok:** dolu yuvaya bakarken elinde öğe olması, alma işlemini değiştirmez.
+- Önizleme yalnızca boş ve elindeki öğeyi kabul eden yuvada çıkar.
+
+Oyuncu elinde bir nesne tutarken crosshair'ı o nesneyi **kabul eden** bir yerleştirme hedefine
+getirdiğinde, hedefin üstünde **elindeki nesnenin kendi şeklinde, yeşil ve yarı saydam bir
+önizleme** belirir. Sol tıkla nesne tam o önizlemenin olduğu yere konur.
+
+*Örnek:* elinde köfteyle ızgaranın boş yuvasına bakan Şef, o yuvada köfte biçiminde yeşil bir
+hayalet görür; tıklayınca köfte oraya konur ve pişmeye başlar. Elinde ekmekle tezgaha bakınca
+tezgahta ekmek biçimli hayalet belirir.
+
+- **Tetikleyici — crosshair'a bağlı (netleşti ✓):** önizleme yalnızca oyuncu hedefe **bakarken**
+  görünür. Hedefe sırtını dönünce kaybolur. *Gerekçe:* önizleme "tıklarsan buraya gider" der;
+  bakmadığın yerde görünmesi yanıltıcı olurdu.
+- **Menzil — tıklama menziliyle aynı (netleşti ✓):** önizleme, crosshair'ın "kullanılabilir"
+  olduğu mesafede görünür; ayrı bir yerleştirme yarıçapı yoktur. *Gerekçe:* önizlemeyi görüp
+  tıklayamadığın bir mesafe olsaydı, önizleme yalan söylemiş olurdu.
+- **Önizleme = "kullanılabilir" crosshair + elindeki nesnenin görseli.** Crosshair o hedefte
+  "kullanılabilir" değilse önizleme de çıkmaz. Elindeki nesne o hedefe konamıyorsa önizleme
+  **hiç çıkmaz** — oyuncu neyin nereye gittiğini deneyerek değil görerek öğrenir.
+- **Önizlemenin şekli elindeki nesneden gelir.** Her öğenin bir görseli vardır (§4.1 — elde
+  tutulan nesne görünür); önizleme o görselin yeşil yarı saydam kopyasıdır. Önizleme için ayrı
+  bir görsel üretilmez.
+- **Önizleme nesnenin o anki hâlini gösterir (netleşti ✓, 21 Eyl 2026).** Elindeki öğenin
+  durumu görselini değiştiriyorsa (yarılanmış ekmek, %32 dolu bardak, kapalı paket), önizleme de
+  **o hâli** gösterir; öğenin "varsayılan" görünümünü değil. *Gerekçe:* önizleme "tıklarsan tam
+  olarak bu oraya gider" der; farklı bir hâl göstermesi yalan söylemek olurdu. Şef için yeni bir
+  bilgi sızdırmaz: renkle anlatılan hâller (pişmişlik, doluluk) konturda zaten görünmez (§4.1.1);
+  şekille anlatılanlar (yarım ekmek) elde tutarken de görünüyordur.
+  **Önizleme şekli gösterir, rengi değil (netleşti ✓, 30 Eyl 2026):** önizlemenin tamamı tek
+  renktir (yeşil); öğenin durum renkleri (pişmişlik rengi vb.) önizlemeye taşınmaz. Hamburger
+  önizlemesinde köfte de yeşildir.
+- **Hedef görünür olmalı (netleşti ✓, 21 Eyl 2026).** Oyuncu ile hedef arasında başka bir oyuncu
+  veya katı bir engel varsa, o hedef yok sayılır: crosshair nötr, önizleme yok, tıklama bir şey
+  yapmaz. Önizleme (Şef'teki nabızlı halka dahil) önündeki nesnelerin **arkasında kalır** —
+  kısmen örtülüyorsa örtülen kısmı görünmez. *Gerekçe:* önünde biri dururken arkasındaki tezgaha
+  bir şey koymak fiziksel olarak anlamsız; önizlemenin engelin üstünden görünmesi yalan olur.
+- **Birden fazla hedef olabilir.** Örn. ızgarada 2 yuva (§5.2.1.1), birleştirme tezgahında 2
+  tezgah (§6.7.3). **Hedef seçimi nişan alarak yapılır (netleşti ✓)** — oyun hedefi kendi seçmez;
+  oyuncu hangi yuvaya bakıyorsa önizleme orada belirir. *Gerekçe:* oyun hedefi kendi seçseydi
+  §5.2.1.1'deki konum bağımlılığı ("soldaki hazır, sağdaki değil") yalnızca alma tarafında
+  yaşardı ve körlüğün bedeli yarıya inerdi.
+  - *Uygulama sonucu:* her yerleştirme hedefinin **kendi çarpışma hacmi** ve **kendi yerleşme
+    noktası** vardır; istasyonun tamamı tek bir hedef değildir.
+- **Yığılan hedefler:** hamburger birleştirmede önizleme, o an tezgahta birikmiş katmanın **üstünde**
+  belirir (alt ekmek → köfte → garnitür → sos → üst ekmek, §6.7.3).
+
+**Bu sistemi kullanan her yer:** ızgara (§5.2.1.1), hamburger birleştirme tezgahı — ekmek, köfte,
+garnitür, sos (§6.7.3), fritöz (§6.7), içecek makinesi yuvası ve bardağa kapak/pipet takma
+(§6.7.1), dondurma makinesi ve topping serpiştirme (§6.7.2), paketleme alanı (§5.3.1), oda arası
+pencereler (§5.1).
+
+**Şef için (bağlayıcı):** Önizleme bir **mesh**'tir, renk değişimi değildir — kontur render'da
+siluet olarak görünmelidir (§4.1.1). **Uyarı:** yarı saydam materyaller çoğu zaman derinlik
+tamponuna yazmaz; kör görüş kenarları derinlik + normal tamponundan ürettiği için (K2) yarı saydam
+önizleme Şef'in ekranında **hiç görünmeyebilir**. Önizlemeye en çok ihtiyaç duyan rol Şef olduğu
+için bu, kontur render adımında **ayrıca doğrulanmalıdır**. Normal render'daki roller için yeşil
+yarı saydamlık korunur — **tek olay, iki sunum** (§7.1.1'deki desenin aynısı).
+
+**Önizleme rengi ve Şef varyantı (netleşti ✓):** Kasiyer ve Komi'de **yeşil** yarı saydam. Şef'te
+**nabız gibi atan beyaz kontur çizgisi.** *Gerekçe:* Şef'in dünyasında her şey beyaz çizgidir;
+önizleme sabit bir beyaz çizgi olsaydı tezgahta gerçekten duran bir nesneden ayırt edilemezdi.
+Nabız, "bu gerçek değil, önizleme" demenin kontur dilindeki karşılığıdır ve §4.1.1'in "dolgu yok"
+kuralını bozmaz. *(21 Eyl 2026: yarı saydam yeşil önizlemenin Şef görüşünde 0 piksel ürettiği
+ölçüldü — ayrı bir çizim geçişi gerekiyor.)*
+
+---
+
+**Etkileşim menzili bir playtest parametresidir (netleşti ✓).** GDD sabit bir değer tanımlamaz;
+Inspector'dan ayarlanabilir kalır (şu anki değer 2,5 m) ve ilk playtest'te belirlenir. Menzil
+değeri tasarım kararı olarak değil, denge parametresi olarak ele alınır. ① ve ② bu **aynı**
+menzili kullanır.
 
 Üretim sorumluluğu dağılımı §6.7'de detaylandırılıyor — Komi'nin kendi kategorileri için Şef'e ihtiyaç duymadan tek başına üretim yapabilmesi, çekirdek döngüye (§3.3) paralel, daha kısa bir üretim yolu ekliyor.
 
@@ -341,12 +449,14 @@ Not: Oyunda ayrı bir **Dumbwaiter** mekanizması yok. Oda-arası birincil etkil
 - Müşteriler pencerenin solunda kaldığı için Komi müşterileri göremez — dolayısıyla sipariş pop-up'ını da göremez. **Bilgi asimetrisinin fiziksel kaynağı burası.**
 - Sadece Komi bu pencereden malzeme/paket koyabiliyor.
 - Komi'nin paketlediği yemek bu pencereden Kasiyer'e (dilsize) geçer.
+- **Geri alma (netleşti ✓, 30 Eyl 2026):** pencereye konan öğeyi hem karşı taraf (Kasiyer) hem koyan taraf (Komi) alabilir. Koyma yetkisi yalnızca Komi'dedir.
 
 #### 5.1.2 İstasyon/Mutfak Penceresi (Komi ↔ Şef)
 - Karşılıklı görüş: **var**. Ses geçişi: **var**.
 - Komi, etin pişip pişmediği gibi görsel durumları buradan takip edip Şef'i yönlendirebilir — Şef'in kendi göremediği bilgiyi dışarıdan tamamlayan tek kanal.
 - Şef, tarifi Komi'nin sözlü yönlendirmesiyle hazırlar ve bitmiş yemeği bu pencereden teslim eder; sadece Şef bu pencereden malzeme/paket koyabiliyor.
 - **Kapasite:** aynı anda **3 hamburger + 3 yan ürün** durabilir. Komi almadan da Şef üretmeye devam edebilir.
+- **Geri alma (netleşti ✓, 30 Eyl 2026):** pencereye konan öğeyi hem Komi hem Şef alabilir — Komi "yanlış koydun" dediğinde Şef düzeltebilir. Koyma yetkisi yalnızca Şef'tedir.
 
 #### 5.1.3 Kasa/Mutfak Paneli — Intercom (Kasiyer ↔ Şef, Komi'yi atlar)
 - Karşılıklı görüş **yok**, ses geçişi **yok** (normal koşullarda).
@@ -390,6 +500,8 @@ Ateşle temas eden her ürün (Et, Patates, Ekstra — hepsi Mutfak'ta, bkz. §6
 
 **Doğru pişmişlik:** Yalnızca **Pişmiş** kabul edilir. Erken alınan et çiğ kalır ve ürün hatalıdır; geç kalınırsa yanar ve yangın çıkar (§5.2.2). Müşteri siparişlerinde pişmişlik tercihi yoktur — tek doğru hedef vardır.
 
+**Çiğ ürün müşteriye ulaşamaz — engel Komi'nin paketlemesindedir (netleşti ✓, 21 Eyl 2026):** Şef çiğ köfteyi hamburgere koyabilir, çiğ patatesi/ekstrayı pencereye bırakabilir; **Şef'in hiçbir eylemi pişmişliğe göre engellenmez.** Engel, durumu görebilen oyuncunun eylemine konur: Komi çiğ içerikli bir hamburgeri veya çiğ bir yan ürünü **pakete koyamaz** (§5.3.1). *Gerekçe:* Şef'in eylemi pişmişliğe göre engellenseydi, crosshair "engelli" olarak ona "bu çiğ" derdi (§4.1.2 ① bunu yasaklar); Şef köfteyi alıp tezgaha bakarak, gerekirse ızgaraya geri koyarak (ilerleme korunur) Komi'siz pişmişlik yoklayabilir ve oyunun temel bağımlılığı (§4.1.1) çökerdi. Bedel korunur: Komi pencerede çiğ ürünü görür, Şef'e söyler, ürün çöpe gider.
+
 #### 5.2.2 Yangının Sonuçları (netleşti ✓)
 - Et'in yanması **sadece ızgarayı** kilitliyor — yangın çıkar, ızgara söndürülene kadar yeni et konulamaz, ızgarada pişmekte olan diğer etler de yanar. Fritöz (Patates/Ekstra) bundan etkilenmiyor, Şef ateş sırasında da kızartmaya devam edebilir.
 - Bu bir global Mutfak kilidi değil — yalnızca yanan ekipman (ızgara) kilitleniyor.
@@ -402,6 +514,11 @@ Ateşle temas eden her ürün (Et, Patates, Ekstra — hepsi Mutfak'ta, bkz. §6
 - Kasiyer tüpü eline aldığı anda Kasa/Mutfak kapısı açılır (tüp elde olmadan kapı açılmaz).
 - Kasiyer Mutfağa girip yangını söndürür; tüp yerine konduğunda kapı otomatik kapanır.
 - Rol sabitliğinin (§4.3) istisnası — Şef kör olduğu için kendi yangınını göremiyor/söndüremiyor.
+- **Şef yangın sırasında Mutfak'tan çıkamaz (netleşti ✓).** Kasa/Mutfak kapısı Kasiyer tüpü aldığı
+  için açılmış olsa bile Şef o kapıdan geçemez. *Gerekçe:* kapı istisnası yalnızca Kasiyer'in
+  **içeri** girmesi için tanımlıdır (§4.3); Şef dışarı çıkabilseydi hem rol sabitliği delinir hem
+  kör bir oyuncu Kasa'da dolaşırken mutfakta üretim tamamen durur. Kapı tek yönlü bir acil durum
+  geçididir.
 
 **Söndürme mekaniği (netleşti ✓):** Kasiyer **sol tık basılı tutarak** püskürtür. Söndürme, birikimli bir ilerleme değeri üzerinden işler ve **bırakıldığında geri sayar**:
 - Alev, biriken ilerlemeyle görsel olarak küçülür (hedefe yaklaştıkça kıvılcım seviyesine iner).
@@ -428,6 +545,10 @@ Ateşle temas eden her ürün (Et, Patates, Ekstra — hepsi Mutfak'ta, bkz. §6
 2. Paketleme alanına sol tık ile bırakır; kağıt orada **ağzı açık** durur (fast-food zincirlerindeki gibi).
 3. Şef pencereye bir ürün bıraktığında Komi sol tık ile onu eline alır, ardından ağzı açık kese kağıdına sol tık yapar — ürün paketin içine girer.
 4. Komi kendi ürettiği içecek ve dondurmayı da aynı şekilde pakete koyar.
+
+**Pakete yalnızca tamamlanmış ürün girer (netleşti ✓, 21 Eyl 2026).** Şu ürünler pakete **konamaz**: çiğ köfte içeren hamburger, çiğ patates/ekstra, %100 dolmamış veya kapağı/pipeti takılmamış bardak (§6.7.1), %100 dolmamış dondurma (§6.7.2). Bu bir **sunucu doğrulamasıdır**; crosshair Komi'ye "engelli" gösterir — Komi durumu gördüğü için bu bir bilgi sızıntısı değildir. Bu engel yalnızca Komi'nin paketleme eylemindedir; Şef'in eylemleri pişmişliğe göre engellenmez (§5.2.1). *Yarıda alma (%32 dolu bardak, yarım dondurma) paketlemeyle ilgili değildir:* amacı, araya giren bir iş yüzünden yarıda bırakılan dolumun sıfırdan başlamamasıdır.
+
+**Paketin içindekiler kendi bilgilerini korur (netleşti ✓, 21 Eyl 2026).** Pakete giren ürün yok edilip yerine "1 hamburger" gibi bir not yazılmaz; ürünün kendisi paketin içinde durur ve bileşimini (hamburgerin katmanları, bardağın içeceği vb.) taşımaya devam eder. *Gerekçe:* teslimde sipariş **birebir** kontrol edilir ("turşusuz muydu?"); yalnızca ürün adını tutan bir not bunu imkânsız kılar.
 5. Hazır paket **Kasa/İstasyon penceresine** bırakılır (§5.1.1) ve Kasiyer oradan alır.
 
 **Paketleme alanı sayısı: 2.** Aynı anda 3 müşteri olabildiği için tek alan ciddi bir jonglörlük yaratırdı. *(Test sonrası artırılabilir.)*
@@ -571,6 +692,21 @@ Aşağıdaki sıralama, tarif/malzeme özelinde **kesinleşmiş bir liste değil
 - Her yeni tarif eklendiğinde, o tarifin gerektirdiği yeni malzeme kabı da mutfağa ekleniyor (örn. Cheeseburger gelince peynir kabı ekleniyor, Şef oradan alıp hazırlıyor).
 - Bu, hem görsel karmaşıklığı hem de Şef'in (kör olduğu için) mekânsal ezber yükünü kademeli artırıyor — zorluk eğrisinin bir parçası.
 
+**İstasyonlar rol kapılıdır — izin listesi bir istasyon parametresidir (netleşti ✓).** Her malzeme
+kabı, birleştirme tezgahı, paketleme alanı ve üretim makinesi, **hangi rollerin kullanabileceğini**
+kendi üzerinde taşır. Liste boş bırakılırsa o istasyonu herkes kullanabilir.
+
+- **Varsayılan:** Mutfak'taki hamburger malzemeleri ve birleştirme tezgahı yalnızca **Şef**;
+  İstasyon'daki içecek/dondurma makineleri ve paketleme alanı yalnızca **Komi**; Kasa'daki
+  nesneler yalnızca **Kasiyer**.
+- *Gerekçe:* Odalar fiziksel olarak ayrı olduğu için bu kısıt normal akışta zaten sağlanır. Ama
+  yangın sırasında Kasa/Mutfak kapısı açılıyor (§5.2.3) ve Kasiyer Mutfak'a girebiliyor — rol kapısı
+  olmasa Kasiyer et alıp kaçabilir ya da kazara üretime karışabilir.
+- **Global kural olarak yazılmaz, istasyon başına ayarlanır.** İleride intercom (§5.1.3) Kasiyer'in
+  Kasa tarafından malzeme göndermesini gerektiriyor; katı bir "yalnızca Şef malzemeye dokunur"
+  kuralı orada tıkanırdı. Liste veri olarak kaldığı sürece bu tür istisnalar kod değişikliği
+  gerektirmez (§11.9 sabitleme yasağı).
+
 ### 6.4 Menü Büyüme İlkesi — Dengeli Dağılım
 Yeni içerik (tarif, malzeme kabı, istasyon, mekanik) toplam seviye sayısına **eşit ve dengeli** dağıtılmalı; erken ya da geç yığılma istenmiyor. §6.2'deki şablon bu ilkenin bir örneği: her birkaç seviyede bir tek bir yeni katman ekleniyor (önce zincirin temel işleyişi, sonra istisna iletişimi, sonra yeni tarif+malzeme, sonra yeni ürün kategorisi+istasyon).
 
@@ -641,7 +777,7 @@ Tek boyut bardak vardır. Akış:
 Tek makine, tek slot, tek aroma (vanilya). Bir **kol** ile çalışır:
 - Komi kolu **çekili tuttuğu sürece** kaba dondurma dolar.
 - Kabın bir **tepe noktası** vardır; dolum oraya ulaştığında kol, oyuncu bırakmasa bile **otomatik olarak bırakılır** ve sade dondurma hazır olur (taşma yok).
-- Kol erken bırakılırsa dolum **yarıda kalır ve dolan miktar görsel olarak kalır** (bir indirmeyi duraklatmak gibi). Yarım dondurma tamamlanmamış üründür.
+- Kol erken bırakılırsa dolum **yarıda kalır ve dolan miktar görsel olarak kalır** (bir indirmeyi duraklatmak gibi). Yarım dondurma tamamlanmamış üründür ve **pakete konamaz** (§5.3.1); kol tekrar çekilince dolum kaldığı yerden devam eder.
 - Makinenin yanında **üç ayrı topping kutusu** durur: renkli draje, çikolata parçacığı, bisküvi parçacığı. İstenen çeşit için ilgili kutudan kaşıkla **tek seferde** dondurmanın üstüne serpiştirilir.
 
 **Topping stoğu (netleşti ✓):** Topping kutuları **sınırsızdır** ve stok sistemine dahil değildir. *(İleride bitebilir/azalabilir hale getirilebilir — bkz. "İleride Değişebilecekler".)*
@@ -660,7 +796,16 @@ Alt ekmek → Köfte/Protein → Garnitür → Sos → Üst ekmek
 - **Kategori sırası zorunludur** — sostan önce garnitür, garnitürden önce protein konmalıdır.
 - **Kategori içinde sıra serbesttir** — peynir/domates/soğan hangi sırayla konursa konsun fark etmez; ketçap ve mayonez de öyle.
 
+**Üst ekmek yalnızca yarılanmış ekmekle konur (netleşti ✓, 25 Eyl 2026).** Alt kısmını koyduğun ekmek elinde **yarım** kalır ve hamburger ancak o yarım ekmekle kapatılır; **bütün bir ekmek üst olarak konamaz** (crosshair "engelli"). *Gerekçe:* aksi hâlde bütün ekmeğin alt yarısı sessizce israf olurdu — Şef kör olduğu için bu kaybı hiç fark etmezdi.
+
+**Ekmeğin görseli (netleşti ✓, 26 Eyl 2026):** Alt ve üst ekmek **ayrı modellerdir** (gerçek
+hamburger ekmeği gibi: alt düz, üst kubbeli) ama envanterde **tek öğedir** — elde ikisi birlikte,
+üst üste duran tam bir ekmek olarak görünür. Alt kısım tezgaha konduğunda elde **yalnızca üst
+ekmek** kalır; oyuncu (ve Şef, konturdan) elindekinin artık sadece üst parça olduğunu görebilir.
+
 **Ekmek iki parçadır, tek envanter öğesidir:** Şef ekmeği eline aldığında alt+üst birlikte gelir. Alt kısım konduğunda elindeki ekmek görsel olarak yarılanır (diğer oyuncular bunu görür). Üst kısım da konduğunda ekmek envanterden tamamen çıkar ve hamburger tamamlanır.
+
+**Envanter doluyken de hamburger kapatılabilir (netleşti ✓, 27 Eyl 2026).** Üst ekmek konduğu anda ekmek öğesi tükenir ve yeri boşalır; tamamlanan hamburger bu boşalan slota girer. Bu yüzden üst ekmeği koymak için boş slot **gerekmez** — dört slotu dolu bir oyuncu da hamburgeri kapatabilir.
 
 **İstasyon tarif doğrulaması YAPMAZ.** Yalnızca **kategori sırasını** denetler. Yanlış malzeme (marul yerine domates) konabilmelidir — hatanın kendisi oyunun konusudur. *(Bu açıkça yazılmazsa tarif doğrulaması eklenir ve yanlış yapma imkânı ortadan kalkar.)*
 
@@ -805,6 +950,8 @@ Her alan için ayrı bir "sabit mi rastgele mi" mekanizması yazılmaz. **Tek bi
 
 **Rol seçimi lobide yapılır.** İki oyuncu aynı rolü seçemez — çakışma varsa hazır verilemez ve oyun başlatılamaz. Hazır verildikten sonra rol değiştirilemez.
 *(Mevcut kodda roller test amacıyla katılma sırasına göre otomatik atanıyor — `SequentialRoleAssignmentStrategy`. Seçim ekranı bunun yerini alacak; `IRoleAssignmentStrategy` soyutlaması zaten bu geçiş için kurulmuştu.)*
+
+**Lobide karakter yoktur (netleşti ✓, 21 Eyl 2026).** Oyuncu karakterleri yalnızca bölüm başladığında doğar; lobi bir arayüzdür. *Faz 0:* lobi ve oyun aynı sahnededir, karakterler round başında doğar. *Faz 0.5:* rol seçimi ve bölüm seçimiyle birlikte ayrı bir lobi sahnesi. Round sırasında kopan oyuncunun karakteri korunur (§8.2) — bu kural değişmez.
 
 **Bölümler arası akış:** Bölüm biter → yıldızlar gösterilir → oyuncular **lobiye döner** → sonraki bölüm seçilir → herkes hazır verir → **Başla butonu aktifleşir ve host başlatır.** (Bombanana modeli.)
 

@@ -8,7 +8,7 @@
 > **Doğruluk kaynakları:** tasarım → `docs/GDD.md` · mühendislik → `CLAUDE.md` · plan → bu dosya.
 > Üçü farklı türde gerçek tutar ve birbirini tekrar etmez.
 
-**Son güncelleme:** 18 Eylül 2026
+**Son güncelleme:** 30 Eylül 2026
 
 ---
 
@@ -84,11 +84,59 @@ Sınırı" bölümünde. Burada yalnızca 18 Eylül'de yapılan kapsam değişik
 | 2 | Highlight sistemi — normal render (§4.1.2) | 1'in doğrulanması buna bağlı; ayrıca tasarım gereği. Şef varyantı kontur render'ı bekliyor. | 3 sa |
 | 3 | `Yamak` → `Komi` yeniden adlandırma | Davranış değiştirmiyor; kod büyüdükçe pahalılaşıyor. | 1 sa |
 | 4 | Input Action temizliği (Bug 3) | Girdi katmanına dokunmuşken hallet, ikinci kez açma. | 0,5 sa |
-| 5 | `IngredientType` kategori + `BurgerRecipe` yeniden yapısı | §6.7.3 kategori sırası bu veriye dayanıyor. | 2 sa |
+| 5 | `ItemType` kategori + `BurgerRecipe` yeniden yapısı | §6.7.3 kategori sırası bu veriye dayanıyor. | 2 sa |
 | 6 | Birleştirme kategori sırası + ekmek alt/üst (§6.7.3) | 5'siz yazılamaz. | 2,5 sa |
 | 7 | Ortak ilerleme temel sınıfı (K5/K6) + ızgara (2 yuva, çiğ/pişmiş/yanmış, K7 attach) | En yüksek getirili mimari adım — Faz 1'de fritöz/içecek/dondurma/söndürme bedava gelir. | 6 sa |
 | 8 | Çöp kutusu (§5.3.2, yangınsız) | 7'den hemen sonra zorunlu. | 1 sa |
 | 9 | **Kontur render spike — 4 sa katı timebox** | Projenin en büyük teknik bilinmeyeni (K2). Zor olduğunu 3. haftada öğrenirsek video biter. 4 saatte ekranda kontur yoksa durulur ve raporlanır. | 4 sa |
+
+**Gerçekleşen (18-21 Eyl):**
+
+| # | İş | Durum |
+|---|---|---|
+| 1 | Etkileşim sunucu otoritesi + çağırana bağlama | ✅ |
+| 1.5 | Etkileşim olaylarına oyuncu kimliği | ✅ |
+| 1.6 | Steam'siz Local Debug — MPPM ile tek makinede 3 oyuncu | ✅ |
+| 1.7 | Spawn pozisyonu yarışı (`CharacterController`) | ✅ 10/10 |
+| 1.8 | `IngredientContainer` + rol kapılı istasyonlar | ✅ |
+| 3 | `Yamak` → `Komi` | ✅ |
+| 2a | Crosshair geri bildirimi + `IInteractionGate` | ✅ |
+| 2b | Yerleştirme çerçevesi — **tasarım düzeltildi, 2d ile yerine konuldu** | ✅ (atıldı) |
+| 2c | Elde tutulan nesnenin görünmesi | ✅ |
+| 2d | Yerleştirme önizlemesi + tek `IngredientRegistry` | ✅ |
+| 2e | İstemci/sunucu menzil kontrolü tek fonksiyonda | ✅ |
+| 9 | **Kör görüş (kontur render)** — hazır URP özelliğiyle ilk denemede çalıştı, K2 desen testi geçti. **En büyük teknik risk kapandı.** | ✅ |
+| 9b | Şef için yerleştirme önizlemesi (nabız gibi atan beyaz kontur) — ekip onayladı | ✅ |
+| 4.0 | Envanter mimarisi — tasarım raporu alındı, denetlendi (öğe = ağ nesnesi, slot = fiş, elde parent yok, tek kapı `ItemMover`) | ✅ |
+| T | **Temizlik:** `IngredientType`/`IngredientRegistry` → `ItemType`/`ItemRegistry` (mekanik, .meta korunur) — `2675553` | ✅ |
+| 4.1a | Öğe prefabları ve altyapı: `Item`, `ItemPresence`, `ItemType.itemPrefab`, NGO prefab kaydı, registry doğrulaması. Oynanış değişmez — `a8a4546` | ✅ |
+| D0 | **Düzeltme:** hedef görünür olmalı — etkileşim ışını oyuncu/engelde durur; Şef halkası derinlik testine alınır — `2a5690d` | ✅ (6/6 oyun testi geçti) |
+| 4.1b | Envanter öğe fişine göçer: kaptan alma = spawn, birleştirme = despawn (`ItemMover`), seçili slot kuralı, arayüzler öğe üzerinden çözer — `09a9a59` | ✅ (tüm oyun testleri 4.2 testiyle kapandı; sızıntı ölçümü K2d'de Claude Code'a doğrulatılıyor) |
+| 4.2 | Yuvaya yerleştirme (`ItemSlot` + `ItemMover`, K7) — `6a87ac1` | ✅ (oyun testi geçti; **Şef'te tezgahtaki ekmek yarım kontur** → K2d) |
+| K2d | Şef yuvadaki ince nesneleri tam görsün — kök neden gömülmeydi (pivot); eşikler değişmedi; `_DepthBias` 0,25→0,02; sızıntı 0, yuva crosshair tablosu doğru — `f241530` | ✅ (oyun testi geçti) |
+| D | Karakterler round başında doğuyor, round dışı etkileşim kapalı, test rol sırası Inspector'da; NV/RPC sıra garantisi yok (kabul) — `b7720b9` | ✅ (oyun testi geçti; istemci Şef yolu ilk kez test edildi, temiz) |
+| 7a | Ortak ilerleme bileşeni (`ServerProgress`, K5) + köfte öğesi + köfte kabı; köfte rengi faza göre — `efee0d1` | ✅ (oyun testi geçti) |
+| D2 | **Düzeltme:** etkileşim bağlamı — tıklama anındaki seçili slot RPC ile gider, sunucu etkileşimde `ActiveSlotIndex`'i okumaz — `8fd932a` | ✅ (oyun testi geçti) |
+| 7b | Izgara: 2 yuva, yuvadaki köfteyi sunucu pişirir, Çiğ→Pişmiş→Yanmış — `0a79563` | ✅ (oyun testi geçti) |
+| 6a | Birleştirme: `ItemType.category` + zorunlu kategori sırası + görünür yığılma — `30855e2` | ✅ (oyun testi geçti) |
+| 6b | Ekmeğin iki parçası + hamburger öğesi (katmanlar + pişmişlik fazı) — `7b17d4a` | ✅ (kural ve akış testleri geçti; **2 bug**: hamburger yuvaya konunca yok oluyor, Şef'te katmanlar ayrık) |
+| D4 | **Düzeltme:** hamburger yuvaya konunca yok oluyor + MissingReferenceException; Şef'te katman aralıkları | ✅ (`76da044`) — yok olma + hata kapandı (oyunda doğrulandı); katman boşluğu **elde sürüyor** → D5 |
+| D5 | **Düzeltme:** kopya görseller (elde / önizleme) — hamburger katman boşluğu, yarım ekmeğin gömülmesi | ❌ `b11e568` — birinci şahısta boşluk **büyüdü** (dünya AABB şişmesi); üçüncü şahıs ve önizleme bitişik → D6 |
+| D6 | **Düzeltme:** yığın yüksekliğini yerel mesh sınırlarından ölç + önizlemede faz rengini kapat — `a99dfe7` | ✅ (8/8 oyun testi geçti, 30 Eyl) |
+| E1 | Ekmek görseli: alt/üst ayrı modeller (GDD §6.7.3, 26 Eyl) + D3 kuralı; ardından Şef'te yarım/üst ekmek önizlemesi kontrol | ⏳ sırada |
+| D3 | Envanter doluyken üst ekmek konabilsin — **karar: evet** (27 Eyl, GDD §6.7.3); E1 ile birlikte | ⏳ |
+| 8 | Çöp kutusu + input temizliği | ⏳ |
+
+**Envanter tahmini (21 Eyl, 4.0 raporu):** Claude Code'un tahmini 11-14 sa + ~2 sa test; danışman 5-6 sa demişti. Raporun 4.3'ü (test amaçlı köfte yuvası + kullanıcısız `BurgerAssembly` iskeleti) **kaldırıldı**: `ServerProgress` ve kategori değerleri ızgara adımına, `BurgerAssembly` birleştirme adımına (Adım 6) taşındı. Kalan envanter işi ~8-10 sa. `ServerProgress` zaten ızgaranın 6 saatinin içindeydi.
+
+**Tahmin muhasebesi (21 Eyl):** "Highlight" diye 3 saat planlanan iş, tasarım netleştikçe 2a-2e'ye
+bölündü ve **~10 saat** tuttu (2b'nin çerçevesi yanlış anlaşılma yüzünden atıldı; 2c zaten ileride
+yapılacaktı; registry birikmiş borçtu). Hafta 1'in gerçekleşen yükü **~42 saat**, plan 23 saatti.
+
+**Hafta 1'den kalan:** kontur spike (4) · malzeme kategorisi (2) · birleştirme sırası (2,5) · ızgara
++ ortak ilerleme sınıfı (6) · çöp (1) · input temizliği (0,5) = **~16 sa**, 24 Eylül'e 3 gün.
+**Hafta 1 hedefi (Şef tek başına hamburger yapıyor) 24 Eylül'e yetişmeyecek** — ızgara büyük
+ihtimalle Hafta 2'ye kayar. 24 Eylül'de tam yeniden plan yapılacak.
 
 ### Hafta 2 — 25 Eylül – 1 Ekim (25 sa)
 
@@ -146,6 +194,33 @@ yerini aldı. Bkz. §5 ve Karar Günlüğü.*
 Üç kişinin aynı akşamı boşaltması 3 gün kala ayarlanmaz.
 
 ---
+
+### Yeniden plan — 22 Eylül (24 Eylül'den öne alındı)
+
+**Kapasite:** Ersel **~40 sa/hafta** çalışacak (22 Eyl beyanı). Kısıt saat değil, **Claude Code
+kullanım hakkı** — gün içinde ne kadar adım koşturulabildiği. 22 Eyl–8 Eki: ~2,3 hafta ≈ **~90 sa**.
+Kalan plan ~71 sa, sapma ×1,5 ile ~100 sa → **sıkışık ama yakın.** Kesme rezervi (7 sa) yerinde;
+1 Ekim karar noktası geçerli.
+
+**Kullanım hakkını koruma kuralları:** Claude Code'a oyun içi test yaptırılmaz (zaten kural);
+teşhis dışında ekran görüntüsü yok; bir adım 2 saati aşacaksa bölünür; raporlar kısa.
+
+**Yeni sıra (bağımlılığa göre):**
+1. D2 etkileşim bağlamı (slot yarışı) — ~1 sa
+2. 7b ızgara — ~3 sa
+3. 6 birleştirme (kategori, alt/üst ekmek, görünür yığılma, hamburger öğesi) — ~4 sa
+4. 8 çöp — ~1 sa · input temizliği — 0,5 sa
+   → **Şef tek başına hamburger yapabiliyor (eski Hafta 1 hedefi)**
+5. Pencere (Şef→Komi yuvası, `ItemSlot` ile ucuz) — ~1 sa
+6. 16a/16b `Randomizable` + `LevelConfig` — 6 sa
+7. 12–15 emote düzeltmesi, iç içe sinyal çarkı, `E` ayrımı, duvar panosu — ~10 sa
+8. 17 müşteri + sipariş/teslim noktaları — 5 sa · 20 sipariş pop-up/sabır/sipariş çarkı — 4 sa
+   → **1 Ekim hedefi: ilk 3 kişilik uçtan uca test**
+9. 22 tarif kitapçığı — 6 sa · 23 paketleme (içindekiler gerçek öğe) — ~7 sa · 24 teslim — 3 sa
+10. 25 hata sayacı + kazan/kaybet — 3 sa · 26 teslim sesleri — 1 sa · 18 VoIP — 2,5 sa
+11. 21 hazırlık fazı, 27 kontrol ipuçları, 19/28 animasyon — ~5 sa
+**Yeni kesme adayları (rezerve eklendi):** 15 sn hazırlık fazı (asıl gerekçesi sos brifingiydi, sos
+kesildi) · kontrol ipuçları · ikinci teslim sesi seti.
 
 ## 4. Karar noktaları
 
@@ -216,6 +291,14 @@ hata sayacı + kazanma/kaybetme. Bunlardan biri düşerse video konsepti kanıtl
   olmak zorunda** (§3.6.2). Malzeme seti birebir aynı olan varyantlar (Deluxe ↔ Veji Deluxe) yine de
   görsel olarak farklı çizilir.
 - **Duvar hata sayacı:** dijital saat görünümlü pano, yan yana 3 X.
+- **Çarpışma hacimleri (teknik, bağlayıcı):** etkileşilebilir her nesnenin (kaplar, tezgah, ızgara
+  yuvaları, makineler, pencereler) çarpışma hacmi **primitif** (kutu/küre/kapsül) veya **convex**
+  mesh olmalı — non-convex mesh collider menzil kontrolünü bozar. Görsel model detaylı olabilir;
+  çarpışma hacmi ayrı ve basit tutulur.
+- **Materyaller:** URP Lit veya Unlit kullanılmalı. Özel shader gerekiyorsa `DepthNormals` geçişi
+  olmalı — yoksa nesne Şef'in kör görüşünde **hiç görünmez**.
+- **Pivot noktaları:** elde tutulan ve yerleştirilen öğelerin (ekmek, köfte, bardak vb.) pivotu
+  **tabanda** olmalı. Pivot merkezdeyse öğe tezgaha/ızgaraya yarı gömülü oturur.
 
 ---
 
@@ -235,6 +318,29 @@ hata sayacı + kazanma/kaybetme. Bunlardan biri düşerse video konsepti kanıtl
 | 18 Eyl 2026 | Property drawer'lar Faz 0'da yazılacak | Ersel'in kararı: "kötü editör arayüzü = boşa zaman kaybı". Davranışa etkisi yok, seviye yazma hızını etkiliyor. **Bedeli:** +2 sa. |
 | 18 Eyl 2026 | **Sos kanalı (§5.6) Faz 0'dan kesildi** | Randomizasyon sistemi + drawer 6 saat ekledi; kesme sırasının 1. kalemi bu. **Animasyoncuya hemen bildirilmeli** — 14 animasyonun 4'ü (renk seti) artık gerekmiyor, 10'a düştü. Faz 0.5'e ilk eklenecek kalem budur. |
 | 18 Eyl 2026 | İçecek makinesi basılı tutma **değil** (§6.7.1 yeniden yazıldı); dondurma kolu basılı tutma **kalıyor** | GDD §6.7.1 zaten "düğmeye basar" diyordu. K5 temel sınıfı iki modu birden desteklemeli: tetikle-sunucu-yürütsün ve basılı-tut. |
+| 21 Eyl 2026 | Şef'in yerleştirme önizlemesi nabız gibi atan beyaz kontur | Şef'in dünyasında her şey beyaz çizgi; sabit çizgi gerçek nesneden ayırt edilemezdi. Ekip test edip onayladı. Yedek plan beyaz yarı saydam dolguydu (§4.1.1'e istisna olurdu). |
+| 21 Eyl 2026 | **Envanter öğeleri ağ nesnesi olacak** (sayı-envanteri kaldırılıyor) | Köftenin pişme ilerlemesi, hamburgerin bileşimi, kese kağıdının içeriği tip numarasıyla taşınamaz; K5/K7 zaten bunu gerektiriyor. Izgaradan önce yapılmalı, yoksa ızgara yeniden yazılır. Yan kazanç: tezgaha konan malzeme tezgahta görünür. |
+| 21 Eyl 2026 | Alınan öğe seçili slota, seçili slot doluysa ilk boş slota girer | Oyuncu baktığı slotun dolmasını bekler (GDD §4.1). |
+| 21 Eyl 2026 | Yerleştirme önizlemesi öğenin o anki hâlini gösterir | Önizleme "tam olarak bu oraya gider" der (GDD §4.1.2 ②). |
+| 21 Eyl 2026 | Hamburger tek öğe, katmanlar öğenin içindeki listede | Beş ayrı nesneden oluşan hamburgeri taşımak beş parent işlemi olurdu; biri başarısız olursa hamburger bölünür. |
+| 21 Eyl 2026 | Paketin içindekiler gerçek öğe olarak paketin içinde kalır | Teslimde sipariş birebir kontrol edilecek ("turşusuz muydu?"); "1 hamburger" notu bunu imkânsız kılar. |
+| 21 Eyl 2026 | Pakete yalnızca tamamlanmış ürün girer; çiğ/yarım ürün engeli **Komi'nin paketlemesinde**, Şef'in eylemlerinde değil | Şef'in eylemi pişmişliğe göre engellenseydi crosshair ona "çiğ" derdi; Şef Komi'siz yoklayabilirdi, temel bağımlılık çökerdi. Komi durumu zaten gördüğü için engel ona bir şey sızdırmaz. |
+| 21 Eyl 2026 | Lobide karakter yok: Faz 0'da karakterler round başında doğar, ayrı lobi sahnesi Faz 0.5'te | Lobide ayrılanın karakteri "hayalet" kalıyordu; ayrı sahne şimdi test edilmiş Steam akışına dokunurdu. |
+| 21 Eyl 2026 | Hedef görünür olmalı: arada oyuncu/engel varsa hedef yok sayılır, önizleme engelin arkasında kalır | Test: Şef'in halkası önündeki oyuncunun üstünden görünüyordu; etkileşim ışını da oyuncuların içinden geçiyordu. |
+| 21 Eyl 2026 | Seçili slot doluysa **seçili slottan sonraki** ilk boş slot, sona gelince başa sarar | Ersel'in netleştirmesi; önceki "ilk boş slot" yazımı eksikti. | *Git geçmişi: ekleme mantığı ilk commit'ten beri "ilk boş slot"; hiç değişmemiş. Seçili slot 1 iken iki kural aynı görünüyordu.*
+| 22 Eyl 2026 | Yuva: boşsa koy, doluysa al; yer değiştirme yok | Danışman önerisi (GDD'de tanımsızdı); Ersel itiraz ederse değişir. |
+| 22 Eyl 2026 | Test için rol sırası Inspector'dan ayarlanabilir (lobide rol seçimi değil) | Şef hep host olduğu için Şef istasyonlarının istemci yolu test edilemiyordu; ızgaradan önce kapatılmalı. |
+| 22 Eyl 2026 | Aynı karede iki oyuncunun aynı yuvaya tıklaması Faz 0'da kabul edilen sınır | Yuvaları farklı roller sırayla kullanıyor; niyet RPC'ye taşımanın maliyeti şimdilik değmez. |
+| 22 Eyl 2026 | K2d (Şef ince nesne konturu) D'den ve ızgaradan önce | Izgaradaki köfteler de tezgaha yatık ince nesneler; Şef onları siluetten tanıyamazsa ızgara oynanamaz (GDD §4.1.1 "kimlik siluetten okunur"). |
+| 22 Eyl 2026 | Birleştirme tezgahının (sarı küp) malzemeyi "silmesi" bug değil, eksik geri bildirim | Tezgah malzemeyi tüketip yalnızca bir listeye yazıyor, üstünde hamburger görünmüyor. Adım 6'da (kategori sırası + görünür yığılma) çözülecek; 24 Eylül yeniden planında Adım 6'nın ızgaradan önce mi sonra mı geleceğine karar verilecek. |
+| 22 Eyl 2026 | Slot değiştirip aynı ağ tick'inde tıklama yarışı Faz 0'da kabul | NGO'da NV deltası tick'te, RPC anında gidiyor; insan için bir tick (~33 ms) içinde tuş+tık nadir. Görülürse RPC'ye slot numarası eklenir. |
+| 22 Eyl 2026 | **Açık karar:** gerçek modellerde mesh orijini | Halka mesh orijininden genişliyor. Öneri: artist brief'e "mesh orijini merkezde, prefab kökü tabanda" (kod yok). |
+| 22 Eyl 2026 | Sıra: ızgara (7a/7b) → birleştirme (6) → çöp (8) | Birleştirmedeki hamburger katmanı köftenin pişmişlik fazını taşıyor (CLAUDE.md hedef mimari); faz ızgarayla doğuyor. Izgara ayrıca K5 ortak bileşeninin ilk kullanıcısı ve en riskli çekirdek mekanik. |
+| 22 Eyl 2026 | 24 Eylül yeniden planı öne alındı; **açık soru: gerçek haftalık kapasite** | Kalan plan ~71 sa (tahmin sapması ×1,5 ile ~100 sa), 25 sa/hafta ile 8 Ekim'e ~55-60 sa kalıyor. Hafta 1'de ~42+ sa çalışıldı. Kapasite netleşmeden kesme kararı verilmez. |
+| 22 Eyl 2026 | Kapasite ~40 sa/hafta; asıl kısıt Claude Code kullanım hakkı | Ersel'in beyanı. Plan sığıyor ama sıkışık; kesme rezervi korunuyor. |
+| 22 Eyl 2026 | Slot/tık yarışı **şimdi** düzeltiliyor (D2) | Ersel: etkileşim noktaları çoğaldıkça sonradan eklemek pahalılaşır. Doğru — her yeni istasyon aynı "aktif öğe" yolunu kullanacak. |
+| 22 Eyl 2026 | D2 yaklaşımı: etkileşim bağlamı (oyuncu + slot) gate'lere ve olaylara açıkça geçer | Alternatif (slot seçimini sunucuya RPC ile yazmak) sahip tarafında slot değiştirmeyi gecikmeli gösterir ve iki kaynak (tahmin + sunucu) yaratır. Bağlam yaklaşımı gizli durum ve sıra varsayımı içermez. |
+| 25 Eyl 2026 | Üst ekmek yalnızca yarılanmış ekmekle konur | GDD'de tanımsızdı. Bütün ekmekle kapatmaya izin verilirse alt yarısı sessizce israf olur ve kör Şef bunu fark edemez. |
 | 18 Eyl 2026 | Commit mesajı biçimi `<Kapsam>: <iş>`, kapsam = iş birimi (dosya adı değil) | Ersel'in kararı. Bir adım birden fazla dosyaya dokunuyor; dosya adına göre etiketlenirse aynı işin commit'leri geçmişte birbirinden kopuyor. Biçim `CLAUDE.md` → Sürüm Kontrolü ve Build bölümünde. |
 
 ---
