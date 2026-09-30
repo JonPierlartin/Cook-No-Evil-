@@ -449,6 +449,9 @@ Not: Oyunda ayrı bir **Dumbwaiter** mekanizması yok. Oda-arası birincil etkil
 - Müşteriler pencerenin solunda kaldığı için Komi müşterileri göremez — dolayısıyla sipariş pop-up'ını da göremez. **Bilgi asimetrisinin fiziksel kaynağı burası.**
 - Sadece Komi bu pencereden malzeme/paket koyabiliyor.
 - Komi'nin paketlediği yemek bu pencereden Kasiyer'e (dilsize) geçer.
+- **Kapasite ve alma (netleşti ✓, 30 Eyl 2026):** pervazda yan yana **3 yuva**. Koyan (Komi) ve karşı
+  taraf (Kasiyer) yuvadaki ürünü alabilir — koyan yanlış koyduğunu geri alabilir. Paketleme gelene kadar
+  yuvalara hamburger konur.
 - **Geri alma (netleşti ✓, 30 Eyl 2026):** pencereye konan öğeyi hem karşı taraf (Kasiyer) hem koyan taraf (Komi) alabilir. Koyma yetkisi yalnızca Komi'dedir.
 
 #### 5.1.2 İstasyon/Mutfak Penceresi (Komi ↔ Şef)
@@ -456,6 +459,9 @@ Not: Oyunda ayrı bir **Dumbwaiter** mekanizması yok. Oda-arası birincil etkil
 - Komi, etin pişip pişmediği gibi görsel durumları buradan takip edip Şef'i yönlendirebilir — Şef'in kendi göremediği bilgiyi dışarıdan tamamlayan tek kanal.
 - Şef, tarifi Komi'nin sözlü yönlendirmesiyle hazırlar ve bitmiş yemeği bu pencereden teslim eder; sadece Şef bu pencereden malzeme/paket koyabiliyor.
 - **Kapasite:** aynı anda **3 hamburger + 3 yan ürün** durabilir. Komi almadan da Şef üretmeye devam edebilir.
+  *(Faz 0: yan ürün olmadığı için yalnızca 3 hamburger yuvası; yan ürün yuvaları patates/ekstra ile gelir.)*
+- **Alma (netleşti ✓, 30 Eyl 2026):** koyan (Şef) ve karşı taraf (Komi) yuvadaki ürünü alabilir — Şef yanlış
+  koyduğunu geri alabilir.
 - **Geri alma (netleşti ✓, 30 Eyl 2026):** pencereye konan öğeyi hem Komi hem Şef alabilir — Komi "yanlış koydun" dediğinde Şef düzeltebilir. Koyma yetkisi yalnızca Şef'tedir.
 
 #### 5.1.3 Kasa/Mutfak Paneli — Intercom (Kasiyer ↔ Şef, Komi'yi atlar)
@@ -574,6 +580,8 @@ Ateşle temas eden her ürün (Et, Patates, Ekstra — hepsi Mutfak'ta, bkz. §6
 
 ### 5.3.2 Çöp / İmha Mekaniği (netleşti ✓)
 - Herhangi bir öğe çöpe atılabilir (yanmış et, çiğ kalmış ürün, yanlış paket).
+- **Her odada bir çöp kutusu (netleşti ✓, 30 Eyl 2026):** Mutfak (Şef), İstasyon (Komi), Kasa (Kasiyer);
+  hepsi aynı mekanik, kutuyu yalnızca kendi odasının rolü kullanır (§6.3).
 - Şef öğeyi sol tık ile eline alır, çöp kutusuna sol tık ile atar. **Atılan öğe imha edilir, geri alınamaz.**
 - Yangın akışı: yangın çıkar → Kasiyer söndürür → **yanmış et alınabilir hale gelir** → Şef eline alıp çöpe atar. Yanmış et söndürülmeden alınamaz.
 
@@ -794,6 +802,9 @@ Birleştirme ayrı bir alanda yapılır (tezgah üstü kesme tahtası vb.). **Bi
 Alt ekmek → Köfte/Protein → Garnitür → Sos → Üst ekmek
 ```
 - **Kategori sırası zorunludur** — sostan önce garnitür, garnitürden önce protein konmalıdır.
+- **Protein zorunludur (netleşti ✓, 30 Eyl 2026):** alt ekmekten hemen sonra yalnızca protein konabilir;
+  garnitür, sos ve üst ekmek ancak protein konduktan sonra gelir. **Etsiz hamburger kapatılamaz.**
+  Proteinden sonra garnitür ve sos atlanabilir (sade hamburger).
 - **Kategori içinde sıra serbesttir** — peynir/domates/soğan hangi sırayla konursa konsun fark etmez; ketçap ve mayonez de öyle.
 
 **Üst ekmek yalnızca yarılanmış ekmekle konur (netleşti ✓, 25 Eyl 2026).** Alt kısmını koyduğun ekmek elinde **yarım** kalır ve hamburger ancak o yarım ekmekle kapatılır; **bütün bir ekmek üst olarak konamaz** (crosshair "engelli"). *Gerekçe:* aksi hâlde bütün ekmeğin alt yarısı sessizce israf olurdu — Şef kör olduğu için bu kaybı hiç fark etmezdi.

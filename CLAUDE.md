@@ -560,6 +560,13 @@ Bunlar tekrar karşılaşılmaması gereken, bedeli ödenmiş derslerdir.
   uygulanıyor, sonradan enjekte edilen sesi kesmiyor (30 Eyl Steam testi: `fed5b33`'teki mute ile Komi
   oyuncuları net duydu). Birini susturmak için paket çözülmez (`1d4d1b2`). Aynı sebeple `volume` ve 3B
   ayarlarının da sohbet sesine uygulanmadığı varsayılmalı — K4 (mekânsal ses) adımında ölçülür.
+- **"Yerel oyuncunun X'i" statik tek alanda tutulmaz.** Başka bir oyuncunun karakteri doğarken onun kamerası
+  bir an etkinleşip kapanır (`ApplyNonOwnerState`); `OnEnable`'da "ben yereliim" yazan, `OnDisable`'da silen
+  tek statik alan böylece silinir ve yerel olan hiç tanınmaz (30 Eyl: `DeafHearing` hiç devreye girmedi,
+  Komi Şef'i ve cızırtıyı duydu). Etkin örnekler listesi tutulur.
+- **Elde tutulan öğe kapsülün içinde durmalı.** Tutma noktası kapsül yarıçapından (0,5) uzaktaysa öğe duvara
+  yaklaşınca öbür tarafa geçer (30 Eyl: hamburger mutfak kapısından taşıyordu). Noktalar yatayda ≤0,4 m
+  (öğe yarıçapı ~0,1); birinci şahıs kamerasının `near` değeri 0,05 (öğe yakın).
 - **Oyuncu kökü kapsülün merkezindedir** (`CharacterController` center 0, height 2). Karakter zemin
   yüksekliğine konursa yarısı gömülür. Doğma yüksekliği prefab'ın kapsül ölçüsünden türetilir
   (`PlayerSpawner.GetFootOffset`); sabit y yazılmaz. *(30 Eyl 2026, `fe38438`)*
@@ -600,7 +607,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 64 .cs dosyası (30 Eyl 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 65 .cs dosyası (30 Eyl 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -623,8 +630,10 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   `ItemMover` (öğe spawn/despawn/parent işlemlerinin **tek** yeri: `SpawnCarried`, `Despawn`,
   `PlaceInSlot`, `TakeFromSlot`; her başarısızlıkta geri alma + koşulsuz `LogError`) ·
   `ItemSlot` (tek öğelik yuva, kendi NetworkObject'i olan sahne kökü nesnesinde; doluluk yuvanın
-  doğrudan çocuğu olan `Item`'dan türetilir, ayrı bayrak yok; Inspector'dan izinli roller ve
-  kabul edilen türler, boş = hepsi; gate = GDD §4.1.2 ② "Yuva ile etkileşim", swap yok) ·
+  doğrudan çocuğu olan `Item`'dan türetilir, ayrı bayrak yok; Inspector'dan **koyma rolleri
+  (`placeRoles`, eski `allowedRoles` — `FormerlySerializedAs`) ve alma rolleri (`takeRoles`)** ayrı, ve
+  kabul edilen türler; boş = hepsi; gate = GDD §4.1.2 ② "Yuva ile etkileşim", swap yok) ·
+  `TrashBin` (GDD §5.3.2; bağlam slotundaki öğeyi alıp yok eder; rol kutu başına, durum sorgulamaz) ·
   `Ekmek_Item` / `TestItem_Item` / `Kofte_Item` / `Hamburger_Item` prefab'ları
 - **Durumdan doğan görseller (6b `7b17d4a`):** `IItemVisualSource` — görseli `visualPrefab`'dan
   değil kendi durumundan üreten öğeler bu arayüzü uygular; elde görsel, dünya görseli ve önizleme
@@ -657,13 +666,19 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - İşlevsel yerleşim: `Buzdolabi_Et` (PF_Fridge; köfte kabı) · iki `BurgerAssemblyStation` (iki
     PF_CuttingTable; GDD §6.7.3 "2 tezgah") · `Izgara` (PF_Grid; yuvalar ızgara üstünde) · `EkmekContainer`
     (kesme tahtalarının arasında, yer tutucu kutu) · doğu duvarına eklenen `PF_Table (Kaplar)` üstünde
-    `Kap_Marul/Domates/Tursu/Sogan/Peynir` (kuzeyden güneye GDD numara sırası) · `TestTezgah` mutfakta
-    pencerenin yanında (pencere adımına kadar hamburgeri bırakma yeri).
+    `Kap_Marul/Domates/Tursu/Sogan/Peynir` (kuzeyden güneye GDD numara sırası). Izgara yuvaları ızgara
+    yüzeyinde (y=1,30; collider ızgara gövdesinin 1,42'lik collider'ının üstüne taşar — yoksa ışın gövdeye
+    çarpar, hedef bulunmaz).
+  - **Pencere yuvaları (GDD §5.1, 30 Eyl):** pervazda (y=1,30) 3'er `ItemSlot`, yalnızca Hamburger kabul
+    eder. `MutfakPencere_Yuva_1-3`: koy Şef, al Şef+Komi. `KasaPencere_Yuva_1-3`: koy Komi, al
+    Komi+Kasiyer. TestTezgah kaldırıldı (eski sahnede duruyor).
+  - **Çöp kutuları:** `Cop_Mutfak` (Şef), `Cop_Istasyon` (Komi), `Cop_Kasa` (Kasiyer) — aynı `TrashBin`,
+    görsel PF_TrashBin.
   - **Mutfak kapısına (`PF_KitchenDoor`) BoxCollider eklendi** — modelde yoktu, Şef kasaya yürüyebiliyordu
     (GDD §5.2.3: kapı yalnızca yangında açılır; Faz 1'de kapı mekaniği bunu yönetir).
   - Doğma noktaları: `DogmaNoktalari/Dogma_<Rol>`, `PlayerSpawner.spawnPoints` (rol → Transform).
-  - Erişim doğrulaması (editörde, göz 1,98): her hedefe mutfak zemininden nişan ışını ulaşıyor ve menzil
-    içinde; en zoru `Kap_Marul` (köşe, en yakın 1,61 m).
+  - Erişim doğrulaması (editörde, göz 1,98): her hedefe **kullanacak rolün odasının** zemininden nişan ışını
+    ulaşıyor ve menzil içinde (pencere yuvaları iki taraftan da); en zoru `Kap_Marul` (köşe, 1,60 m).
 - **Malzemeler (30 Eyl 2026):** Garnitür türleri `Marul`(3) `Domates`(4) `Tursu`(5) `Sogan`(6) `Peynir`(7),
   kategori Garnitür; öğe prefab'ları `Assets/Prefabs/Items/`, görseller `ItemVisuals/`. **Kaplar sınırsız**
   malzeme verir — Ersel: "ileride malzeme editörden ayarlanabilir olacak; o sistem kurulunca değişecek"
@@ -701,7 +716,8 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   hold tüketicileri (Faz 1: dondurma kolu, yangın tüpü) yazılırken "tutarken slot değişirse iptal
   mi" sorusu cevaplanmalı.
 - `IngredientContainer` (rol kapılı malzeme kabı) · `BurgerAssemblyStation` (rol kapılı, gate'li;
-  **kategori sırası** GDD §6.7.3 — azalmayan sıra: atlamak serbest, geri dönmek yasak; **tarif
+  **kategori sırası** GDD §6.7.3 — azalmayan sıra, geri dönmek yasak; **alt ekmekten sonra yalnızca
+  protein** (et zorunlu, etsiz kapatılamaz — 30 Eyl); proteinden sonra garnitür/sos atlanabilir; **tarif
   doğrulaması yok**; `PlacedIngredients` artık `NetworkList<BurgerLayerEntry {TypeId, PhaseIndex}>`
   — katman köftenin pişmişlik fazını da taşır) · `BurgerStackVisual` (yığını replike listeden
   **yerel** çizer; katman yükseklikleri sınır kutusundan toplanır, ağ nesnesi spawn etmez;
@@ -824,8 +840,9 @@ Dersler "Unity / Editor" tuzaklarında.)*
 - 4.1b'de `HotbarUI`, `HeldItemVisual`, `PlacementPreview`, `BurgerAssemblyStation`'dan `registry`
   alanı silindi; sahne ve `Player.prefab`'te serileştirilmiş kalıntısı duruyor (zararsız). Bir
   sonraki kayıtta Unity temizler — o diff'i gürültü sanıp atma.
-- `TestTezgah` (mutfak, pencerenin yanı) + `TestTezgah_Gray.mat` — Adım 4.2'nin oyun kuralı taşımayan
-  test yuvası; Şef→Komi pencere yuvası gelince kaldırılacak.
+- `TestTezgah_Gray.mat` — TestTezgah ana sahneden kaldırıldı (pencere yuvaları geldi); materyal yalnızca
+  `SampleScene_EskiHarita`'da kullanılıyor.
+- Çöp geri bildirimi yalnızca görsel (öğe elden/hotbar'dan kalkar); Şef için işitsel "çöpe gitti" sesi yok.
 - **Bilinen sınır — aynı anda iki tıklama:** iki oyuncu aynı boş yuvaya aynı karede tıklarsa
   ikincisinin tıklaması "dolu yuva" kuralıyla ilkinin öğesini **alır**; istemcinin "koymak
   istiyordum" niyeti sunucuya taşınmıyor. Faz 0'da kabul edildi (yuvaları farklı roller sırayla
