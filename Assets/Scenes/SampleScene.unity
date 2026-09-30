@@ -13001,7 +13001,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
   ShowTopMostFoldoutHeaderGroup: 1
-  placeRoles: 02000000
+  placeRoles: 0200000001000000
   takeRoles: 0200000001000000
   acceptedTypes:
   - {fileID: 11400000, guid: 92177b9961bae5f44b21c7e7321775fe, type: 2}
@@ -13127,7 +13127,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
   ShowTopMostFoldoutHeaderGroup: 1
-  placeRoles: 03000000
+  placeRoles: 0300000002000000
   takeRoles: 0300000002000000
   acceptedTypes:
   - {fileID: 11400000, guid: 92177b9961bae5f44b21c7e7321775fe, type: 2}
@@ -13253,7 +13253,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
   ShowTopMostFoldoutHeaderGroup: 1
-  placeRoles: 02000000
+  placeRoles: 0200000001000000
   takeRoles: 0200000001000000
   acceptedTypes:
   - {fileID: 11400000, guid: 92177b9961bae5f44b21c7e7321775fe, type: 2}
@@ -13379,7 +13379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
   ShowTopMostFoldoutHeaderGroup: 1
-  placeRoles: 02000000
+  placeRoles: 0200000001000000
   takeRoles: 0200000001000000
   acceptedTypes:
   - {fileID: 11400000, guid: 92177b9961bae5f44b21c7e7321775fe, type: 2}
@@ -13505,7 +13505,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
   ShowTopMostFoldoutHeaderGroup: 1
-  placeRoles: 03000000
+  placeRoles: 0300000002000000
   takeRoles: 0300000002000000
   acceptedTypes:
   - {fileID: 11400000, guid: 92177b9961bae5f44b21c7e7321775fe, type: 2}
@@ -13631,7 +13631,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSlot
   ShowTopMostFoldoutHeaderGroup: 1
-  placeRoles: 03000000
+  placeRoles: 0300000002000000
   takeRoles: 0300000002000000
   acceptedTypes:
   - {fileID: 11400000, guid: 92177b9961bae5f44b21c7e7321775fe, type: 2}

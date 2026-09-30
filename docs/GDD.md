@@ -447,11 +447,11 @@ Not: Oyunda ayrı bir **Dumbwaiter** mekanizması yok. Oda-arası birincil etkil
 #### 5.1.1 Kasa/İstasyon Penceresi (Kasiyer ↔ Komi)
 - Karşılıklı görüş: **var**. Ses geçişi: **var**.
 - Müşteriler pencerenin solunda kaldığı için Komi müşterileri göremez — dolayısıyla sipariş pop-up'ını da göremez. **Bilgi asimetrisinin fiziksel kaynağı burası.**
-- Sadece Komi bu pencereden malzeme/paket koyabiliyor.
+- ~~Sadece Komi bu pencereden malzeme/paket koyabiliyor.~~ **İki yönlü (netleşti ✓, 30 Eyl 2026):** Komi ve
+  Kasiyer bu pencereye koyabilir ve buradan alabilir.
 - Komi'nin paketlediği yemek bu pencereden Kasiyer'e (dilsize) geçer.
-- **Kapasite ve alma (netleşti ✓, 30 Eyl 2026):** pervazda yan yana **3 yuva**. Koyan (Komi) ve karşı
-  taraf (Kasiyer) yuvadaki ürünü alabilir — koyan yanlış koyduğunu geri alabilir. Paketleme gelene kadar
-  yuvalara hamburger konur.
+- **Kapasite (netleşti ✓, 30 Eyl 2026):** pervazda yan yana **3 yuva**. Paketleme gelene kadar yuvalara
+  hamburger konur.
 - **Geri alma (netleşti ✓, 30 Eyl 2026):** pencereye konan öğeyi hem karşı taraf (Kasiyer) hem koyan taraf (Komi) alabilir. Koyma yetkisi yalnızca Komi'dedir.
 
 #### 5.1.2 İstasyon/Mutfak Penceresi (Komi ↔ Şef)
@@ -460,8 +460,8 @@ Not: Oyunda ayrı bir **Dumbwaiter** mekanizması yok. Oda-arası birincil etkil
 - Şef, tarifi Komi'nin sözlü yönlendirmesiyle hazırlar ve bitmiş yemeği bu pencereden teslim eder; sadece Şef bu pencereden malzeme/paket koyabiliyor.
 - **Kapasite:** aynı anda **3 hamburger + 3 yan ürün** durabilir. Komi almadan da Şef üretmeye devam edebilir.
   *(Faz 0: yan ürün olmadığı için yalnızca 3 hamburger yuvası; yan ürün yuvaları patates/ekstra ile gelir.)*
-- **Alma (netleşti ✓, 30 Eyl 2026):** koyan (Şef) ve karşı taraf (Komi) yuvadaki ürünü alabilir — Şef yanlış
-  koyduğunu geri alabilir.
+- **İki yönlü (netleşti ✓, 30 Eyl 2026):** Şef ve Komi bu pencereye koyabilir ve buradan alabilir (yukarıdaki
+  "sadece Şef koyabiliyor" cümlesinin yerine geçer).
 - **Geri alma (netleşti ✓, 30 Eyl 2026):** pencereye konan öğeyi hem Komi hem Şef alabilir — Komi "yanlış koydun" dediğinde Şef düzeltebilir. Koyma yetkisi yalnızca Şef'tedir.
 
 #### 5.1.3 Kasa/Mutfak Paneli — Intercom (Kasiyer ↔ Şef, Komi'yi atlar)

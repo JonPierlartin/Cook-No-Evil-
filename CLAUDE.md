@@ -564,9 +564,14 @@ Bunlar tekrar karşılaşılmaması gereken, bedeli ödenmiş derslerdir.
   bir an etkinleşip kapanır (`ApplyNonOwnerState`); `OnEnable`'da "ben yereliim" yazan, `OnDisable`'da silen
   tek statik alan böylece silinir ve yerel olan hiç tanınmaz (30 Eyl: `DeafHearing` hiç devreye girmedi,
   Komi Şef'i ve cızırtıyı duydu). Etkin örnekler listesi tutulur.
-- **Elde tutulan öğe kapsülün içinde durmalı.** Tutma noktası kapsül yarıçapından (0,5) uzaktaysa öğe duvara
-  yaklaşınca öbür tarafa geçer (30 Eyl: hamburger mutfak kapısından taşıyordu). Noktalar yatayda ≤0,4 m
-  (öğe yarıçapı ~0,1); birinci şahıs kamerasının `near` değeri 0,05 (öğe yakın).
+- **Elde tutulan öğe duvardan geçmemeli, ama gövdenin içinde de kalmamalı.** Tutma noktası kapsül
+  yarıçapından (0,5) uzaktaysa öğe duvara yaslanınca öbür tarafa geçer (30 Eyl: hamburger mutfak kapısından
+  taşıyordu). Noktayı kapsülün içine almak **üçüncü şahısta çözüm değildir**: yer tutucu gövde görseli de 0,5
+  yarıçaplı kapsül, öğe gövdenin içinde kalır ve kimse kimsenin elindekini göremez (aynı gün bu yüzden
+  bozuldu). **Kural:** birinci şahıs noktası kapsülün içinde (yatayda ≤0,4; kamera `near` 0,05); üçüncü
+  şahıs noktası gövdenin önünde (0,40/0,15/0,55) ve `HeldItemVisual.LateUpdate` gövde ekseninden öğe
+  yarıçapında **SphereCast** atıp öğeyi engele değmeyecek kadar geri çeker (ince ışın çapraz açıda 1,9 cm
+  taşıyordu). Final karakter sanatında da kollar collider dışına çıkacağı için bu desen kalır.
 - **Oyuncu kökü kapsülün merkezindedir** (`CharacterController` center 0, height 2). Karakter zemin
   yüksekliğine konursa yarısı gömülür. Doğma yüksekliği prefab'ın kapsül ölçüsünden türetilir
   (`PlayerSpawner.GetFootOffset`); sabit y yazılmaz. *(30 Eyl 2026, `fe38438`)*
@@ -670,8 +675,8 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     yüzeyinde (y=1,30; collider ızgara gövdesinin 1,42'lik collider'ının üstüne taşar — yoksa ışın gövdeye
     çarpar, hedef bulunmaz).
   - **Pencere yuvaları (GDD §5.1, 30 Eyl):** pervazda (y=1,30) 3'er `ItemSlot`, yalnızca Hamburger kabul
-    eder. `MutfakPencere_Yuva_1-3`: koy Şef, al Şef+Komi. `KasaPencere_Yuva_1-3`: koy Komi, al
-    Komi+Kasiyer. TestTezgah kaldırıldı (eski sahnede duruyor).
+    eder. **İki yönlü:** `MutfakPencere_Yuva_1-3` Şef+Komi koyar/alır; `KasaPencere_Yuva_1-3`
+    Komi+Kasiyer koyar/alır. TestTezgah kaldırıldı (eski sahnede duruyor).
   - **Çöp kutuları:** `Cop_Mutfak` (Şef), `Cop_Istasyon` (Komi), `Cop_Kasa` (Kasiyer) — aynı `TrashBin`,
     görsel PF_TrashBin.
   - **Mutfak kapısına (`PF_KitchenDoor`) BoxCollider eklendi** — modelde yoktu, Şef kasaya yürüyebiliyordu

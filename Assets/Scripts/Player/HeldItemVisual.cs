@@ -20,10 +20,14 @@ public class HeldItemVisual : NetworkBehaviour
 {
     [Tooltip("Birinci sahis tutma noktasi (oyuncu kamerasinin cocugu). Yalnizca sahip gorur.")]
     [SerializeField] private Transform firstPersonHoldPoint;
-    [Tooltip("Ucuncu sahis tutma noktasi (govde gorselinin cocugu, el hizasi). Yalnizca diger oyuncular gorur.")]
+    [Tooltip("Ucuncu sahis tutma noktasi (govde gorselinin cocugu, el hizasi, govdenin ONUNDE). Yalnizca diger oyuncular gorur.")]
     [SerializeField] private Transform thirdPersonHoldPoint;
+    [Tooltip("Ucuncu sahis ogenin onundeki engeli (duvar, kapi) arayan isinin carpacagi katmanlar.")]
+    [SerializeField] private LayerMask thirdPersonBlockMask = Physics.DefaultRaycastLayers;
 
     private PlayerInventory _inventory;
+    // Ucuncu sahis kopyasinin yatay yaricapi (engelden geri cekme payi); gorsel her uretildiginde olculur.
+    private float _instanceRadius;
     private bool _isLocalOwner;
     private bool _subscribed;
     private GameObject _instance;
@@ -147,7 +151,57 @@ public class HeldItemVisual : NetworkBehaviour
             return;
 
         _instanceRenderers = _instance.GetComponentsInChildren<Renderer>(true);
+        _instanceRadius = MeasureHorizontalRadius(_instance.transform, _instanceRenderers);
         ApplyPhaseColorToInstance();
+    }
+
+    // Ucuncu sahis ogesi govdenin ONUNDE tutulur (govde gorseliyle kapsul collider'i ayni boyda — nokta kapsulun
+    // icine alinirsa oge govdenin icinde kalir ve kimse goremez; 30 Eyl). Onu bir duvar/kapiya yaslaninca oge
+    // engelin ote tarafina gecmesin diye, govde ekseninden tutma noktasina oge yaricapinda kure atilir ve oge
+    // engele degmeyecek kadar geri cekilir (kamera carpisma deseni). Kure kendi kapsulunun icinden basladigi
+    // icin oyuncunun kendi collider'i sayilmaz (Unity kurali). Birinci sahiste gerekmez: nokta kapsulun icinde.
+    private void LateUpdate()
+    {
+        if (_isLocalOwner || _instance == null || _shownAnchor == null)
+            return;
+
+        var anchor = _shownAnchor.position;
+        var origin = new Vector3(transform.position.x, anchor.y, transform.position.z);
+        var toAnchor = anchor - origin;
+        float distance = toAnchor.magnitude;
+        if (distance < 1e-4f)
+        {
+            _instance.transform.position = anchor;
+            return;
+        }
+
+        // Ince isin degil, ogenin yaricapinda kure: capraz acida da ogenin kenari engele deger degmez durur
+        // (isinla capraz acida 1,9 cm tasiyordu — editor olcumu, 30 Eyl).
+        var direction = toAnchor / distance;
+        float allowed = distance;
+        if (Physics.SphereCast(origin, _instanceRadius, direction, out var hit, distance, thirdPersonBlockMask, QueryTriggerInteraction.Ignore))
+            allowed = hit.distance;
+
+        _instance.transform.position = origin + direction * allowed;
+    }
+
+    // Kopyanin kendi kokunun yerel uzayinda (renderer.localBounds koseleri — dunya AABB'si degil) yatay yaricap.
+    private static float MeasureHorizontalRadius(Transform root, Renderer[] renderers)
+    {
+        float radius = 0f;
+        foreach (var renderer in renderers)
+        {
+            var b = renderer.localBounds;
+            for (int xi = -1; xi <= 1; xi += 2)
+            for (int zi = -1; zi <= 1; zi += 2)
+            {
+                var corner = b.center + new Vector3(b.extents.x * xi, 0f, b.extents.z * zi);
+                var local = root.InverseTransformPoint(renderer.transform.TransformPoint(corner));
+                radius = Mathf.Max(radius, new Vector2(local.x, local.z).magnitude);
+            }
+        }
+
+        return radius;
     }
 
     private void RebindVisualSource(Item item)
