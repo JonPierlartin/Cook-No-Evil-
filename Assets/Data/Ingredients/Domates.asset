@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd982d1c9ae4344d9358a57f1b7e2c4, type: 3}
+  m_Name: Domates
+  m_EditorClassIdentifier: Assembly-CSharp::ItemType
+  id: 4
+  localizationKey: ingredient.domates
+  icon: {fileID: 21300000, guid: 04f56e651a9df694595a8f9ce63d87e6, type: 3}
+  visualPrefab: {fileID: 861835995077233709, guid: 0aea703463b1232499e6f18c4dafe119, type: 3}
+  itemPrefab: {fileID: 8038282843011107679, guid: 3a74a412ebe7f064e86c23fe2ca3fdf7, type: 3}
+  category: 3
+  phaseColors: []

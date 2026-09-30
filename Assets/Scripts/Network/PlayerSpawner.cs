@@ -25,8 +25,18 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkObject))]
 public class PlayerSpawner : NetworkBehaviour
 {
+    [System.Serializable]
+    private struct RoleSpawnPoint
+    {
+        public PlayerRole role;
+        [Tooltip("Zemin yuzeyinde bir nokta; karakter bu noktanin konum ve yonunde, kapsul tabani zemine oturacak sekilde doger.")]
+        public Transform point;
+    }
+
     [SerializeField] private NetworkObject playerPrefab;
-    [Tooltip("Gercek seviye geometrisi henuz yok; her rol icin basit bir ofset kullanilir.")]
+    [Tooltip("GDD 3.2: her rol kendi odasinda baslar (Kasiyer -> Kasa, Komi -> Istasyon, Sef -> Mutfak). Noktalar sahnede durur.")]
+    [SerializeField] private RoleSpawnPoint[] spawnPoints;
+    [Tooltip("Yalnizca bir rolun dogma noktasi atanmamissa: rol x bu aralik, y=0 (yedek; uyari basilir).")]
     [SerializeField] private float spawnSpacing = 2f;
 
     // Rol -> spawn edilmis Player.prefab NetworkObject'i. Round sirasinda dondurulmus
@@ -120,11 +130,12 @@ public class PlayerSpawner : NetworkBehaviour
             return;
         }
 
-        // Zemin y=0 (gri-kutu seviye). Kök, CharacterController kapsülünün MERKEZİNDE durduğu için
-        // (prefab: center 0, height 2) kök y=0'a konursa kapsülün yarısı zemine gömülür. Yükseklik
-        // prefab'ın kendi kapsül ölçüsünden türetilir: kapsülün tabanı (+ skin) zemine oturur.
-        var spawnPosition = new Vector3((int)role * spawnSpacing, GetFootOffset(), 0f);
-        var instance = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
+        // Kök, CharacterController kapsülünün MERKEZİNDE durduğu için (prefab: center 0, height 2) zemin
+        // noktasına konursa kapsülün yarısı gömülür. Yükseklik prefab'ın kendi kapsül ölçüsünden türetilir:
+        // kapsülün tabanı (+ skin) doğma noktasının zeminine oturur.
+        GetSpawnPose(role, out var groundPosition, out var rotation);
+        var spawnPosition = groundPosition + Vector3.up * GetFootOffset();
+        var instance = Instantiate(playerPrefab, spawnPosition, rotation);
         instance.SpawnAsPlayerObject(clientId);
         _spawnedPlayerObjects[role] = instance;
 
@@ -132,6 +143,26 @@ public class PlayerSpawner : NetworkBehaviour
         // degismiyor" raporu icin — Player.log'da bu satirin varligi spawn'in
         // gercekten gerceklestigini dogrular (bkz. PlayerController'daki kamera log'u).
         Debug.Log($"[PlayerSpawner] Client {clientId} icin Player.prefab spawn edildi (rol={role}).");
+    }
+
+    private void GetSpawnPose(PlayerRole role, out Vector3 groundPosition, out Quaternion rotation)
+    {
+        if (spawnPoints != null)
+        {
+            foreach (var entry in spawnPoints)
+            {
+                if (entry.role != role || entry.point == null)
+                    continue;
+
+                groundPosition = entry.point.position;
+                rotation = Quaternion.Euler(0f, entry.point.eulerAngles.y, 0f);
+                return;
+            }
+        }
+
+        Debug.LogWarning($"[PlayerSpawner] '{role}' icin dogma noktasi atanmamis; yedek konum kullaniliyor.");
+        groundPosition = new Vector3((int)role * spawnSpacing, 0f, 0f);
+        rotation = Quaternion.identity;
     }
 
     // Kökten kapsül tabanına (+ skin) olan yükseklik. Prefab'da CharacterController yoksa 0.

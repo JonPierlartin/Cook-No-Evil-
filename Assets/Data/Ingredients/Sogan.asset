@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd982d1c9ae4344d9358a57f1b7e2c4, type: 3}
+  m_Name: Sogan
+  m_EditorClassIdentifier: Assembly-CSharp::ItemType
+  id: 6
+  localizationKey: ingredient.sogan
+  icon: {fileID: 21300000, guid: e0fc5d60dcf4a2c4b8545a4b71389499, type: 3}
+  visualPrefab: {fileID: 4091066173357890317, guid: 4c49db677fd5ae14a86f2e0142ce1346, type: 3}
+  itemPrefab: {fileID: 8038282843011107679, guid: 27ad8c3100a62e5468eb54d03a00c779, type: 3}
+  category: 3
+  phaseColors: []
