@@ -119,6 +119,11 @@ public class PlacementPreview : MonoBehaviour
                 materials[i] = previewMaterial;
 
             renderer.sharedMaterials = materials;
+            // Durum rengi (ör. köftenin pişmişlik fazı, ItemPhaseColoring/BurgerStackBuilder ile
+            // MaterialPropertyBlock üzerinden yazılmış olabilir) önizlemeye TAŞINMAZ (GDD 4.1.2 ②:
+            // önizleme şekli gösterir, rengi değil) — malzeme değişse de MPB üstte kalıp rengi
+            // gösteriyordu (D6, 30 Eyl 2026: hamburger önizlemesinde köfte kırmızı görünüyordu).
+            renderer.SetPropertyBlock(null);
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
         }

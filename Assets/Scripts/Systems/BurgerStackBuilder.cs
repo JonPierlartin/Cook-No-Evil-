@@ -12,10 +12,21 @@ using UnityEngine;
 // D5 (25 Eyl 2026): olcum ve yerlesim ROOT'UN KENDI YEREL uzayinda yapilir, world-space DEGIL. root
 // hangi ebeveynin altinda kurulursa kurulsun (elde tutma noktasi, onizleme koku, yuva) — o ebeveyn
 // donuk/olcekli olsa BILE (orn. birinci sahis tutma noktasi PlayerController'in uyguladigi kamera
-// pitch'iyle her kare doner) katmanlar bosluksuz/ortusmesiz dizilir. Onceki surum world-space
-// `root.up * height` ile yerlestirip world-eksenine-hizali `Renderer.bounds.size.y` ile olcuyordu; bu
-// ikisi yalnizca root donusu tam olarak world Y ile hizaliyken tutarliydi — pitch'li ankorde bir
-// katman kalinligi kadar (~0,10-0,16 birim) ortusme/bosluk uretiyordu (olculdu, bkz. commit govdesi).
+// pitch'iyle her kare doner) katmanlar bosluksuz/ortusmesiz dizilir.
+//
+// D6 (30 Eyl 2026): D5'in MeasureLocalRange'i world-AXIS-ALIGNED `Renderer.bounds`'un koselerini
+// root'un yerel uzayina tasiyordu — bu koseler zaten EKSENE HIZALAMA ile SISMISTI (donuk bir mesh'in
+// dunya AABB'si gercek kalinligindan buyuktur), donusum bunu GERI ALAMAZ. D5'in kendi "sonra: 0"
+// ölçümü GECERSIZDI cunku dogrulama ayni (yanlis) fonksiyonu kullaniyordu — kendi kendini dogrulayan
+// bir olcum. GERCEK oyun testinde (b11e568 sonrasi) katman boslugu KUCULMEDI, BUYUDU (bakis acisi
+// dikeldikce sisme artiyor). Bagimsiz dogrulama (gercek mesh vertex'leriyle, hicbir bounds kisayolu
+// olmadan) bunu dogruladi: 30 derece pitch'te bosluk 0,29 birim (bir katmanin ~2 kati). Duzeltme:
+// `Renderer.bounds` (dunya AABB) hicbir yerde CAGRILMAZ; onun yerine `Renderer.localBounds` (mesh'in
+// KENDI yerel uzayinda, eksene-hizalama kaybı OLMAYAN kutusu) kullanilir, koseleri
+// `renderer.transform.TransformPoint` (dunyaya) sonra `root.InverseTransformPoint` (root'un yereline)
+// ile tasinir. Bu bilesim matematiksel olarak yalnizca renderer'in ROOT'A GORE SABIT yerel donusumunu
+// uygular (root.worldToLocal * renderer.localToWorld ifadesinde root'un KENDI dunya donusumu iptal
+// olur) — root ne kadar donuk/olcekli olursa olsun ayni, DOGRU sonucu verir.
 public static class BurgerStackBuilder
 {
     // Katmanları root'un altına dizer, oluşan nesneleri created'a ekler, toplam yüksekliği (root'un
@@ -66,9 +77,10 @@ public static class BurgerStackBuilder
         created.Clear();
     }
 
-    // Renderer'larin (world-eksenine-hizali) sinir kutusu koselerini root'un YEREL uzayina tasiyip
-    // oradaki Y araligini olcer. root donuk olsa bile katmanin root'a gore GERCEK dikey kaplamini
-    // verir; yalnizca world Y okumak (eski surum) root donukken yanlis sonuc uretiyordu.
+    // Renderer'in KENDI yerel sinir kutusunu (mesh-net, eksene-hizalama kaybı OLMAYAN) alip
+    // koselerini root'un yerel uzayina tasir. Renderer.bounds (dunya AABB) KULLANILMAZ — D6'da
+    // bulundu: donuk bir mesh'in dunya-eksenine-hizali kutusu gercek kalinligindan buyuk cikar, bu
+    // sismeyi sonraki donusum GERI ALAMAZ (bkz. sinif basi yorum).
     private static void MeasureLocalRange(Transform root, Renderer[] renderers, out float minY, out float maxY)
     {
         minY = float.PositiveInfinity;
@@ -76,16 +88,17 @@ public static class BurgerStackBuilder
 
         foreach (var renderer in renderers)
         {
-            var bounds = renderer.bounds;
-            var center = bounds.center;
-            var extents = bounds.extents;
+            var localBounds = renderer.localBounds;
+            var center = localBounds.center;
+            var extents = localBounds.extents;
 
             for (int xi = -1; xi <= 1; xi += 2)
             for (int yi = -1; yi <= 1; yi += 2)
             for (int zi = -1; zi <= 1; zi += 2)
             {
-                var corner = center + new Vector3(extents.x * xi, extents.y * yi, extents.z * zi);
-                float localY = root.InverseTransformPoint(corner).y;
+                var localCorner = center + new Vector3(extents.x * xi, extents.y * yi, extents.z * zi);
+                var worldCorner = renderer.transform.TransformPoint(localCorner);
+                float localY = root.InverseTransformPoint(worldCorner).y;
                 if (localY < minY) minY = localY;
                 if (localY > maxY) maxY = localY;
             }
