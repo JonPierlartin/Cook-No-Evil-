@@ -120,7 +120,10 @@ public class PlayerSpawner : NetworkBehaviour
             return;
         }
 
-        var spawnPosition = new Vector3((int)role * spawnSpacing, 0f, 0f);
+        // Zemin y=0 (gri-kutu seviye). Kök, CharacterController kapsülünün MERKEZİNDE durduğu için
+        // (prefab: center 0, height 2) kök y=0'a konursa kapsülün yarısı zemine gömülür. Yükseklik
+        // prefab'ın kendi kapsül ölçüsünden türetilir: kapsülün tabanı (+ skin) zemine oturur.
+        var spawnPosition = new Vector3((int)role * spawnSpacing, GetFootOffset(), 0f);
         var instance = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
         instance.SpawnAsPlayerObject(clientId);
         _spawnedPlayerObjects[role] = instance;
@@ -129,5 +132,15 @@ public class PlayerSpawner : NetworkBehaviour
         // degismiyor" raporu icin — Player.log'da bu satirin varligi spawn'in
         // gercekten gerceklestigini dogrular (bkz. PlayerController'daki kamera log'u).
         Debug.Log($"[PlayerSpawner] Client {clientId} icin Player.prefab spawn edildi (rol={role}).");
+    }
+
+    // Kökten kapsül tabanına (+ skin) olan yükseklik. Prefab'da CharacterController yoksa 0.
+    private float GetFootOffset()
+    {
+        if (!playerPrefab.TryGetComponent(out CharacterController controller))
+            return 0f;
+
+        float scaleY = playerPrefab.transform.localScale.y;
+        return (controller.height * 0.5f - controller.center.y + controller.skinWidth) * scaleY;
     }
 }
