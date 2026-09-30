@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bba6f5d70300d54ebd532c34281aeea, type: 3}
+  m_Name: Varyant_Tursulu_Taslak
+  m_EditorClassIdentifier: Assembly-CSharp::BurgerVariant
+  designLabel: "Tur\u015Fulu (TASLAK \u2014 Ersel seviye yazarken de\u011Fi\u015Ftirir)"
+  image: {fileID: 0}
+  ingredients:
+  - item: {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}
+    removable: 0
+  - item: {fileID: 11400000, guid: e200959aef144964a98ec0fcedae76ad, type: 2}
+    removable: 1
+  - item: {fileID: 11400000, guid: 549df235501615f4cb781daea3d3fbb6, type: 2}
+    removable: 1
+  - item: {fileID: 11400000, guid: 008cb81050ee14747901bfcf640824f6, type: 2}
+    removable: 1

@@ -123,9 +123,13 @@ Sınırı" bölümünde. Burada yalnızca 18 Eylül'de yapılan kapsam değişik
 | D4 | **Düzeltme:** hamburger yuvaya konunca yok oluyor + MissingReferenceException; Şef'te katman aralıkları | ✅ (`76da044`) — yok olma + hata kapandı (oyunda doğrulandı); katman boşluğu **elde sürüyor** → D5 |
 | D5 | **Düzeltme:** kopya görseller (elde / önizleme) — hamburger katman boşluğu, yarım ekmeğin gömülmesi | ❌ `b11e568` — birinci şahısta boşluk **büyüdü** (dünya AABB şişmesi); üçüncü şahıs ve önizleme bitişik → D6 |
 | D6 | **Düzeltme:** yığın yüksekliğini yerel mesh sınırlarından ölç + önizlemede faz rengini kapat — `a99dfe7` | ✅ (8/8 oyun testi geçti, 30 Eyl) |
-| E1 | Ekmek görseli: alt/üst ayrı modeller (GDD §6.7.3, 26 Eyl) + D3 kuralı; ardından Şef'te yarım/üst ekmek önizlemesi kontrol | ⏳ sırada |
-| D3 | Envanter doluyken üst ekmek konabilsin — **karar: evet** (27 Eyl, GDD §6.7.3); E1 ile birlikte | ⏳ |
-| 8 | Çöp kutusu + input temizliği | ⏳ |
+| E1 | Ekmek görseli: alt/üst ayrı modeller (GDD §6.7.3) — `9ba8091`; ek yeri pırıltısı `4d76c5a` | ✅ (oyun testi geçti) |
+| D3 | Envanter doluyken üst ekmek konabilsin — `9ba8091` | ✅ |
+| D7 | runInBackground + gömülü doğma `fe38438` · cızırtı, DURDURULDU + zaman aşımı, sağır Komi, ikonlar `fed5b33` · Komi sesleri `1d4d1b2` | ✅ (oyun testi geçti) |
+| H | **Harita:** artist haritası ana sahnede, 5 garnitür + kaplar, buzdolabı eti, 2 tezgah, rol doğma noktaları, mutfak kapısı — `6b327ae` | ✅ |
+| D8 | Pencere yuvaları (3'er, iki yönlü), çöp (3 oda), et zorunlu, ızgara yüksekliği, sağırlık düzeltmesi, elde öğe görünürlüğü — `c87b383`, `13b7af4` | ✅ (elde öğe + iki yönlü pencere testi bekliyor) |
+| 8 | Çöp kutusu — D8'de yapıldı · input temizliği (Previous/Next) | ⏳ input |
+| 16a+16b | `NumericValue` + `Selection<T>`, `LevelConfig`, `BurgerVariant`, kanallar, istasyon kimlikleri, sunucu çözümlemesi — property drawer'sız | ✅ kod; oyun testi bekliyor |
 
 **Envanter tahmini (21 Eyl, 4.0 raporu):** Claude Code'un tahmini 11-14 sa + ~2 sa test; danışman 5-6 sa demişti. Raporun 4.3'ü (test amaçlı köfte yuvası + kullanıcısız `BurgerAssembly` iskeleti) **kaldırıldı**: `ServerProgress` ve kategori değerleri ızgara adımına, `BurgerAssembly` birleştirme adımına (Adım 6) taşındı. Kalan envanter işi ~8-10 sa. `ServerProgress` zaten ızgaranın 6 saatinin içindeydi.
 
@@ -341,6 +345,12 @@ hata sayacı + kazanma/kaybetme. Bunlardan biri düşerse video konsepti kanıtl
 | 22 Eyl 2026 | Slot/tık yarışı **şimdi** düzeltiliyor (D2) | Ersel: etkileşim noktaları çoğaldıkça sonradan eklemek pahalılaşır. Doğru — her yeni istasyon aynı "aktif öğe" yolunu kullanacak. |
 | 22 Eyl 2026 | D2 yaklaşımı: etkileşim bağlamı (oyuncu + slot) gate'lere ve olaylara açıkça geçer | Alternatif (slot seçimini sunucuya RPC ile yazmak) sahip tarafında slot değiştirmeyi gecikmeli gösterir ve iki kaynak (tahmin + sunucu) yaratır. Bağlam yaklaşımı gizli durum ve sıra varsayımı içermez. |
 | 25 Eyl 2026 | Üst ekmek yalnızca yarılanmış ekmekle konur | GDD'de tanımsızdı. Bütün ekmekle kapatmaya izin verilirse alt yarısı sessizce israf olur ve kör Şef bunu fark edemez. |
+| 30 Eyl 2026 | Pencereler iki yönlü, 3'er hamburger yuvası (Mutfak: Şef+Komi, Kasa: Komi+Kasiyer) | Ersel'in kararı; GDD §5.1.1/5.1.2 güncellendi. Kasa penceresinin sayısı GDD'de yoktu. |
+| 30 Eyl 2026 | Protein zorunlu; etsiz hamburger kapatılamaz | Ersel'in kararı; GDD §6.7.3'teki "garnitürden önce protein" kuralının netleşmesi. |
+| 30 Eyl 2026 | Her odada kendi rolünün çöp kutusu, aynı script | Ersel'in kararı; GDD §5.3.2. |
+| 30 Eyl 2026 | Fazla müşteriler ve yedek havuz **varsayılan sipariş slotunu** kullanır | Ersel'in kararı (16b). GDD §7.3.1 slot ile müşteri sayısı farkını tanımlamıyordu. **GDD'ye işlenmedi** (16b GDD düzenlemeyi yasakladı) — Ersel işleyecek. |
+| 30 Eyl 2026 | Varyantta malzeme başına "çıkarılabilir" işareti; "komple randomize" yalnızca işaretlileri alır | Ersel'in kararı (16b). Adım "tüm malzemeler" diyordu, GDD §7.3.2 "çıkarılabilir"; tümü alınırsa etsiz (yapılamaz) sipariş çıkabilirdi. **GDD'ye işlenmedi** — Ersel işleyecek. |
+| 30 Eyl 2026 | Kaplar sınırsız; malzeme/stok editörden ayarlanınca değişecek | Ersel'in kararı. LevelConfig'te stok alanları tanımlı ve boş. |
 | 18 Eyl 2026 | Commit mesajı biçimi `<Kapsam>: <iş>`, kapsam = iş birimi (dosya adı değil) | Ersel'in kararı. Bir adım birden fazla dosyaya dokunuyor; dosya adına göre etiketlenirse aynı işin commit'leri geçmişte birbirinden kopuyor. Biçim `CLAUDE.md` → Sürüm Kontrolü ve Build bölümünde. |
 
 ---

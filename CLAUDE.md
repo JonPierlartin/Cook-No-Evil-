@@ -337,6 +337,26 @@ kendi modunu taşır** — bir seviyede 4 müşteriden ikisi sabit, ikisi rastge
 alanlar bundan türetilir. Ayrı ayrı yazılırsa tek-kaynak ilkesi çöker ve her yeni alan yeniden iş
 çıkarır.
 
+**Uygulama (Adım 16b, 30 Eyl 2026):**
+- Ortak tipler: `NumericValue` (Fixed değer / Random min–max; `ResolveInt`/`ResolveFloat`) ve
+  `Selection<T>` (Fixed `fixedItems` / Random `pool` + `count`; havuzda **boş eleman = "yok"**; `takeAll` =
+  havuzun tamamı rastgele sırayla — eşleşme karıştırma). Tek seçimli alan = count 1. **Başka "sabit mi rastgele
+  mi" bayrağı yazılmaz** (kod taramasıyla doğrulandı).
+- `LevelConfig` (SO): §11.9'un tamamı; `OrderSlot` (varyant, eksik, içecek, dondurma, yan — her biri
+  `Selection`), `defaultOrderSlot` (slot listesinden fazla müşteri + yedek havuz; 30 Eyl kararı),
+  `ChannelConfig` (kanal, açık mı, değer listesi, `Selection<ItemType>` eşleşme: `items[i] ↔ values[i]`),
+  `activeStations` (`Selection<StationId>`), sos pompası dizilimi, stok + tetik, süre çarpanı, hazırlık, ipuçları,
+  tohum. Tarif kitapçığı ayrı alan değil: açık varyantlardan türer.
+- `BurgerVariant` (SO; eski `BurgerRecipe`, aynı script GUID'i): malzeme + **çıkarılabilir** işareti (eksik
+  "komple randomize" kısayolu yalnızca işaretlileri alır — 30 Eyl kararı), görsel. Ekmek listede yok (sabit).
+- `SignalChannel` + `SignalValue` (SO): kanal ve değer kataloğu (`Assets/Data/Channels/`). Yön (4) ve Sayı (5)
+  dolu; Renk/Şekil/Vücut tanımlı, boş.
+- `StationId` (SO, `Assets/Data/Stations/`) + `StationIdentity` (sahne): makine/kap kimliği. Açma/kapama yok.
+- `LevelResolver.Resolve(config, seed)` — saf fonksiyon, `System.Random`, Edit modunda da çalışır.
+  `LevelDirector` (GameSystems; **aktif LevelConfig'in tek seçim yeri**) round `RoundActive`'e geçince
+  **yalnızca sunucuda, bir kez** çözer, `Current`'ta (`ResolvedLevel`) tutar ve konsola yazar. Replikasyon yok.
+- Örnek: `Assets/Data/Levels/Seviye1_Taslak.asset` (içerik TASLAK). Property drawer yok (Inspector ham).
+
 ### K9 — ESC menüsü oyunu durdurmaz
 `ESC` duraklatma menüsü **yereldir**; bir oyuncu ayarları açtığında diğerleri oynamaya devam eder.
 `GameLoopManager`'daki pause mimarisi **yalnızca disconnect** içindir — ikisi karıştırılmamalıdır.
@@ -612,7 +632,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 65 .cs dosyası (30 Eyl 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 76 .cs dosyası (30 Eyl 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -748,12 +768,12 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 - Etkileşim round dışında kapalı: `PlayerInteractor` crosshair ve sunucu kararı aynı
   `GameLoopManager.IsRoundActive` kontrolünü kullanır.
 - `BlindVisionCamera` + `BlindVision_Renderer` + `BlindVisionOutline.shader` — Şef'in kör görüşü (K2)
-- `BurgerRecipe` + `ItemType` (ScriptableObject'ler)
+- `BurgerVariant` (eski `BurgerRecipe`) + `ItemType` + `LevelConfig` (ScriptableObject'ler; bkz. K8 uygulama)
 
 **Adlandırma notu (Temizlik `2675553`, 21 Eyl 2026):** `IngredientType`/`IngredientRegistry` →
 `ItemType`/`ItemRegistry` oldu; öğe türü artık bardak, kese kağıdı, hamburger gibi malzeme dışı
 öğeleri de kapsar. **Bilinçli olarak eski adla kalanlar:** serileştirilmiş alan adları
-(`ItemRegistry.ingredients`, `IngredientContainer.ingredient`, `BurgerRecipe.excludedIngredients`),
+(`ItemRegistry.ingredients`, `IngredientContainer.ingredient`),
 `IngredientContainer` ve `IngredientRequirement` sınıfları (gerçekten malzemeyle ilgililer),
 `Assets/Data/Ingredients/` klasörü. Alan adı değiştirmek `FormerlySerializedAs` + asset yeniden
 kaydı gerektirir; değeri yok.
@@ -819,8 +839,9 @@ Dersler "Unity / Editor" tuzaklarında.)*
 
 - `Player.prefab` içinde stale `sprintMultiplier: 1.6` serileştirilmiş alanı (kodda karşılığı yok)
 - `LobbyUIController.HandleRoundStateChanged` içindeki teşhis `Debug.Log`
-- `BurgerRecipe` + `NormalHamburger.asset` artık hiçbir yerde kullanılmıyor (6a'da tarif
-  doğrulaması kaldırıldı); sipariş sistemi bağlanırken ya kullanılacak ya silinecek.
+- LevelConfig/varyant Inspector'ı ham (property drawer yok; PLAN kesme sırası 5). Seviye yazarken
+  `Selection`'da kullanılmayan liste de görünür — yalnızca `source`'a uyan alan okunur.
+- `ProductCategory` bayrakları LevelConfig'te tanımlı ama henüz hiçbir tüketici okumuyor (sipariş adımı).
 - `PlacementPreview.mat` (URP Unlit, yeşil, alfa 0.5, ZWrite kapalı) yer tutucu. *(Yarı gömülü
   görünme sorunu K2d'de pivot tabana alınarak çözüldü.)*
 - `TestItem` elde ~0,10 m yüksek görünüyor (tutma noktaları Ekmek'e göre ayarlandı; K2d).
@@ -857,7 +878,7 @@ Dersler "Unity / Editor" tuzaklarında.)*
 - `CrosshairUI` görselleri yer tutucu (Knob sprite, beyaz/yeşil/kırmızı); "kullanılabilir" yeşili
   yeşil birleştirme tezgahı üzerinde düşük kontrastlı
 - **Bayat kod yorumları (30 Eyl kod taraması; davranışa etkisi yok, okuyanı yanıltır):**
-  `BurgerRecipe` ("istasyon bu tarifle doğrular" — 6a'dan beri yok) · `ItemRegistry` ("PlayerInventory
+  `ItemRegistry` ("PlayerInventory
   int id taşır" — 4.1b'den beri yok) · `IngredientContainer:607` (Köfte'yi spawn edilemeyen tür diye
   anıyor) · `HoldOrPressInteractable:9,17` (paketleme/diyafon'u basılı tutma örneği veriyor; GDD'de ikisi
   de tıklama) · `GameLoopManager` başı ("skor hedefi" — GDD'de yok, K1) · `LobbyUIController:28,243` ve
@@ -886,4 +907,4 @@ Dersler "Unity / Editor" tuzaklarında.)*
   gerçek AppID alınınca ikisi de güncellenmeli
 - Haritada collider'sız dekor: `PF_Frier`, sepetler, müşteri masa/sandalyeleri, kesme tahtaları,
   servis tepsileri — içinden geçilir. Fritöz Faz 0 dışı; müşteri alanı müşteri adımında ele alınır.
-- `NormalHamburger.asset` tarifi (`Ekmek × 2`, `Kofte × 1`) — placeholder, gerçek menüye bağlı değil
+- Varyantlar (`Assets/Data/Variants/*_Taslak`) ve `Seviye1_Taslak` içerik taslağıdır; Ersel seviye yazarken değiştirir.

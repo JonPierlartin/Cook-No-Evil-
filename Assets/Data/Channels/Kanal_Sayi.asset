@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3afe76e0d2c76934e95a59db08ac0755, type: 3}
+  m_Name: Kanal_Sayi
+  m_EditorClassIdentifier: Assembly-CSharp::SignalChannel
+  displayName: "Say\u0131"
+  values:
+  - {fileID: 11400000, guid: 6d4ec62a0d91bd143b9f5d5e14f7397e, type: 2}
+  - {fileID: 11400000, guid: 95c8388d92141814bba3db9da8bea421, type: 2}
+  - {fileID: 11400000, guid: da9a40f501e928c4da880dcd0ecf6b03, type: 2}
+  - {fileID: 11400000, guid: 881147417e503a34a9a83b0cf44d8e43, type: 2}
+  - {fileID: 11400000, guid: 7d914ec2ba77dfe4bba87892827c980e, type: 2}

@@ -1,0 +1,365 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b708306d032ef7b4f9d9112110fe6c6f, type: 3}
+  m_Name: Seviye1_Taslak
+  m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
+  customerCount:
+    source: 0
+    value: 2
+    min: 0
+    max: 0
+  customerInterval:
+    source: 1
+    value: 0
+    min: 10
+    max: 15
+  intervalCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  patience:
+    source: 1
+    value: 0
+    min: 20
+    max: 30
+  backupPoolSize:
+    source: 0
+    value: 2
+    min: 0
+    max: 0
+  orderSlots:
+  - note: 'Sabit slot: Klasik, tam malzemeli'
+    variant:
+      source: 0
+      fixedItems:
+      - {fileID: 11400000, guid: 5282c8839fdac6e46a970cd4bbe4d9e6, type: 2}
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+    missing:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+    missingPoolIsVariantRemovables: 0
+    drink:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+    iceCream:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+    side:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+  - note: "Rastgele slot: iki varyanttan biri, 0-1 eksik (domates/so\u011Fan/tur\u015Fu)"
+    variant:
+      source: 1
+      fixedItems: []
+      pool:
+      - {fileID: 11400000, guid: 5282c8839fdac6e46a970cd4bbe4d9e6, type: 2}
+      - {fileID: 11400000, guid: 86913d1ac64d39c408d1b8a54d50c619, type: 2}
+      count:
+        source: 0
+        value: 1
+        min: 1
+        max: 1
+      takeAll: 0
+    missing:
+      source: 1
+      fixedItems: []
+      pool:
+      - {fileID: 11400000, guid: 64d2b7aa887042b4a9980eee15a1bf33, type: 2}
+      - {fileID: 11400000, guid: 549df235501615f4cb781daea3d3fbb6, type: 2}
+      - {fileID: 11400000, guid: e200959aef144964a98ec0fcedae76ad, type: 2}
+      count:
+        source: 1
+        value: 0
+        min: 0
+        max: 1
+      takeAll: 0
+    missingPoolIsVariantRemovables: 0
+    drink:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+    iceCream:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+    side:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+  defaultOrderSlot:
+    note: "Fazla/yedek m\xFC\u015Fteri: iki varyanttan biri, \xE7\u0131kar\u0131labilirlerden
+      0-1 eksik"
+    variant:
+      source: 1
+      fixedItems: []
+      pool:
+      - {fileID: 11400000, guid: 5282c8839fdac6e46a970cd4bbe4d9e6, type: 2}
+      - {fileID: 11400000, guid: 86913d1ac64d39c408d1b8a54d50c619, type: 2}
+      count:
+        source: 0
+        value: 1
+        min: 1
+        max: 1
+      takeAll: 0
+    missing:
+      source: 1
+      fixedItems: []
+      pool: []
+      count:
+        source: 1
+        value: 0
+        min: 0
+        max: 1
+      takeAll: 0
+    missingPoolIsVariantRemovables: 1
+    drink:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 1
+        min: 0
+        max: 0
+      takeAll: 0
+    iceCream:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 1
+        min: 0
+        max: 0
+      takeAll: 0
+    side:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 1
+        min: 0
+        max: 0
+      takeAll: 0
+  openVariants:
+    source: 0
+    fixedItems:
+    - {fileID: 11400000, guid: 5282c8839fdac6e46a970cd4bbe4d9e6, type: 2}
+    - {fileID: 11400000, guid: 86913d1ac64d39c408d1b8a54d50c619, type: 2}
+    pool: []
+    count:
+      source: 0
+      value: 1
+      min: 0
+      max: 0
+    takeAll: 0
+  openProductCategories: 1
+  channels:
+  - channel: {fileID: 11400000, guid: d0035ef299a81014fbe6fbecf8897ed9, type: 2}
+    enabled: 1
+    values:
+    - {fileID: 11400000, guid: b7392385256e54349acf850bba3ebbcf, type: 2}
+    - {fileID: 11400000, guid: db15d8d147eb8424e8b6cc71ed1e8f00, type: 2}
+    - {fileID: 11400000, guid: d95b07f26b4be89469bdb459a1ff0524, type: 2}
+    - {fileID: 11400000, guid: 0a3bcb0e99238b94cba9c8ca0e372f34, type: 2}
+    items:
+      source: 0
+      fixedItems:
+      - {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+  - channel: {fileID: 11400000, guid: 62b7523fed98d224494f63c714268bf8, type: 2}
+    enabled: 1
+    values:
+    - {fileID: 11400000, guid: 6d4ec62a0d91bd143b9f5d5e14f7397e, type: 2}
+    - {fileID: 11400000, guid: 95c8388d92141814bba3db9da8bea421, type: 2}
+    - {fileID: 11400000, guid: da9a40f501e928c4da880dcd0ecf6b03, type: 2}
+    - {fileID: 11400000, guid: 881147417e503a34a9a83b0cf44d8e43, type: 2}
+    - {fileID: 11400000, guid: 7d914ec2ba77dfe4bba87892827c980e, type: 2}
+    items:
+      source: 1
+      fixedItems: []
+      pool:
+      - {fileID: 11400000, guid: 1c0bce3c9b84aee4598cbc2ebc811558, type: 2}
+      - {fileID: 11400000, guid: 64d2b7aa887042b4a9980eee15a1bf33, type: 2}
+      - {fileID: 11400000, guid: e200959aef144964a98ec0fcedae76ad, type: 2}
+      - {fileID: 11400000, guid: 549df235501615f4cb781daea3d3fbb6, type: 2}
+      - {fileID: 11400000, guid: 008cb81050ee14747901bfcf640824f6, type: 2}
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 1
+  - channel: {fileID: 11400000, guid: f1e48a516c3c40f429beb9d43e2ec4a5, type: 2}
+    enabled: 0
+    values: []
+    items:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+  - channel: {fileID: 11400000, guid: 1eb29a3f5f67fa04db5ee6bc884899c5, type: 2}
+    enabled: 0
+    values: []
+    items:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+  - channel: {fileID: 11400000, guid: 17043abbd5d71c541bd7faa22cdb02c0, type: 2}
+    enabled: 0
+    values: []
+    items:
+      source: 0
+      fixedItems: []
+      pool: []
+      count:
+        source: 0
+        value: 0
+        min: 0
+        max: 0
+      takeAll: 0
+  activeStations:
+    source: 0
+    fixedItems:
+    - {fileID: 11400000, guid: b33be0f17b5d5374384a4e80b978e679, type: 2}
+    - {fileID: 11400000, guid: 6384219a1b540f1498ce71d998324c54, type: 2}
+    - {fileID: 11400000, guid: 747adb13ed654b84695a70d2d54b2e54, type: 2}
+    - {fileID: 11400000, guid: ee6d543df81cd2b428752e30627df3ff, type: 2}
+    - {fileID: 11400000, guid: ad482d092c4fa064183f9e7ddfbdb895, type: 2}
+    - {fileID: 11400000, guid: f32aed25c029cc84fad65d84c1a0e563, type: 2}
+    - {fileID: 11400000, guid: 55e289da64320ce4aa9a573e61fe2761, type: 2}
+    - {fileID: 11400000, guid: 8d7d34885e519264c8525c0c8cc35f38, type: 2}
+    - {fileID: 11400000, guid: 6215ad5e91c626c44b812877e9c75166, type: 2}
+    - {fileID: 11400000, guid: 6337aa2bb57e97743ab39a28f871bcb2, type: 2}
+    pool: []
+    count:
+      source: 0
+      value: 1
+      min: 0
+      max: 0
+    takeAll: 0
+  saucePumpOrder:
+    source: 0
+    fixedItems: []
+    pool: []
+    count:
+      source: 0
+      value: 1
+      min: 0
+      max: 0
+    takeAll: 0
+  stocks: []
+  stockTriggers: []
+  timeMultiplier:
+    source: 0
+    value: 1
+    min: 0
+    max: 0
+  prepPhaseEnabled: 0
+  prepPhaseSeconds:
+    source: 0
+    value: 15
+    min: 0
+    max: 0
+  showControlHints: 0
+  useFixedSeed: 0
+  seed: 12345
