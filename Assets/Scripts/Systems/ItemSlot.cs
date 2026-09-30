@@ -17,8 +17,12 @@ using UnityEngine;
 [RequireComponent(typeof(PlacementTarget))]
 public class ItemSlot : NetworkBehaviour, IInteractionGate
 {
-    [Tooltip("Bu yuvayi kullanabilecek roller (GDD 6.3). Bos birakilirsa herkes kullanabilir.")]
-    [SerializeField] private PlayerRole[] allowedRoles;
+    [Tooltip("Bu yuvaya oge KOYABILECEK roller (GDD 6.3, 5.1). Bos birakilirsa herkes koyabilir.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("allowedRoles")]
+    [SerializeField] private PlayerRole[] placeRoles;
+    [Tooltip("Bu yuvadan oge ALABILECEK roller. Bos birakilirsa herkes alabilir. Ornek (GDD 5.1.2 + 30 Eyl karari): " +
+        "Mutfak penceresine yalnizca Sef koyar; Sef ve Komi alir.")]
+    [SerializeField] private PlayerRole[] takeRoles;
     [Tooltip("Bu yuvanin kabul ettigi oge turleri. Bos birakilirsa her tur kabul edilir.")]
     [SerializeField] private ItemType[] acceptedTypes;
 
@@ -64,8 +68,8 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
     }
 
     // Kural TEK yerde (GDD "Yuva ile etkilesim"); sunucu tamamlanmada, crosshair her karede sorar. SWAP YOK:
-    //  - bos yuva : rol izinli + BAGLAM slotunda oge var + turu kabul ediliyor
-    //  - dolu yuva: rol izinli + envanterde bos slot var (elindeki ogenin durumu onemsiz)
+    //  - bos yuva : rol koyabilir (placeRoles) + BAGLAM slotunda oge var + turu kabul ediliyor
+    //  - dolu yuva: rol alabilir (takeRoles) + envanterde bos slot var (elindeki ogenin durumu onemsiz)
     public bool CanInteract(InteractionContext context, out string reason)
     {
         return TryEvaluate(context, out _, out _, out reason);
@@ -77,11 +81,6 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
         occupant = null;
 
         var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(context.ClientId) : PlayerRole.None;
-        if (!IsRoleAllowed(role))
-        {
-            reason = "rol izinli değil";
-            return false;
-        }
 
         inventory = PlayerInventory.FindForClient(context.ClientId);
         if (inventory == null)
@@ -92,6 +91,12 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
 
         if (TryGetOccupant(out occupant))
         {
+            if (!IsRoleIn(takeRoles, role))
+            {
+                reason = "rol bu yuvadan alamaz";
+                return false;
+            }
+
             if (!inventory.HasFreeSlot(context.SlotIndex))
             {
                 reason = "boş slot yok";
@@ -100,6 +105,12 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
 
             reason = null;
             return true;
+        }
+
+        if (!IsRoleIn(placeRoles, role))
+        {
+            reason = "rol bu yuvaya koyamaz";
+            return false;
         }
 
         // ActiveSlotIndex (NetworkVariable) DEGIL — context.SlotIndex, RPC'nin tasidigi tiklama
@@ -137,8 +148,9 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
             ItemMover.PlaceInSlot(this, inventory, context.SlotIndex);
     }
 
-    private bool IsRoleAllowed(PlayerRole role)
+    // Bos liste = herkes.
+    private static bool IsRoleIn(PlayerRole[] roles, PlayerRole role)
     {
-        return allowedRoles == null || allowedRoles.Length == 0 || System.Array.IndexOf(allowedRoles, role) >= 0;
+        return roles == null || roles.Length == 0 || System.Array.IndexOf(roles, role) >= 0;
     }
 }

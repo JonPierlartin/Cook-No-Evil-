@@ -224,7 +224,9 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
     }
 
     // KATEGORI SIRASI — tek yer (GDD 6.7.3): Alt ekmek -> Protein -> Garnitur -> Sos -> Ust ekmek.
-    // Kategori ICINDE sira serbest; garnitur ve sos birden fazla kez konabilir (esit sira serbest).
+    // PROTEIN ZORUNLU (GDD 6.7.3 "garniturden once protein konmalidir"; 30 Eyl karari: etsiz hamburger
+    // kapatilamaz): alt ekmekten hemen sonra YALNIZCA protein konur. Proteinden sonra garnitur ve sos
+    // atlanabilir (sade hamburger). Kategori ICINDE sira serbest; ayni kategori tekrar konabilir.
     // Tarif dogrulamasi YOK: yalnizca sira. Bos yigina yalnizca ekmek (alt ekmek) konur; dolu yigina
     // konan ekmek UST ekmektir (sira 4, her seyden sonra). Kategorisi Yok olan tur hicbir zaman konmaz.
     private bool IsCategoryAllowedNext(ItemCategory next)
@@ -236,6 +238,9 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
             return next == ItemCategory.Ekmek;
 
         int lastRank = RankOfLayer(PlacedIngredients.Count - 1);
+        if (lastRank == 0)
+            return next == ItemCategory.Protein;
+
         return lastRank >= 0 && RankOfNew(next) >= lastRank;
     }
 

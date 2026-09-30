@@ -19,15 +19,21 @@ public class DeafHearing : MonoBehaviour
     [Tooltip("Sağır dinleyicide oyun efektlerinin ses çarpanı (GDD 4.1.3: 'kısık'). Playtest parametresi.")]
     [SerializeField, Range(0f, 1f)] private float effectVolumeScale = 0.3f;
 
-    private static DeafHearing _local;
+    // Etkin (kamerası açık) dinleyiciler. Kamera yalnızca sahipte açık kalır, ama başka bir oyuncunun karakteri
+    // doğarken onun kamerası bir an etkinleşip kapanır (PlayerController.ApplyNonOwnerState). Tek bir statik
+    // "_local" alanı tutulsaydı o geçici kamera kaydı ezip kapanırken silerdi ve yerel dinleyici hiç sağır
+    // olmazdı (30 Eyl testi: Komi hâlâ Şef'i ve cızırtıyı duyuyordu). Liste bunu önler.
+    private static readonly System.Collections.Generic.List<DeafHearing> Enabled = new();
     private AudioLowPassFilter _filter;
 
+    private static DeafHearing Local => Enabled.Count > 0 ? Enabled[Enabled.Count - 1] : null;
+
     // Yerel dinleyici şu an sağır mı. Dinleyici yoksa (lobi, kamera kapalı) sağır değildir.
-    public static bool IsLocalListenerDeaf => _local != null && _local.IsDeafNow;
+    public static bool IsLocalListenerDeaf => Local != null && Local.IsDeafNow;
 
-    public static float EffectRadius => _local != null ? _local.effectRadius : 0f;
+    public static float EffectRadius => Local != null ? Local.effectRadius : 0f;
 
-    public static float EffectVolumeScale => _local != null ? _local.effectVolumeScale : 1f;
+    public static float EffectVolumeScale => Local != null ? Local.effectVolumeScale : 1f;
 
     private bool IsDeafNow =>
         GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive &&
@@ -39,13 +45,15 @@ public class DeafHearing : MonoBehaviour
         _filter.enabled = false;
     }
 
-    private void OnEnable() => _local = this;
+    private void OnEnable()
+    {
+        if (!Enabled.Contains(this))
+            Enabled.Add(this);
+    }
 
     private void OnDisable()
     {
-        if (_local == this)
-            _local = null;
-
+        Enabled.Remove(this);
         _filter.enabled = false;
     }
 
