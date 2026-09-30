@@ -120,6 +120,15 @@ MonoBehaviour:
     m_Localized: Round devam ediyor, sadece daha once baglanmis oyuncular geri donebilir.
     m_Metadata:
       m_Items: []
+  - m_Id: 19196251697995776
+    m_Localized: DURDURULDU
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19196251760910336
+    m_Localized: "B\xF6l\xFCm ba\u015Far\u0131s\u0131z: kopan oyuncu zaman\u0131nda
+      d\xF6nmedi."
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

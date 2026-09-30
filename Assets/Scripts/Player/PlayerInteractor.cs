@@ -169,6 +169,11 @@ public class PlayerInteractor : NetworkBehaviour
         if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
             return CrosshairState.Neutral;
 
+        // Oyun durdurulmusken (bir oyuncu koptu) sunucu etkilesimi reddeder (RequestInteractServerRpc) —
+        // crosshair da ayni kosulla notr kalir, "kullanilabilir" deyip yalan soylemez.
+        if (GameLoopManager.Instance.IsGamePaused)
+            return CrosshairState.Neutral;
+
         if (target == null)
             return CrosshairState.Neutral;
 

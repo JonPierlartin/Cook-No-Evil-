@@ -2,18 +2,16 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-// IVoiceProvider ile calisan, AudioSource entegreli, rol tabanli sesli sohbet yonetimi.
-// GDD 2.2 / Red Line 2: Kasiyer'in mikrofonu server tarafindan susturulur, Komi gelen
-// ses sohbetini Low-Pass filtreli duyar, Sef'in etkilesim/VoIP sesi Hyper-Spatial olur.
-// Bu kisitlamalar sadece round aktifken uygulanir (GameLoopManager.IsRoundActive,
-// Round State tek otoriteye konsolide edildi) — lobide herkes normal konusup duyabilir;
-// koordinasyon icin.
+// IVoiceProvider ile calisan, AudioSource entegreli, rol tabanli sesli sohbet yonetimi (GDD 10.4):
+//  - Kasiyer (dilsiz): mikrofonu sunucu tarafinda susturulur (paketi hic relay edilmez).
+//  - Komi (sagir): HICBIR oyuncunun sesini duymaz — Faz 0 karari (GDD 11.2). Sef->Komi gibberish Faz 0.5.
+//    Susturma AudioSource.mute ile yapilir, ana ses seviyesinden bagimsizdir (K3). Oyun efektleri
+//    (orn. izgara cizirtisi) bundan etkilenmez; onlar mesafeyle zayiflar (GDD 4.1.3).
+// Bu kisitlamalar yalnizca round aktifken uygulanir; lobide herkes normal konusup duyabilir.
+// Bilinen eksik (K4): konusmaci AudioSource'lari gercek oyuncu konumunda degil (Faz 0 plani, VoIP adimi).
 [RequireComponent(typeof(NetworkObject))]
 public class VoIPController : NetworkBehaviour
 {
-    [Tooltip("Komi (Sagir) rolu icin gelen ses sohbetine uygulanacak Low-Pass kesim frekansi (Hz).")]
-    [SerializeField] private float komiLowPassCutoffHz = 800f;
-
     private IVoiceProvider _voiceProvider;
     private readonly Dictionary<ulong, VoiceStreamPlayer> _speakerPlayers = new();
     private PlayerRole _localRole = PlayerRole.None;
@@ -81,6 +79,10 @@ public class VoIPController : NetworkBehaviour
     {
         _localRole = role;
         UpdateLocalMuteState();
+
+        // Rol hoparlorler olustuktan sonra gelebilir (rejoin): mevcut hoparlorler yeni role gore kurulur.
+        foreach (var player in _speakerPlayers.Values)
+            ApplyRoleBasedAudioSettings(player.Source);
     }
 
     private void HandleRoundStateChanged(RoundState previous, RoundState current)
@@ -150,11 +152,8 @@ public class VoIPController : NetworkBehaviour
 
     private void ApplyRoleBasedAudioSettings(AudioSource source)
     {
-        // Onceki round'dan kalmis olabilecek Low-Pass filtreyi temizle; round durumu ve/veya
-        // rol degismis olabilir, her cagrida sifirdan dogru kurulum yapiyoruz.
-        var existingLowPass = source.GetComponent<AudioLowPassFilter>();
-        if (existingLowPass != null)
-            Destroy(existingLowPass);
+        // Round durumu ve/veya rol degismis olabilir: her cagrida sifirdan dogru kurulum yapilir.
+        source.mute = false;
 
         if (!IsRoundActive)
         {
@@ -166,10 +165,8 @@ public class VoIPController : NetworkBehaviour
         switch (_localRole)
         {
             case PlayerRole.Komi:
-                // Sagir icin gelen ses sohbeti tamamen bogukluyor.
-                source.spatialBlend = 0f;
-                var lowPass = source.gameObject.AddComponent<AudioLowPassFilter>();
-                lowPass.cutoffFrequency = komiLowPassCutoffHz;
+                // Sagir: hicbir oyuncunun sesini duymaz (bkz. dosya basi).
+                source.mute = true;
                 break;
 
             case PlayerRole.Sef:

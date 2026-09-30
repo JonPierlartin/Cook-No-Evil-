@@ -1,3 +1,6 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -19,6 +22,25 @@ using UnityEngine;
 public class GameLoopManager : NetworkBehaviour
 {
     public static GameLoopManager Instance { get; private set; }
+
+    // GDD 8.2: round sirasinda kopan oyuncu bu sure icinde donmezse oturum kapanir, bolum basarisiz sayilir.
+    // Duraklatma boyunca GERCEK zamanla sayilir; oyun devam edince (donus) sifirlanir.
+    [Tooltip("Kopan oyuncunun donmesi icin beklenen sure (saniye). GDD 8.2: 300 (5 dk). Test icin kisaltilabilir.")]
+    [SerializeField, Min(1f)] private float disconnectTimeoutSeconds = 300f;
+
+    // UIStrings tablosundaki anahtar (DisconnectReason ile agdan gider; ceviri UI'da yapilir).
+    public const string SessionTimeoutReasonKey = "error.session_timeout";
+
+    // Sebepli DisconnectClient istemciyi bir sonraki guncellemede koparir (NGO: sebep mesaji once kuyruga
+    // girer). Host, istemciler kopana kadar (en fazla bu kadar) bekler ki sebep mesaji gitsin; sonra kapanir.
+    private const float SessionEndFlushSeconds = 2f;
+
+    // Yalnizca sunucuda (host) tetiklenir: oturum zaman asimiyla bitti, istemciler koparildi. Host'un
+    // arayuzu agi kapatip sebebi gosterir (bkz. LobbyUIController). Parametre: UIStrings anahtari.
+    public event Action<string> OnServerSessionEnded;
+
+    private float _pausedSeconds;
+    private bool _sessionEnding;
 
     public readonly NetworkVariable<RoundState> CurrentRoundState =
         new(RoundState.Lobby, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -61,6 +83,46 @@ public class GameLoopManager : NetworkBehaviour
             CurrentRoundState.Value = RoundState.Lobby;
             _isPaused.Value = false;
         }
+
+        _pausedSeconds = 0f;
+        _sessionEnding = false;
+    }
+
+    private void Update()
+    {
+        if (!IsServer || _sessionEnding)
+            return;
+
+        if (!IsGamePaused)
+        {
+            _pausedSeconds = 0f;
+            return;
+        }
+
+        _pausedSeconds += Time.unscaledDeltaTime;
+        if (_pausedSeconds >= disconnectTimeoutSeconds)
+            StartCoroutine(EndSessionForTimeout());
+    }
+
+    // GDD 8.2 "oturum kapatilir, bolum basarisiz sayilir": bagli istemciler sebeple koparilir (ekranlarinda
+    // sebep yazar), ardindan host'un kendi arayuzu agi kapatir. Faz 0'da ayri lobi sahnesi olmadigi icin
+    // "lobiye donus" = herkesin ilk ekrana donmesi; yeniden host edilerek tekrar oynanir.
+    private IEnumerator EndSessionForTimeout()
+    {
+        _sessionEnding = true;
+        Debug.LogWarning($"[GameLoopManager] Kopan oyuncu {disconnectTimeoutSeconds:F0} sn icinde donmedi; oturum kapatiliyor (bolum basarisiz).");
+
+        foreach (var clientId in new List<ulong>(NetworkManager.ConnectedClientsIds))
+        {
+            if (clientId != NetworkManager.ServerClientId)
+                NetworkManager.DisconnectClient(clientId, SessionTimeoutReasonKey);
+        }
+
+        float deadline = Time.realtimeSinceStartup + SessionEndFlushSeconds;
+        while (NetworkManager != null && NetworkManager.ConnectedClientsIds.Count > 1 && Time.realtimeSinceStartup < deadline)
+            yield return null;
+
+        OnServerSessionEnded?.Invoke(SessionTimeoutReasonKey);
     }
 
     // Host'un "Oyunu Baslat" butonuyla cagirdigi, server-authoritative round baslatma —

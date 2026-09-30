@@ -115,6 +115,14 @@ MonoBehaviour:
     m_Key: error.round_in_progress
     m_Metadata:
       m_Items: []
+  - m_Id: 19196251697995776
+    m_Key: game.paused
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19196251760910336
+    m_Key: error.session_timeout
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

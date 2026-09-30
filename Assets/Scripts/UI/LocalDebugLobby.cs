@@ -36,14 +36,23 @@ public class LocalDebugLobby : MonoBehaviour
         // NetworkManager.Singleton'a Awake'te erisilmez (sira garantisi yok).
         _networkManager = Unity.Netcode.NetworkManager.Singleton;
         if (_networkManager != null)
+        {
             _networkManager.OnClientDisconnectCallback += HandleClientDisconnect;
+            _networkManager.OnServerStopped += HandleServerStopped;
+        }
     }
 
     private void OnDestroy()
     {
         if (_networkManager != null)
+        {
             _networkManager.OnClientDisconnectCallback -= HandleClientDisconnect;
+            _networkManager.OnServerStopped -= HandleServerStopped;
+        }
     }
+
+    // Host kapandi (orn. GDD 8.2 zaman asimi): tekrar Local Host/Join yapilabilsin.
+    private void HandleServerStopped(bool wasHost) => SetLocalButtonsVisible(true);
 
     private UnityEngine.UI.Button CreateButton(string label, UnityEngine.Events.UnityAction onClick, int siblingOffset)
     {
@@ -121,6 +130,12 @@ public class LocalDebugLobby : MonoBehaviour
             return;
 
         SetLocalButtonsVisible(true);
+
+        // Sunucu bizi bir sebeple kopardiysa (orn. GDD 8.2 zaman asimi) sebep gosterilir. Steam yolunda bunu
+        // SteamLobbyManager yapar ama yalnizca bir Steam lobisi varken; Local Debug'da burasi yapar.
+        string reason = _networkManager.DisconnectReason;
+        if (!string.IsNullOrEmpty(reason) && LobbyUIController.Instance != null)
+            LobbyUIController.Instance.ShowErrorScreen(reason);
     }
 
     private void SetLocalButtonsVisible(bool visible)

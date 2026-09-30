@@ -83,6 +83,7 @@ public class LobbyUIController : MonoBehaviour
         if (GameLoopManager.Instance != null)
         {
             GameLoopManager.Instance.CurrentRoundState.OnValueChanged += HandleRoundStateChanged;
+            GameLoopManager.Instance.OnServerSessionEnded += HandleServerSessionEnded;
         }
         else
         {
@@ -108,7 +109,10 @@ public class LobbyUIController : MonoBehaviour
             RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
 
         if (GameLoopManager.Instance != null)
+        {
             GameLoopManager.Instance.CurrentRoundState.OnValueChanged -= HandleRoundStateChanged;
+            GameLoopManager.Instance.OnServerSessionEnded -= HandleServerSessionEnded;
+        }
     }
 
     private void HandleHostClicked()
@@ -281,8 +285,35 @@ public class LobbyUIController : MonoBehaviour
     // tamamen habersiz kalir, cevirisi burada, tek yerde yapilir.
     private void HandleLobbyError(string errorKey)
     {
+        // Round sirasinda gelen hata = oturumdan sebeple koparildik (orn. GDD 8.2 zaman asimi): oyun arayuzu
+        // acik ve imlec kilitli kalmasin, ilk ekrana donulsun.
+        if (ShouldLockCursor)
+        {
+            ShowErrorScreen(errorKey);
+            return;
+        }
+
         statusText.text = Localize("lobby.error_prefix", Localize(errorKey));
         hostButton.interactable = true;
+    }
+
+    // Oturum bir sebeple bitti: oyun arayuzu kapanir, ilk ekran ve hata metni gosterilir. Steam yolu
+    // (HandleLobbyError), Local Debug istemcisi (LocalDebugLobby) ve host'un zaman asimi
+    // (HandleServerSessionEnded) ayni ekrani kullanir.
+    public void ShowErrorScreen(string errorKey)
+    {
+        SetGameplayCanvasVisible(false);
+        connectionLostPanel.SetActive(false);
+        lobbyPanel.SetActive(true);
+        ResetToInitialScreen();
+        statusText.text = Localize("lobby.error_prefix", Localize(errorKey));
+    }
+
+    // Yalnizca host: GameLoopManager istemcileri koparip oturumu bitirdi; ag burada kapatilir.
+    private void HandleServerSessionEnded(string reasonKey)
+    {
+        SteamLobbyManager.Instance.LeaveLobby();
+        ShowErrorScreen(reasonKey);
     }
 
     private void HandleHostDisconnected()

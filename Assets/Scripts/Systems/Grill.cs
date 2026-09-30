@@ -12,8 +12,9 @@ using UnityEngine;
 // (4.2 deseni; kendi NetworkObject'leri, sahne kökünde) — izinli rol ve kabul edilen tür yuva
 // üzerinde ayarlanır, ızgara bunlara bakmaz. Faz 0'da yanmış öğe için özel kural yok (yangın yok).
 //
-// Ses/görsel geri bildirim EKLENMEZ: renk zaten faza göre ItemPhaseVisual/HeldItemVisual tarafından
-// değişiyor; faz değişiminde ses çıkmaz (Şef pişmişliği duymamalı, GDD 4.1.1).
+// Görsel geri bildirim: renk faza göre ItemPhaseVisual/HeldItemVisual tarafından değişir. İşitsel: ızgarada
+// pişen öğe varken sabit bir cızırtı çalar (GrillSizzle, GDD 10.5) — faz değişiminde ses DEĞİŞMEZ (Şef
+// bir şeyin piştiğini duyar, pişmişliği duymaz, GDD 4.1.1).
 [RequireComponent(typeof(NetworkObject))]
 public class Grill : NetworkBehaviour
 {
@@ -24,32 +25,61 @@ public class Grill : NetworkBehaviour
     // yeniden kullanılmaz).
     private readonly HashSet<ulong> _warnedItems = new();
 
+    // Izgarada şu an pişen bir öğe var mı. Sunucunun pişirmesi (Update) ve istemcinin cızırtısı (GrillSizzle)
+    // AYNI kuraldan okur: yuva doluluğu parent ilişkisinden, round/duraklatma durumu replike
+    // NetworkVariable'lardan geldiği için her makinede yerel olarak hesaplanabilir.
+    public bool IsCooking
+    {
+        get
+        {
+            if (!IsCookingAllowed || slots == null)
+                return false;
+
+            foreach (var slot in slots)
+            {
+                if (TryGetCookable(slot, out _, out _))
+                    return true;
+            }
+
+            return false;
+        }
+    }
+
+    // Round dışında ve oyun duraklatılmışken (bir oyuncu koptu) pişme DURUR — GDD 8.2; aksi halde kopan
+    // oyuncunun dönüşünü beklerken et yanardı.
+    private static bool IsCookingAllowed
+    {
+        get
+        {
+            var loop = GameLoopManager.Instance;
+            return loop != null && loop.IsRoundActive && !loop.IsGamePaused;
+        }
+    }
+
+    // Yuvada ServerProgress taşıyan bir öğe var mı. item: yuvadaki öğe (ilerlemesi olmasa da), uyarı için.
+    private static bool TryGetCookable(ItemSlot slot, out Item item, out ServerProgress progress)
+    {
+        progress = null;
+        item = null;
+        return slot != null && slot.TryGetOccupant(out item) && item.TryGetComponent(out progress);
+    }
+
     private void Update()
     {
-        if (!IsServer || slots == null)
-            return;
-
-        // Round dışında ve oyun duraklatılmışken (bir oyuncu koptu) pişme DURUR — GDD 8.2; aksi halde
-        // kopan oyuncunun dönüşünü beklerken et yanardı.
-        var loop = GameLoopManager.Instance;
-        if (loop == null || !loop.IsRoundActive || loop.IsGamePaused)
+        if (!IsServer || slots == null || !IsCookingAllowed)
             return;
 
         float deltaTime = Time.deltaTime;
         foreach (var slot in slots)
         {
-            if (slot == null || !slot.TryGetOccupant(out var item))
-                continue;
-
-            if (!item.TryGetComponent(out ServerProgress progress))
+            if (TryGetCookable(slot, out var item, out var progress))
             {
-                if (_warnedItems.Add(item.NetworkObjectId))
-                    Debug.LogWarning($"[Grill] '{name}': yuvadaki '{item.name}' öğesinde ServerProgress yok, pişirilemiyor.", item);
-
+                progress.ServerAdvance(deltaTime);
                 continue;
             }
 
-            progress.ServerAdvance(deltaTime);
+            if (item != null && _warnedItems.Add(item.NetworkObjectId))
+                Debug.LogWarning($"[Grill] '{name}': yuvadaki '{item.name}' öğesinde ServerProgress yok, pişirilemiyor.", item);
         }
     }
 }
