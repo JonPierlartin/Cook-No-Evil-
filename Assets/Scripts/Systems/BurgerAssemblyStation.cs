@@ -181,7 +181,7 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         }
 
         if (itemType.Category == ItemCategory.Ekmek)
-            return TryEvaluateBread(context, inventory, item, out reason);
+            return TryEvaluateBread(item, out reason);
 
         reason = null;
         return true;
@@ -189,10 +189,10 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
 
     // Ekmegin iki parcali kurali (GDD 6.7.3): bos yigina yalnizca BUTUN ekmek (alt); dolu yigina
     // yalnizca YARIM ekmek (ust) — butun ekmek ust olamaz, yarim ekmek alt olamaz. Ust ekmek
-    // hamburgeri tamamlar: hamburger turu spawn edilebilir olmali ve envanterde (ekmegin kendi slotu
-    // disinda) bos slot bulunmali — yarim hamburger ortada kalmaz. Envanterin doluluğu Şef'in kendi
-    // bilgisi, durum sizintisi degil.
-    private bool TryEvaluateBread(InteractionContext context, PlayerInventory inventory, Item item, out string reason)
+    // hamburgeri tamamlar: hamburger turu spawn edilebilir olmali. Bos slot GEREKMEZ (GDD 6.7.3,
+    // 27 Eyl): ust ekmek konunca ekmek tukenir, bastigi baglam slotu bosalir ve hamburger oraya girer
+    // (CompleteBurger — once ekmek slottan alinir, sonra hamburger ayni slottan baslayan kuralla eklenir).
+    private bool TryEvaluateBread(Item item, out string reason)
     {
         if (!item.TryGetComponent(out BreadHalf bread))
         {
@@ -213,19 +213,10 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
             return false;
         }
 
-        if (!stackEmpty)
+        if (!stackEmpty && (hamburgerType == null || hamburgerType.ItemPrefab == null))
         {
-            if (hamburgerType == null || hamburgerType.ItemPrefab == null)
-            {
-                reason = "hamburger türü atanmamış";
-                return false;
-            }
-
-            if (!inventory.HasFreeSlot(context.SlotIndex))
-            {
-                reason = "boş slot yok";
-                return false;
-            }
+            reason = "hamburger türü atanmamış";
+            return false;
         }
 
         reason = null;

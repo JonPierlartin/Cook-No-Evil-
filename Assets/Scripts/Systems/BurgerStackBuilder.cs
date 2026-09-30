@@ -7,7 +7,8 @@ using UnityEngine;
 // (BurgerAssembly, hem dünya görseli hem elde/önizleme kopyası) aynı kuralı kullanır. Katman için ağ
 // nesnesi spawn edilmez, collider eklenmez. Her katman türün visualPrefab'ından üretilir; prefab kökü
 // tabanda olduğu için (K2d) katmanın tabanı bir öncekinin ölçülen yüksekliği toplanarak üstüne oturur.
-// Köftenin pişmişlik rengi (faz) ItemPhaseColoring ile uygulanır.
+// Köftenin pişmişlik rengi (faz) ItemPhaseColoring ile uygulanır. Ekmek katmanı alt/üst parçasını
+// yığındaki konumundan seçer (BreadVisualParts).
 //
 // D5 (25 Eyl 2026): olcum ve yerlesim ROOT'UN KENDI YEREL uzayinda yapilir, world-space DEGIL. root
 // hangi ebeveynin altinda kurulursa kurulsun (elde tutma noktasi, onizleme koku, yuva) — o ebeveyn
@@ -46,7 +47,13 @@ public static class BurgerStackBuilder
             layer.transform.localPosition = Vector3.zero;
             layer.transform.localRotation = Quaternion.identity;
 
-            var renderers = layer.GetComponentsInChildren<Renderer>(true);
+            // Ekmek (GDD 6.7.3): yığının ilk katmanı ALT, sonraki (hamburgeri kapatan) katman ÜST ekmektir.
+            // Hangisi olduğu ağdan gelmez, katmanın yığındaki konumundan türetilir.
+            if (layer.TryGetComponent(out BreadVisualParts bread))
+                bread.Show(i == 0 ? BreadVisualParts.Part.Bottom : BreadVisualParts.Part.Top);
+
+            // Yalnızca görünen parçalar ölçülür ve boyanır (gizlenen ekmek parçası yüksekliğe katılmaz).
+            var renderers = CollectShownRenderers(layer.transform);
             ItemPhaseColoring.Apply(renderers, type, layers[i].PhaseIndex);
             created.Add(layer);
 
@@ -75,6 +82,33 @@ public static class BurgerStackBuilder
         }
 
         created.Clear();
+    }
+
+    // Katmanın içinde KAPATILMAMIŞ parçaların renderer'ları. GetComponentsInChildren(false) kullanılmaz:
+    // o, ebeveyn zincirinin tamamına bakar — katman etkin olmayan bir ebeveynin altında kurulursa hiçbir
+    // renderer döndürmez ve yığın yüksekliği sıfırlanır. Burada yalnızca katmanın KENDİ içindeki
+    // activeSelf zinciri önemlidir.
+    private static Renderer[] CollectShownRenderers(Transform layer)
+    {
+        var all = layer.GetComponentsInChildren<Renderer>(true);
+        var shown = new List<Renderer>(all.Length);
+        foreach (var renderer in all)
+        {
+            bool active = true;
+            for (var t = renderer.transform; t != null && t != layer.parent; t = t.parent)
+            {
+                if (!t.gameObject.activeSelf)
+                {
+                    active = false;
+                    break;
+                }
+            }
+
+            if (active)
+                shown.Add(renderer);
+        }
+
+        return shown.ToArray();
     }
 
     // Renderer'in KENDI yerel sinir kutusunu (mesh-net, eksene-hizalama kaybı OLMAYAN) alip

@@ -4,37 +4,39 @@ using UnityEngine;
 
 // GDD 6.7.3: "Ekmek iki parçadır, tek envanter öğesidir." Alt kısım konunca ekmek envanterden düşmez,
 // elde YARIM kalır; yalnızca yarım ekmek üst olarak konabilir. Bu bileşen o durumu taşır (sunucu
-// sahipli, herkese replike — K6). Görsel: yarım ekmek, bütün ekmeğin belirlenen oranı kadar yüksek
-// bir disk (yer tutucu; kök tabanda olduğu için kökün Y ölçeği tabanı sabit tutar). Dünya görseli,
-// elde görsel ve önizleme AYNI hâli gösterir: dünya görselini bu bileşen ölçekler; elde/önizleme
-// kopyalarını IItemVisualSource ile kendisi üretir.
+// sahipli, herkese replike — K6). Görsel: bütünken alt + üst ekmek üst üste, yarılanınca YALNIZCA üst
+// ekmek (GDD 6.7.3 "Ekmeğin görseli"); parçaları BreadVisualParts gösterir. Dünya görseli, elde görsel
+// ve önizleme AYNI hâli gösterir: dünya görselini bu bileşen ayarlar; elde/önizleme kopyalarını
+// IItemVisualSource ile kendisi üretir.
 [RequireComponent(typeof(Item))]
 public class BreadHalf : NetworkBehaviour, IItemVisualSource
 {
-    [Tooltip("Öğenin dünya görselinin kökü (Ekmek_Item'ın çocuğu olan görsel prefab). Yarılanınca Y ölçeği küçülür.")]
-    [SerializeField] private Transform worldVisualRoot;
-    [Tooltip("Yarım ekmeğin bütün ekmeğe göre yüksekliği (yer tutucu görsel: 0,5). Şef konturdan bütün/yarım farkını okuyabilmeli (GDD 4.1.1).")]
-    [SerializeField, Range(0.1f, 0.9f)] private float halvedHeightScale = 0.5f;
-
     // Alt kısım kondu mu. Yalnızca sunucu yazar.
     public readonly NetworkVariable<bool> IsHalved =
         new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private Item _item;
+    private BreadVisualParts _worldParts;
 
     public event Action VisualChanged;
 
     public int VisualVersion => IsHalved.Value ? 1 : 0;
 
+    private BreadVisualParts.Part CurrentPart => IsHalved.Value ? BreadVisualParts.Part.Top : BreadVisualParts.Part.Whole;
+
     private void Awake()
     {
         _item = GetComponent<Item>();
+        // Dünya görseli, öğe prefab'ının çocuğu olan Ekmek_Visual örneğidir (visualPrefab ile aynı kaynak).
+        _worldParts = GetComponentInChildren<BreadVisualParts>(true);
+        if (_worldParts == null)
+            Debug.LogWarning($"[BreadHalf] '{name}': dünya görselinde BreadVisualParts yok; alt/üst ekmek ayrımı görünmeyecek.", this);
     }
 
     public override void OnNetworkSpawn()
     {
         IsHalved.OnValueChanged += HandleHalvedChanged;
-        ApplyWorldScale();
+        ApplyWorldVisual();
     }
 
     public override void OnNetworkDespawn()
@@ -52,14 +54,14 @@ public class BreadHalf : NetworkBehaviour, IItemVisualSource
 
     private void HandleHalvedChanged(bool previous, bool current)
     {
-        ApplyWorldScale();
+        ApplyWorldVisual();
         VisualChanged?.Invoke();
     }
 
-    private void ApplyWorldScale()
+    private void ApplyWorldVisual()
     {
-        if (worldVisualRoot != null)
-            ApplyHalvedScale(worldVisualRoot);
+        if (_worldParts != null)
+            _worldParts.Show(CurrentPart);
     }
 
     public GameObject CreateVisual(Transform parent)
@@ -69,16 +71,9 @@ public class BreadHalf : NetworkBehaviour, IItemVisualSource
             return null;
 
         var visual = Instantiate(prefab, parent);
-        ApplyHalvedScale(visual.transform);
-        return visual;
-    }
+        if (visual.TryGetComponent(out BreadVisualParts parts))
+            parts.Show(CurrentPart);
 
-    // D5: dunya gorseli (ApplyWorldScale) ve kopyalar (CreateVisual) AYNI tek formulden gecer — iki
-    // ayri yerde ayni matematigi yazmak zamanla ayrisma riski tasir. Kok tabanda oldugu icin (K2d) Y
-    // olcegini kucultmek tabani sabit tutar, tepe iner; X/Z HER ZAMAN 1 (visualPrefab kokunun kendi
-    // yerel olcegi zaten (1,1,1) olmali).
-    private void ApplyHalvedScale(Transform root)
-    {
-        root.localScale = new Vector3(1f, IsHalved.Value ? halvedHeightScale : 1f, 1f);
+        return visual;
     }
 }

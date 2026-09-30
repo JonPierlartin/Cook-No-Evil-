@@ -88,8 +88,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BreadHalf
   ShowTopMostFoldoutHeaderGroup: 1
-  worldVisualRoot: {fileID: 382152199108067952}
-  halvedHeightScale: 0.5
 --- !u!1001 &3104729202270102033
 PrefabInstance:
   m_ObjectHideFlags: 0
