@@ -10,6 +10,9 @@ public class PlayerSignalDisplay : NetworkBehaviour
     [Tooltip("İşaretin gösterileceği nokta (gövdenin önü; Komi pencereden karşıdan okur).")]
     [SerializeField] private Transform anchor;
 
+    [Tooltip("Karakter modeli (jestli sinyaller modelin eliyle oynar).")]
+    [SerializeField] private PlayerCharacterVisual character;
+
     private GameObject _instance;
     private float _hideAt;
 
@@ -36,8 +39,12 @@ public class PlayerSignalDisplay : NetworkBehaviour
     // Etkileşim sinyali kesti (GDD 3.6.0): işaret süresini beklemeden kalkar.
     private void HandlePlaybackCancelled(ulong clientId)
     {
-        if (OwnerClientId == clientId)
-            Clear();
+        if (OwnerClientId != clientId)
+            return;
+
+        Clear();
+        if (character != null && character.Animator != null)
+            character.Animator.CancelGesture();
     }
 
     private void HandleSignalStarted(ulong senderId, SignalValue signal)
@@ -46,6 +53,14 @@ public class PlayerSignalDisplay : NetworkBehaviour
             return;
 
         Clear();
+
+        // Jest verisi olan sinyal (yön) karakterin eliyle oynar; olmayan yer tutucu işaretle gösterilir.
+        if (signal.GestureDirection != Vector3.zero && character != null && character.Animator != null)
+        {
+            character.Animator.PlayGesture(signal.GestureDirection, signal.Duration);
+            return;
+        }
+
         if (signal.VisualPrefab == null || anchor == null)
             return;
 

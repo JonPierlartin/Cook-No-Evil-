@@ -644,7 +644,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 104 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 105 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -863,18 +863,28 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     başarısızsa önce portu kimin tuttuğuna bakılır.
   - Kese kağıdı modelleri: `NewAssets/PaperBags/SM_PaperBag_{Fold,Open,Closed}` → `KeseKagidi_Visual`'da 0,7 ölçekli,
     geniş yüzü −Z'ye (fotoğraf yüzü) bakacak şekilde 90° çevrili; materyal yer tutucu (FBX'te materyal yok).
-- **Karakter modelleri (4 Eki 2026):** `PlayerCharacterVisual` (Player kökü): rol → model eşleşmesi Inspector'da
-  (Şef `Karakter_Hamburger`, Komi `Karakter_Ketcap`, Kasiyer `Karakter_Kasa`; `Assets/Prefabs/Characters/`). Model
-  her istemcide replike rolden yerel kurulur, `Visual` altına ayak hizasında; yer tutucu kapsül kapanır. **Sahibi
-  kendi modelini görmez** (ShadowsOnly). Kaynak: `NewAssets/Characters/*.fbx` — karakterler FBX içinde dağınık
-  konumlarda ve **−Z'ye bakıyor**; prefab'da `Model` çocuğu ortalanıp 180° çevrildi (kök ayakta, ön +Z).
-  - **Yürüme animasyonu yalnızca Ketçap'ta var.** FBX, nesne × aksiyon matrisi olarak 35 klip veriyor; doğrusu her
-    nesnenin KENDİ aksiyonu (`X|XAction`) — beşi `Assets/Animations/Ketcap_Yuruyus.anim`'de birleştirildi (döngülü,
-    yerinde). `Ketcap.controller`: Idle ↔ Walk, `Moving` (bool). Parametre karakterin yataydaki gerçek hızından
-    sürülür (yumuşatılmış; uzak oyuncuda NetworkTransform konumundan) — animasyon için ağ verisi yok.
-    Hamburger ve Kasa'nın animasyonu/iskeleti yok (statik).
-  - `PlayerEmoteReactor`'ın renk parlaması yer tutucu kapsüle yazıyor (artık görünmez); zıplama/eğilme modele de
-    uygulanır. Üçüncü şahıs tutma noktası (z 0,55) Hamburger'in yarıçapının (0,6) içinde kalıyor — ayarlanacak.
+- **Karakter modelleri ve prosedürel animasyon (4 Eki 2026):**
+  - `PlayerCharacterVisual` (Player kökü): rol → model eşleşmesi Inspector'da (Şef `Karakter_Hamburger`, Komi
+    `Karakter_Ketcap`, Kasiyer `Karakter_Kasa`; `Assets/Prefabs/Characters/`). Model her istemcide replike rolden
+    yerel kurulur, `Visual` altına ayak hizasında; yer tutucu kapsül kapanır. **Sahibi kendi gövdesini ve
+    ayaklarını görmez (ShadowsOnly), ellerini görür** (kendi jestini görebilsin).
+  - Karakter prefab düzeni (kodla kuruldu): kök (ayakta, ön +Z) → `Govde`, `AyakSol/Sag`, `ElSol/Sag`. Kaynak:
+    `NewAssets/Characters/CookNoEvil_Characters.fbx` (gövdeler; FBX'te dağınık konumda ve −Z'ye bakıyor →
+    ortalanıp 180° çevrildi), tekil ayakkabı mesh'leri (`Crocks_1.002/.005` — hamburger ve kasanın çift ayakkabı
+    mesh'i adımlatılamadığı için kullanılmadı), `three-finger-hand_Free.fbx` (el; sağ el X'te aynalı). El pivotu:
+    **+Z parmak yönü, +Y başparmak**. Karakterlerde iskelet yok; elin içindeki parmak kemikleri kullanılmıyor.
+  - `ProceduralCharacterAnimator`: klip ve Animator yok. Hız, kökün dünya konum değişiminden ölçülüp karakterin
+    yerel uzayına çevrilir → ileri/geri/yan yürüyüş aynı koddan (ayaklar hareket yönünde zıt fazda adımlar, adım
+    sıklığı hıza bağlı; gövde iner-kalkar ve o yöne eğilir; eller karşı ayakla salınır; dururken nefes).
+    **IK paketi eklenmedi** — parçalar ayrı olduğu için zincir çözmeye gerek yok. Tüm genlikler Inspector'da.
+  - Yön jesti: `SignalValue.gestureDirection` (karakterin yerel uzayı) doluysa `PlayerSignalDisplay` yer tutucu
+    işaret yerine `Animator.PlayGesture(dir, süre)` çağırır; iptalde `CancelGesture`. Sol için sol el, diğerleri
+    için sağ el göğüs önüne (`gestureCenter`, prefab başına) kalkıp yönü gösterir. `Yon_*` asset'lerinde yön dolu,
+    `visualPrefab` boşaltıldı (ok prefab'ları `Prefabs/Signals/`'ta duruyor). Sayı ve Sipariş Bitti hâlâ yer tutucu.
+  - Artist'in ketçap yürüme klibi (`CookNoEvil_WalkingAnimation.fbx`) kullanılmıyor (yalnızca ileri ve yalnızca
+    ketçap); birleştirilmiş klip/controller silindi.
+  - `PlayerEmoteReactor`'ın renk parlaması yer tutucu kapsüle yazıyor (artık görünmez). Üçüncü şahıs tutma noktası
+    (z 0,55) Hamburger'in yarıçapının (0,6) içinde kalıyor — ayarlanacak.
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

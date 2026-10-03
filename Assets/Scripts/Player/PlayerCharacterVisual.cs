@@ -4,9 +4,9 @@ using UnityEngine;
 // Oyuncunun rolüne göre karakter modeli (GDD 9: Şef kör hamburger, Komi sağır ketçap, Kasiyer dilsiz yazar kasa).
 // Tamamen yerel sunum: rol replike rol listesinden okunur (RoleManager), model her istemcide o role göre kurulur;
 // ağdan ek bir şey gitmez. Rol → model eşleşmesi veridir (Inspector); modeli olmayan rol yer tutucu gövdeyle kalır.
-//  - Sahibi kendi modelini görmez (birinci şahıs: kamera modelin içinde); gölgesi kalır.
-//  - Yürüme animasyonu: modelde Animator varsa "moving" parametresi karakterin yataydaki gerçek hızından sürülür
-//    (uzak oyuncularda NetworkTransform'un taşıdığı konumdan) — animasyon için ayrı bir ağ verisi yoktur.
+// Animasyon modelin kendi bileşenindedir (ProceduralCharacterAnimator: hareketi karakterin gerçek hızından üretir).
+//  - Sahibi kendi gövdesini ve ayaklarını görmez (birinci şahıs: kamera modelin içinde), gölgesi kalır. ELLERİ
+//    görünür kalır: kendi yön jestini görebilsin diye.
 public class PlayerCharacterVisual : NetworkBehaviour
 {
     [System.Serializable]
@@ -24,23 +24,15 @@ public class PlayerCharacterVisual : NetworkBehaviour
     [SerializeField] private Renderer placeholderBody;
     [Tooltip("Ayak hizası, visualRoot'un yerel uzayında (oyuncu kökü kapsülün merkezindedir).")]
     [SerializeField] private Vector3 feetLocalPosition = new(0f, -1f, 0f);
-    [Tooltip("Animator'daki yürüme parametresi (bool).")]
-    [SerializeField] private string movingParameter = "Moving";
-    [Tooltip("Bu hızın (m/sn) üstünde karakter yürüyor sayılır.")]
-    [SerializeField, Min(0f)] private float movingSpeedThreshold = 0.15f;
 
     private GameObject _model;
-    private Animator _animator;
     private PlayerRole _shownRole = PlayerRole.None;
-    private Vector3 _lastPosition;
-    private int _movingHash;
-    private float _smoothedSpeed;
+
+    // Kurulu modelin animasyon bileşeni (jest oynatmak için); model yoksa null.
+    public ProceduralCharacterAnimator Animator { get; private set; }
 
     public override void OnNetworkSpawn()
     {
-        _movingHash = Animator.StringToHash(movingParameter);
-        _lastPosition = transform.position;
-
         if (RoleManager.Instance != null)
             RoleManager.Instance.OnRolesChanged += Refresh;
 
@@ -70,7 +62,7 @@ public class PlayerCharacterVisual : NetworkBehaviour
             Destroy(_model);
 
         _model = null;
-        _animator = null;
+        Animator = null;
         _shownRole = RoleManager.Instance != null ? RoleManager.Instance.GetRole(OwnerClientId) : PlayerRole.None;
 
         GameObject prefab = null;
@@ -89,29 +81,18 @@ public class PlayerCharacterVisual : NetworkBehaviour
         _model = Instantiate(prefab, visualRoot);
         _model.transform.localPosition = feetLocalPosition;
         _model.transform.localRotation = Quaternion.identity;
-        _animator = _model.GetComponentInChildren<Animator>();
+        Animator = _model.GetComponent<ProceduralCharacterAnimator>();
 
-        // Birinci şahıs: sahibi kendi modelini görmez, yalnızca gölgesini.
-        if (IsOwner)
-        {
-            foreach (var renderer in _model.GetComponentsInChildren<Renderer>(true))
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
-        }
-    }
-
-    private void Update()
-    {
-        if (_animator == null)
+        if (!IsOwner)
             return;
 
-        var position = transform.position;
-        var delta = position - _lastPosition;
-        _lastPosition = position;
-        delta.y = 0f;
-
-        // Uzak oyuncunun konumu ağ enterpolasyonuyla gelir; anlık hız titrer. Yumuşatılmış hız kullanılır.
-        float speed = Time.deltaTime > 0f ? delta.magnitude / Time.deltaTime : 0f;
-        _smoothedSpeed = Mathf.Lerp(_smoothedSpeed, speed, Mathf.Clamp01(10f * Time.deltaTime));
-        _animator.SetBool(_movingHash, _smoothedSpeed > movingSpeedThreshold);
+        // Birinci şahıs: sahibi kendi gövdesini/ayaklarını görmez (yalnızca gölge); elleri görünür kalır.
+        foreach (var renderer in _model.GetComponentsInChildren<Renderer>(true))
+        {
+            bool isHand = Animator != null
+                && (renderer.transform.IsChildOf(Animator.LeftHand) || renderer.transform.IsChildOf(Animator.RightHand));
+            if (!isHand)
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+        }
     }
 }

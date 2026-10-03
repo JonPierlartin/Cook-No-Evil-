@@ -16,6 +16,7 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 11236395820f9be4fa4164542c226749, type: 3}
   useWheelAngle: 1
   wheelAngle: 180
-  visualPrefab: {fileID: 6324182074147258323, guid: 1b47e05603f74424697bf97be57e9ef2, type: 3}
+  gestureDirection: {x: -1, y: 0, z: 0}
+  visualPrefab: {fileID: 0}
   clip: {fileID: 0}
   durationSeconds: 1.3
