@@ -477,6 +477,7 @@ MonoBehaviour:
   thirdPersonBlockMask:
     serializedVersion: 2
     m_Bits: 4294967291
+  character: {fileID: 37509965985435541}
 --- !u!114 &7100000000000000006
 MonoBehaviour:
   m_ObjectHideFlags: 0

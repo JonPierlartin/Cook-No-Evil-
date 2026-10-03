@@ -644,7 +644,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 105 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 106 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -881,6 +881,16 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     işaret yerine `Animator.PlayGesture(dir, süre)` çağırır; iptalde `CancelGesture`. Sol için sol el, diğerleri
     için sağ el göğüs önüne (`gestureCenter`, prefab başına) kalkıp yönü gösterir. `Yon_*` asset'lerinde yön dolu,
     `visualPrefab` boşaltıldı (ok prefab'ları `Prefabs/Signals/`'ta duruyor). Sayı ve Sipariş Bitti hâlâ yer tutucu.
+  - **Parmak pozu:** `HandPose` (her el pivotunda): elin `DEF-*` parmak kemikleri + yerel kıvrılma ekseni + azami açı;
+    üç grup (işaret / diğerleri / başparmak). Eksenler prefab kurulurken hesaplanıp **"kıvırınca uç avuca yaklaşıyor
+    mu" testiyle doğrulandı** (aynalı sağ elde eksen işareti tahmin edilmez). İşaret: işaret düz, diğerleri kapalı.
+  - **Jest yüksekliği:** `gestureCenter.y` = 1,55 (dünya ≈1,85): pencere açıklığının (1,50–2,30) içinde. El yalnızca
+    yana/yukarı kayar; **aşağı yönde el inmez, yalnızca parmak aşağı döner** (4 Eki: el pervazın altında kalıyor,
+    Komi göremiyordu).
+  - **Elde öğe:** `HeldItemVisual` her karede `Animator.SetHoldTarget(öğe görseli)` çağırır; sağ el öğenin altına
+    girer (avuç yukarı, parmaklar yarı kapalı), duvar geri çekmesinde de öğeyi izler. Alma: öğe ve el birlikte
+    önden gelir (`GetHoldDisplacement`); bırakma: öğe gidince el öne uzanıp yerine döner. Öncelik: jest > tutma >
+    yürüme salınımı.
   - Artist'in ketçap yürüme klibi (`CookNoEvil_WalkingAnimation.fbx`) kullanılmıyor (yalnızca ileri ve yalnızca
     ketçap); birleştirilmiş klip/controller silindi.
   - `PlayerEmoteReactor`'ın renk parlaması yer tutucu kapsüle yazıyor (artık görünmez). Üçüncü şahıs tutma noktası

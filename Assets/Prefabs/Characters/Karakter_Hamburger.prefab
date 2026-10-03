@@ -1058,6 +1058,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7289617826720476205}
+  - component: {fileID: 665349611939372906}
   m_Layer: 0
   m_Name: ElSag
   m_TagString: Untagged
@@ -1081,6 +1082,79 @@ Transform:
   - {fileID: 2802868648655367386}
   m_Father: {fileID: 6537655426325742333}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &665349611939372906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 583447557729313290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4db95b487d5ba24db4b4a8b79b09aa5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HandPose
+  joints:
+  - bone: {fileID: 6803348033999323719}
+    group: 0
+    localAxis: {x: 0.99595946, y: 0.000000050308678, z: -0.08980399}
+    maxAngle: 80
+    restRotation: {x: -0.0084921615, y: -0.02072308, z: 0.08339486, w: 0.99626493}
+  - bone: {fileID: 2239135264292146167}
+    group: 0
+    localAxis: {x: 0.99322164, y: -0.00000044807155, z: -0.11623619}
+    maxAngle: 85
+    restRotation: {x: 0.020241007, y: -0.013284062, z: -0.0020966067, w: 0.9997047}
+  - bone: {fileID: 5104634472843675039}
+    group: 0
+    localAxis: {x: 0.99461085, y: 0.00000065767364, z: -0.10367912}
+    maxAngle: 85
+    restRotation: {x: 0.024798298, y: 0.006314912, z: -0.0027432991, w: 0.9996688}
+  - bone: {fileID: 1591304280267682842}
+    group: 1
+    localAxis: {x: 0.9999512, y: 0.0000000098316315, z: 0.009882032}
+    maxAngle: 80
+    restRotation: {x: -0.055173352, y: 0.0016430196, z: 0.014960036, w: 0.9983634}
+  - bone: {fileID: 9193713620729643807}
+    group: 1
+    localAxis: {x: 0.9999891, y: -0.0000004512095, z: 0.0046743094}
+    maxAngle: 85
+    restRotation: {x: 0.05297063, y: -0.0028052889, z: 0.0048412518, w: 0.9985804}
+  - bone: {fileID: 426605956517194306}
+    group: 1
+    localAxis: {x: 0.9999578, y: -0.000000048432586, z: 0.009186249}
+    maxAngle: 85
+    restRotation: {x: 0.00737025, y: 0.002284203, z: 0.002008468, w: 0.99996823}
+  - bone: {fileID: 1296770373904754883}
+    group: 1
+    localAxis: {x: 0.9959783, y: -0.00000036230614, z: 0.089594305}
+    maxAngle: 80
+    restRotation: {x: -0.013880444, y: 0.0032922016, z: -0.07775864, w: 0.99687016}
+  - bone: {fileID: 220800684267475036}
+    group: 1
+    localAxis: {x: 0.9922006, y: 0.00000015437757, z: 0.12465118}
+    maxAngle: 85
+    restRotation: {x: 0.022389803, y: 0.017625427, z: 0.002412737, w: 0.99959105}
+  - bone: {fileID: 1569817571419591126}
+    group: 1
+    localAxis: {x: 0.9944157, y: -0.00000017738776, z: 0.10553419}
+    maxAngle: 85
+    restRotation: {x: 0.022002757, y: -0.009620081, z: 0.0025494304, w: 0.9997084}
+  - bone: {fileID: 4419327852596039197}
+    group: 2
+    localAxis: {x: 0.7735302, y: 0.00000085681654, z: -0.63375944}
+    maxAngle: 35
+    restRotation: {x: -0.024606664, y: -0.5259536, z: -0.3593867, w: 0.77045995}
+  - bone: {fileID: 3762316848830547264}
+    group: 2
+    localAxis: {x: 0.7896905, y: -0.000002590532, z: -0.6135054}
+    maxAngle: 45
+    restRotation: {x: 0.0515829, y: 0.00848817, z: -0.027351495, w: 0.998258}
+  - bone: {fileID: 4264942696437261802}
+    group: 2
+    localAxis: {x: 0.7584938, y: 0.000002205633, z: -0.65168023}
+    maxAngle: 45
+    restRotation: {x: -0.022385377, y: -0.014278166, z: 0.0010279339, w: 0.99964696}
 --- !u!1 &584227628649557844
 GameObject:
   m_ObjectHideFlags: 0
@@ -9026,6 +9100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1448882228891566207}
+  - component: {fileID: 4750414638370360373}
   m_Layer: 0
   m_Name: ElSol
   m_TagString: Untagged
@@ -9049,6 +9124,79 @@ Transform:
   - {fileID: 4655120331280255379}
   m_Father: {fileID: 6537655426325742333}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4750414638370360373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6951602375290773928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4db95b487d5ba24db4b4a8b79b09aa5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HandPose
+  joints:
+  - bone: {fileID: 4516079333230822388}
+    group: 0
+    localAxis: {x: 0.99595946, y: 0.000000050308678, z: -0.08980399}
+    maxAngle: 80
+    restRotation: {x: -0.0084921615, y: -0.02072308, z: 0.08339486, w: 0.99626493}
+  - bone: {fileID: 758490618320743157}
+    group: 0
+    localAxis: {x: 0.99322164, y: -0.00000044807155, z: -0.11623619}
+    maxAngle: 85
+    restRotation: {x: 0.020241007, y: -0.013284062, z: -0.0020966067, w: 0.9997047}
+  - bone: {fileID: 4823577570023517783}
+    group: 0
+    localAxis: {x: 0.99461085, y: 0.00000065767364, z: -0.10367912}
+    maxAngle: 85
+    restRotation: {x: 0.024798298, y: 0.006314912, z: -0.0027432991, w: 0.9996688}
+  - bone: {fileID: 8497983525578731497}
+    group: 1
+    localAxis: {x: 0.9999512, y: 0.0000000098316315, z: 0.009882032}
+    maxAngle: 80
+    restRotation: {x: -0.055173352, y: 0.0016430196, z: 0.014960036, w: 0.9983634}
+  - bone: {fileID: 3878657902159536443}
+    group: 1
+    localAxis: {x: 0.9999891, y: -0.0000004512095, z: 0.0046743094}
+    maxAngle: 85
+    restRotation: {x: 0.05297063, y: -0.0028052889, z: 0.0048412518, w: 0.9985804}
+  - bone: {fileID: 5286981674711360315}
+    group: 1
+    localAxis: {x: 0.9999578, y: -0.000000048432586, z: 0.009186249}
+    maxAngle: 85
+    restRotation: {x: 0.00737025, y: 0.002284203, z: 0.002008468, w: 0.99996823}
+  - bone: {fileID: 8874888045962044825}
+    group: 1
+    localAxis: {x: 0.9959783, y: -0.00000036230614, z: 0.089594305}
+    maxAngle: 80
+    restRotation: {x: -0.013880444, y: 0.0032922016, z: -0.07775864, w: 0.99687016}
+  - bone: {fileID: 6910974607610352067}
+    group: 1
+    localAxis: {x: 0.9922006, y: 0.00000015437757, z: 0.12465118}
+    maxAngle: 85
+    restRotation: {x: 0.022389803, y: 0.017625427, z: 0.002412737, w: 0.99959105}
+  - bone: {fileID: 1373502326967857341}
+    group: 1
+    localAxis: {x: 0.9944157, y: -0.00000017738776, z: 0.10553419}
+    maxAngle: 85
+    restRotation: {x: 0.022002757, y: -0.009620081, z: 0.0025494304, w: 0.9997084}
+  - bone: {fileID: 7415173329592958434}
+    group: 2
+    localAxis: {x: 0.7735302, y: 0.00000085681654, z: -0.63375944}
+    maxAngle: 35
+    restRotation: {x: -0.024606664, y: -0.5259536, z: -0.3593867, w: 0.77045995}
+  - bone: {fileID: 3450242728427763912}
+    group: 2
+    localAxis: {x: 0.7896905, y: -0.000002590532, z: -0.6135054}
+    maxAngle: 45
+    restRotation: {x: 0.0515829, y: 0.00848817, z: -0.027351495, w: 0.998258}
+  - bone: {fileID: 5383770494685812443}
+    group: 2
+    localAxis: {x: 0.7584938, y: 0.000002205633, z: -0.65168023}
+    maxAngle: 45
+    restRotation: {x: -0.022385377, y: -0.014278166, z: 0.0010279339, w: 0.99964696}
 --- !u!1 &6958342927187261325
 GameObject:
   m_ObjectHideFlags: 0
@@ -9392,6 +9540,8 @@ MonoBehaviour:
   rightFoot: {fileID: 9049565845110500634}
   leftHand: {fileID: 1448882228891566207}
   rightHand: {fileID: 7289617826720476205}
+  leftHandPose: {fileID: 4750414638370360373}
+  rightHandPose: {fileID: 665349611939372906}
   strideLength: 0.28
   stepHeight: 0.12
   footPitch: 18
@@ -9403,12 +9553,21 @@ MonoBehaviour:
   responsiveness: 10
   idleBob: 0.012
   idleRate: 0.35
-  gestureCenter: {x: 0, y: 1, z: 0.85}
+  gestureCenter: {x: 0, y: 1.55, z: 0.85}
   gestureSideOffset: 0.25
   gestureReach: 0.3
   gesturePump: 0.07
   gesturePumpRate: 2
   gestureBlendTime: 0.18
+  holdPalmOffset: 0.03
+  holdBlendTime: 0.14
+  pickReach: {x: 0.35, y: 0.12}
+  pickTime: 0.28
+  placeReach: 0.3
+  placeTime: 0.14
+  restCurl: 0.18
+  holdCurl: 0.45
+  fingerSpeed: 8
 --- !u!1 &7311069106994641777
 GameObject:
   m_ObjectHideFlags: 0

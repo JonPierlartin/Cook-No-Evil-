@@ -24,6 +24,8 @@ public class HeldItemVisual : NetworkBehaviour
     [SerializeField] private Transform thirdPersonHoldPoint;
     [Tooltip("Ucuncu sahis ogenin onundeki engeli (duvar, kapi) arayan isinin carpacagi katmanlar.")]
     [SerializeField] private LayerMask thirdPersonBlockMask = Physics.DefaultRaycastLayers;
+    [Tooltip("Karakter modeli: eli tutulan ogeyi izlesin diye (yoksa oge eskisi gibi havada durur).")]
+    [SerializeField] private PlayerCharacterVisual character;
 
     private PlayerInventory _inventory;
     // Ucuncu sahis kopyasinin yatay yaricapi (engelden geri cekme payi); gorsel her uretildiginde olculur.
@@ -162,8 +164,25 @@ public class HeldItemVisual : NetworkBehaviour
     // icin oyuncunun kendi collider'i sayilmaz (Unity kurali). Birinci sahiste gerekmez: nokta kapsulun icinde.
     private void LateUpdate()
     {
-        if (_isLocalOwner || _instance == null || _shownAnchor == null)
+        // Karakter modeli varsa eli tutulan ogeyi izler (ProceduralCharacterAnimator): oge gelince el altina girer,
+        // gidince birakma hareketi yapar. Alma sirasinda oge ve el birlikte onden gelir (GetHoldDisplacement).
+        var animator = character != null ? character.Animator : null;
+        if (_instance == null || _shownAnchor == null)
+        {
+            if (animator != null)
+                animator.SetHoldTarget(null);
             return;
+        }
+
+        var displacement = animator != null ? animator.GetHoldDisplacement(_shownAnchor) : Vector3.zero;
+        if (animator != null)
+            animator.SetHoldTarget(_instance.transform);
+
+        if (_isLocalOwner)
+        {
+            _instance.transform.position = _shownAnchor.position + displacement;
+            return;
+        }
 
         var anchor = _shownAnchor.position;
         var origin = new Vector3(transform.position.x, anchor.y, transform.position.z);
@@ -171,21 +190,19 @@ public class HeldItemVisual : NetworkBehaviour
         float distance = toAnchor.magnitude;
         if (distance < 1e-4f)
         {
-            _instance.transform.position = anchor;
+            _instance.transform.position = anchor + displacement;
             return;
         }
 
-        // Ince isin degil, ogenin yaricapinda kure: capraz acida da ogenin kenari engele deger degmez durur
-        // (isinla capraz acida 1,9 cm tasiyordu — editor olcumu, 30 Eyl).
         var direction = toAnchor / distance;
         float allowed = distance;
         if (Physics.SphereCast(origin, _instanceRadius, direction, out var hit, distance, thirdPersonBlockMask, QueryTriggerInteraction.Ignore))
             allowed = hit.distance;
 
-        _instance.transform.position = origin + direction * allowed;
+        // Engel varsa (duvara yasli) one dogru kayma uygulanmaz: oge duvardan gecmesin.
+        _instance.transform.position = origin + direction * allowed + (allowed < distance ? Vector3.zero : displacement);
     }
 
-    // Kopyanin kendi kokunun yerel uzayinda (renderer.localBounds koseleri — dunya AABB'si degil) yatay yaricap.
     private static float MeasureHorizontalRadius(Transform root, Renderer[] renderers)
     {
         float radius = 0f;
