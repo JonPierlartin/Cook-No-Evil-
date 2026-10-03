@@ -25,6 +25,8 @@ public class CustomerDirector : MonoBehaviour
     [SerializeField] private Transform[] orderSpots;
     [Tooltip("Teslim Penceresi'ndeki yerler (yan yana; kuyruk değil — GDD 5.3). En az eşzamanlı sınır kadar olmalı.")]
     [SerializeField] private Transform[] deliverySpots;
+    [Tooltip("Sipariş penceresinden teslim penceresine yürürken sırayla geçilen noktalar (duvarın DIŞINDAN dolaşmak için).")]
+    [SerializeField] private Transform[] orderToDeliveryWaypoints;
 
     // Yalnızca sunucuda: bölümün tüm müşterileri (yedekler dahil) teslim alıp veya ayrılıp bitti.
     public event Action ServerAllCustomersFinished;
@@ -162,6 +164,7 @@ public class CustomerDirector : MonoBehaviour
         customer.ServerOrderTaken += HandleOrderTaken;
         customer.ServerPatienceExpired += HandlePatienceExpired;
         customer.ServerOrderTimeExpired += HandleOrderTimeExpired;
+        customer.ServerDeliveryRequested += HandleDeliveryRequested;
 
         _active.Add(customer);
         _queue.Add(customer);
@@ -182,7 +185,7 @@ public class CustomerDirector : MonoBehaviour
         }
 
         _deliveryOccupants[spot] = customer;
-        customer.ServerMoveTo(deliverySpots[spot].position, deliverySpots[spot].rotation, null);
+        customer.ServerMoveTo(deliverySpots[spot].position, deliverySpots[spot].rotation, null, orderToDeliveryWaypoints);
 
         // Sipariş süresi (GDD 3.4.1): sinyal sayısı siparişin içeriğinden, taban/katsayı SO'dan, çarpan seviyeden.
         var unmapped = new List<ItemType>();
@@ -201,7 +204,7 @@ public class CustomerDirector : MonoBehaviour
     {
         Release(_deliveryOccupants, customer);
         GameLoopManager.Instance.ServerAddError($"{customer.Label} siparişi süresinde teslim edilmedi");
-        Leave(customer);
+        Leave(customer, CustomerMood.Angry);
     }
 
     private static string DescribeOrder(ResolvedLevel.Order order)
@@ -232,28 +235,49 @@ public class CustomerDirector : MonoBehaviour
             Debug.Log("[Müşteri] Yedek havuz boş; yerine müşteri gelmeyecek.");
         }
 
-        Leave(customer);
+        Leave(customer, CustomerMood.Angry);
     }
 
-    // Teslim adımı çağırır: müşteri siparişini aldı (doğru ya da yanlış — hata kararı teslim adımındadır) ve ayrılır.
-    public void ServerCustomerServed(Customer customer)
+    // Teslim (GDD 5.3.1, 3.4): oyuncu elindeki paketi bu müşteriye verdi. Doğrulama YALNIZCA burada, sunucuda
+    // yapılır (K6) — istemci yalnızca "bu müşteriye, şu slottaki paketi" niyetini gönderdi. Paketin gerçek içeriği
+    // siparişle birebir karşılaştırılır. Doğru: müşteri memnun ayrılır. Yanlış: 1 Hata, müşteri ayrılır, yedek havuz
+    // TETİKLENMEZ. Her iki durumda paket ve içindekiler yok edilir.
+    private void HandleDeliveryRequested(Customer customer, InteractionContext context)
     {
-        if (!IsServer || !_active.Contains(customer))
+        var inventory = PlayerInventory.FindForClient(context.ClientId);
+        if (inventory == null || !inventory.TryGetItem(context.SlotIndex, out var held) || !held.TryGetComponent(out Package package))
+        {
+            Debug.LogWarning($"[Müşteri] {customer.Label} teslim reddedildi (client {context.ClientId}): elde paket yok.");
             return;
+        }
+
+        var result = DeliveryValidator.Validate(customer.Order, package.BuildProducts());
+
+        if (inventory.ServerTryTakeItemAt(context.SlotIndex, out var taken))
+            ItemMover.Despawn(taken);
 
         Release(_deliveryOccupants, customer);
-        Debug.Log($"[Müşteri] {customer.Label} teslim aldı ve ayrılıyor.");
-        Leave(customer);
+        if (result.Correct)
+        {
+            Debug.Log($"[Müşteri] {customer.Label} DOĞRU teslim aldı (client {context.ClientId}); memnun ayrılıyor.");
+        }
+        else
+        {
+            GameLoopManager.Instance.ServerAddError($"{customer.Label} yanlış teslim: {result.Reason}");
+        }
+
+        Leave(customer, result.Correct ? CustomerMood.Happy : CustomerMood.Angry);
     }
 
     // Müşteri ayrılmaya başladığı anda restoranda yer açılır (GDD 3.4.2); kapıya varınca yok edilir.
-    private void Leave(Customer customer)
+    private void Leave(Customer customer, CustomerMood mood)
     {
         _active.Remove(customer);
         customer.ServerOrderTaken -= HandleOrderTaken;
         customer.ServerPatienceExpired -= HandlePatienceExpired;
         customer.ServerOrderTimeExpired -= HandleOrderTimeExpired;
-        customer.ServerStartLeaving();
+        customer.ServerDeliveryRequested -= HandleDeliveryRequested;
+        customer.ServerStartLeaving(mood);
         customer.ServerMoveTo(entrancePoint.position, entrancePoint.rotation, gone =>
         {
             if (gone != null && gone.IsSpawned)

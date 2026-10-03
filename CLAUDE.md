@@ -637,7 +637,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 93 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 95 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -777,6 +777,25 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     kökünü kapatır. Fotoğraf paketin −Z yüzündedir (yuvada güneyden bakan görür; elde kameraya bakar).
   - Kasa penceresi (`KasaPencere_Yuva_1-3`): yalnızca `KeseKagidi`; koyma Komi, alma Komi + Kasiyer. Yuva sayısı =
     sahnedeki yuva nesnesi sayısı (sahne içi ağ nesneleri; sayaçla üretilmiyor).
+- **Teslim ve doğrulama (Adım 24, 3 Eki 2026):**
+  - Teslim = müşteriye tıklama (aynı `Customer` gate'i): durum `Ordered` + rol `deliveryRoles` (Kasiyer) + bağlam
+    slotunda paket. **Gate doğru müşteri olup olmadığına bakmaz** (crosshair sızdırmasın); karar sunucuda.
+  - `DeliveryValidator.Validate(order, products)` (saf; yalnızca `CustomerDirector.HandleDeliveryRequested`
+    çağırır): paket içeriği ↔ sipariş birebir. Hamburger: malzeme çoklu kümesi = varyant − eksikler (ekmek
+    sayılmaz, sıra önemsiz, adet önemli); fazı olan malzeme `ProgressPhase.Servable` fazda olmalı (`KofteProgress`'te
+    yalnızca Pişmiş). Diğer ürünler tür eşleşmesi. Artan öğe = yanlış. Yeni ürün türü gelince yalnızca buradaki
+    karşılaştırma genişler. `Package.BuildProducts()` paketi bu veriye çevirir.
+  - Sonuç: doğru → `Mood = Happy`; yanlış → `ServerAddError` + `Mood = Angry`, yedek **gelmez**. Her iki durumda
+    paket `ItemMover.Despawn` ile içeriğiyle yok edilir, teslim yeri boşalır. Sabır/süre dolunca da `Angry`.
+  - `DeliveryFeedback` (sahne: `TeslimGeriBildirimi`): tek olay, mekânsal sunum — `Customer.MoodChanged` (Happy) →
+    başarı sesi, `GameLoopManager.ErrorCount` artışı → hata sesi; iki dünya kaynağında çalar (`Ses_Kasa` tezgahta,
+    `Ses_Mutfak` mutfakta; Linear, `RoleAwareAudioRange`). Role göre kod yok. Sesler yer tutucu, betikle üretildi
+    (`Assets/Audio/Teslim_Basari.wav`, `Teslim_Hata.wav`). Komi için görsel gösterge duvar panelinde (Adım 25).
+  - **Müşteri rotası:** `Customer.ServerMoveTo(..., waypoints)`; sipariş → teslim yürüyüşü `RotaKosesi`
+    (11,6 / −8,6) üzerinden duvarın dışından dolaşır (`CustomerDirector.orderToDeliveryWaypoints`). Diğer yürüyüşler
+    düz çizgide zaten dışarıda (küre taramasıyla doğrulandı).
+  - **Pakete tek hamburger** (Ersel, 3 Eki): `PackingArea.onePerType` — pakette aynı türden ürün varsa ikincisi
+    girmez (farklı türler girer).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

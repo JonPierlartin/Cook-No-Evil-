@@ -8,11 +8,20 @@ public class PackingArea : ItemSlot
 {
     [Tooltip("Pakete girebilen ürün türleri. Boş bırakılırsa paket dışındaki her öğe girebilir.")]
     [SerializeField] private ItemType[] packableTypes;
+    [Tooltip("Açıksa bir pakete aynı türden ikinci ürün girmez (Ersel, 3 Eki: pakete tek hamburger). Farklı " +
+        "türden ürünler (ileride içecek, dondurma) eklenebilir.")]
+    [SerializeField] private bool onePerType = true;
 
     protected override bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out Item occupant, out string reason)
     {
-        if (!IsPacking(context, out inventory, out occupant, out _, out _))
+        if (!IsPacking(context, out inventory, out occupant, out var package, out var held))
             return base.TryEvaluate(context, out inventory, out occupant, out reason);
+
+        if (onePerType && package.ContainsType(held.Type))
+        {
+            reason = "pakette bu üründen zaten var";
+            return false;
+        }
 
         // Pakete ürün koymak, alana öğe koymakla aynı rol kuralına tabidir.
         if (!CanRolePlace(context.ClientId))

@@ -15,7 +15,10 @@ MonoBehaviour:
   phases:
   - name: Cig
     duration: 5
+    servable: 0
   - name: Pismis
     duration: 5
+    servable: 1
   - name: Yanmis
     duration: 3
+    servable: 0

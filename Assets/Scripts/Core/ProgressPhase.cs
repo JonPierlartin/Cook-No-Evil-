@@ -11,7 +11,11 @@ public struct ProgressPhase
     [Tooltip("Bu fazda kalinacak sure (saniye). GDD 5.2.1 yol gostericisi: urun basina 3-10 sn " +
         "arasinda secilir; bu bir kod kisiti degildir, tasarim onerisidir.")]
     [SerializeField, Min(0.01f)] private float duration;
+    [Tooltip("Bu fazdaki urun teslimde kabul edilir mi (GDD 5.3.1: cig/yanik kofte yanlistir). Pisirme " +
+        "profillerinde yalnizca 'Pismis' isaretlenir.")]
+    [SerializeField] private bool servable;
 
     public readonly string Name => name;
     public readonly float Duration => duration;
+    public readonly bool Servable => servable;
 }

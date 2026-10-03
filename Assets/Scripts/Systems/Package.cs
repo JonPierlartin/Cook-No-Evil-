@@ -126,6 +126,41 @@ public class Package : NetworkBehaviour, IItemVisualSource
         return entries;
     }
 
+    // Teslim doğrulaması için paketin gerçek içeriği (yalnızca sunucu kullanır): hamburger katmanlarıyla, diğer
+    // öğeler türüyle.
+    public List<DeliveryValidator.Product> BuildProducts()
+    {
+        var products = new List<DeliveryValidator.Product>();
+        var contents = new List<Item>();
+        GetContents(contents);
+        foreach (var content in contents)
+        {
+            var product = new DeliveryValidator.Product { Type = content.Type };
+            if (content.TryGetComponent(out BurgerAssembly burger))
+            {
+                product.Layers = new List<DeliveryValidator.Layer>();
+                for (int i = 0; i < burger.Layers.Count; i++)
+                    product.Layers.Add(new DeliveryValidator.Layer(registry != null ? registry.Find(burger.Layers[i].TypeId) : null, burger.Layers[i].PhaseIndex));
+            }
+
+            products.Add(product);
+        }
+
+        return products;
+    }
+
+    // Pakette bu türden bir ürün zaten var mı (paketleme kuralı için).
+    public bool ContainsType(ItemType type)
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            if (transform.GetChild(i).TryGetComponent(out Item item) && item.Type == type)
+                return true;
+        }
+
+        return false;
+    }
+
     private void ApplyWorldVisual()
     {
         if (_worldParts == null)

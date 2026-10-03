@@ -136,6 +136,7 @@ Sınırı" bölümünde. Burada yalnızca 18 Eylül'de yapılan kapsam değişik
 | 17a | Müşteri akışı (çözümlenmiş seviyeden), sipariş alma, sabır + çark (yalnızca Kasiyer), hata sayacı, bölüm sonu altyapısı | ✅ kod; oyun testi bekliyor |
 | 17b | Sipariş pop-up'ı (varyant görseli + X'li eksikler), sipariş süresi (SO + içerikten sinyal sayımı), sipariş çarkı (yalnızca Kasiyer), süre hatası | ✅ kod; oyun testi bekliyor |
 | 23 | Kese kağıdı + kap, 2 paketleme alanı, pakete ürün koyma (gerçek öğe olarak içinde), içerikle birlikte çöp, içerikten türeyen paket fotoğrafı, Kasa penceresi rolleri | ✅ kod; oyun testi bekliyor |
+| 24 | Teslim (müşteriye paket), sunucu doğrulaması (birebir içerik + servis edilebilir faz), memnun/öfkeli ayrılış, başarı/hata sesleri (Kasa + mutfak); müşteri rotası duvarın dışından; pakete tek hamburger | ✅ kod; oyun testi bekliyor |
 
 **Envanter tahmini (21 Eyl, 4.0 raporu):** Claude Code'un tahmini 11-14 sa + ~2 sa test; danışman 5-6 sa demişti. Raporun 4.3'ü (test amaçlı köfte yuvası + kullanıcısız `BurgerAssembly` iskeleti) **kaldırıldı**: `ServerProgress` ve kategori değerleri ızgara adımına, `BurgerAssembly` birleştirme adımına (Adım 6) taşındı. Kalan envanter işi ~8-10 sa. `ServerProgress` zaten ızgaranın 6 saatinin içindeydi.
 
@@ -357,6 +358,8 @@ hata sayacı + kazanma/kaybetme. Bunlardan biri düşerse video konsepti kanıtl
 | 30 Eyl 2026 | Fazla müşteriler ve yedek havuz **varsayılan sipariş slotunu** kullanır | Ersel'in kararı (16b). GDD §7.3.1 slot ile müşteri sayısı farkını tanımlamıyordu. GDD §7.3.1'e işlendi (3 Eki). |
 | 30 Eyl 2026 | Varyantta malzeme başına "çıkarılabilir" işareti; "komple randomize" yalnızca işaretlileri alır | Ersel'in kararı (16b). Adım "tüm malzemeler" diyordu, GDD §7.3.2 "çıkarılabilir"; tümü alınırsa etsiz (yapılamaz) sipariş çıkabilirdi. GDD §7.3.2'ye işlendi (3 Eki). |
 | 3 Eki 2026 | Panoda numara/yön oku yazmaz; kod malzemenin panodaki yerinden okunur (proteinler yön düzeninde, garnitürler sırayla), giriş = resim + ad | Ersel'in kararı: oyuncular dili kendileri bulduklarını hissetsin. GDD §3.6.2 / §3.6.3'e işlendi. |
+| 3 Eki 2026 | Pakete aynı türden ikinci ürün (ikinci hamburger) girmez; paket yeniden açılıp farklı ürün eklenebilir | Ersel'in kararı (Adım 23 testi). **GDD §5.3.1'e işlenmedi** (Adım 24 GDD düzenlemeyi yasakladı). |
+| 3 Eki 2026 | Sipariş Penceresi = Kasa'nın doğu duvarındaki küçük pencere, müşteriler arka arkaya sıra olur; sabır yalnızca sıranın başındakinde işler | Ersel'in kararı (17a testi); sabrın başlama anı Claude'un seçimi. **GDD'ye işlenmedi.** |
 | 30 Eyl 2026 | Kaplar sınırsız; malzeme/stok editörden ayarlanınca değişecek | Ersel'in kararı. LevelConfig'te stok alanları tanımlı ve boş. |
 | 3 Eki 2026 | Sabır süresi ve müşteriler arası bekleme **her müşteri için ayrı** çekilir | Ersel'in kararı. GDD §7.3.3'e işlendi. |
 | 3 Eki 2026 | Duvar malzeme listesinde eşleşme değişimi **satırın yer değiştirmesiyle** görünür; pano diğer kanalların eşleşmelerini de gösterebilir | Ersel'in notu; GDD §3.6.3'e işlendi. Pano adımı (15) çözülmüş eşleşmeyi (`ResolvedLevel` kanal sırası) okuyacak — istemcilere replikasyon o adımda gerekir. |
