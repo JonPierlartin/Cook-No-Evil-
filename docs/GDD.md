@@ -229,7 +229,7 @@ Kalan süreye Komi'nin sözlü aktarımı, Şef'in pişirme + birleştirme süre
 **Değişim duvar listesinde görsel olarak görünür (netleşti ✓, 3 Eki 2026).** Malzeme listesi (§3.6.2) hem
 Kasa hem İstasyon tarafında, Kasa/İstasyon penceresinin yanında durur; garnitürler **alt alta, numara sırasıyla**
 dizilidir. Kasiyer, kitaptan hamburgerin malzemelerine baktıktan sonra her garnitürü **bu listedeki sırasına göre**
-anlatır. Eşleşme değiştiğinde yalnızca yanındaki rakam değişmez — **malzemenin listedeki yeri kayar**: bir
+anlatır. Panoda rakam yazmaz (§3.6.2); eşleşme değiştiğinde **malzemenin listedeki yeri kayar**: bir
 bölümde Marul 1. ve Domates 2. satırdayken, sonrakinde Marul 3. satıra, Domates 5. satıra iner. Liste her iki
 odada aynı sırayı gösterir. Sıra yalnızca garnitür gibi numarayla anlatılan malzemeler içindir; **aynı pano
 düzeni diğer kanalların eşleşmelerini de** (protein yönleri ve ileride sos, içecek, dondurma için kullanılan
@@ -270,6 +270,12 @@ Sayfaların **içeriği** ve **sayısı**, `LevelConfig`'te açık olan hamburge
 
 **Malzeme listesi — duvarda, iki odada birden.** Hem İstasyon'da hem Kasa'da asılı durur. UI değil, fiziksel pano.
 - *Gerekçe:* Komi hem listeyi hem Kasiyer'in jestlerini **aynı anda** görebilmeli. TAB gibi bir tuşa bağlansaydı panel açıkken jest kaçardı ve iletişim zayıflardı.
+- **Panoda kod yazmaz (netleşti ✓, 3 Eki 2026).** Pano malzemeleri **resim + ad** olarak gösterir; yanlarına
+  numara ya da yön oku **yazılmaz**. Kodu oyuncu malzemenin panodaki **yerinden** çıkarır: proteinler bir merkezin
+  çevresine yönlerine göre dizilir (yukarıdaki protein = "yukarı"), garnitürler alt alta dizilir (üstten kaçıncı
+  sıradaysa numarası odur). Sos, içecek ve dondurma için de aynı pano düzeni kullanılır (her kanalın kendi bölümü).
+  *Gerekçe:* oyuncular bu dili kendileri geliştirdiklerini hissetmeli; "Marul = 1" panoda hazır yazarsa keşif
+  duygusu kalmaz.
 - **Yerleşim kısıtı:** Liste panoları, Komi'nin hem panoyu hem Kasa/İstasyon penceresini; Kasiyer'in de hem panoyu hem Komi'yi görebileceği şekilde konumlandırılmalıdır.
 
 **Kasiyer'in mekânsal döngüsü (dikkat):** Kasiyer'in jestlerini Komi'nin görebilmesi için Kasiyer'in **Kasa/İstasyon penceresinin önünde** olması gerekir. Yani Kasiyer sürekli dört nokta arasında gidip gelir: sipariş penceresi → tarif kitabı → sinyal penceresi → teslim penceresi. Bu yürüyüş süresi, sipariş süresi hesabının (§3.4.1) görünmeyen bir parçasıdır; Kasa odasının yerleşimi doğrudan Kasiyer'in temposunu belirler ve bu dört nokta birbirine makul mesafede olmalıdır.
@@ -930,6 +936,10 @@ Bir seviyedeki her sipariş slotu **kendi başına** sabit veya rastgele olabili
 | Dondurma | Belirli bir çeşit / yok | Havuzdan çekilir |
 | Patates / Ekstra | Belirli bir ürün / yok | Havuzdan çekilir |
 
+**Slot sayısı müşteri sayısından azsa (netleşti ✓, 30 Eyl 2026):** seviyede bir **varsayılan sipariş slotu**
+tanımlıdır. Slot listesinden fazla gelen müşteriler ve yedek havuzdan gelenler (§3.4) bu varsayılan slotu kullanır.
+Varsayılan slot da diğerleri gibi sabit veya rastgele olabilir.
+
 #### 7.3.2 Eksik malzeme randomizasyonu
 
 İki parametreyle tanımlanır:
@@ -938,7 +948,7 @@ Bir seviyedeki her sipariş slotu **kendi başına** sabit veya rastgele olabili
 
 *Örnek:* Classic Burger'de izinli havuz = {soğan, turşu, domates}, adet aralığı = 0–1. Müşteri ya tam malzemeli ister, ya bu üçünden **rastgele birini** istemez.
 
-**"Komple randomize" kısayolu:** İzinli havuz elle doldurulmak yerine tek bir işaretle "o varyantın çıkarılabilir malzemelerinin tamamı" olarak bırakılabilir. Mekanizma aynıdır — yalnızca havuzu elle doldurma zahmetini kaldırır. Adet aralığı yine ayrı ayarlanır.
+**"Komple randomize" kısayolu:** İzinli havuz elle doldurulmak yerine tek bir işaretle "o varyantın çıkarılabilir malzemelerinin tamamı" olarak bırakılabilir. **Hangi malzemenin çıkarılabilir olduğu varyantın kendisinde, malzeme başına işaretlenir** (netleşti ✓, 30 Eyl 2026); kısayol yalnızca işaretlileri alır — böylece etsiz (yapılamayan) bir sipariş çıkmaz. Mekanizma aynıdır — yalnızca havuzu elle doldurma zahmetini kaldırır. Adet aralığı yine ayrı ayarlanır.
 
 **Neyin çıkarılabilir olduğu da bir parametredir.** Ekmeğin veya proteinin çıkarılabilir sayılıp sayılmayacağı kodun kararı değildir; izinli havuz tasarımcının doldurduğu serbest bir listedir.
 

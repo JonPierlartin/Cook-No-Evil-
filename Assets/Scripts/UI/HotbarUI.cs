@@ -14,8 +14,13 @@ public class HotbarUI : MonoBehaviour
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private Image[] slotIcons;
     [SerializeField] private Image[] slotBackgrounds;
-    [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color activeColor = Color.yellow;
+    [Tooltip("Slot zemini: secili olmayan / secili. Koyu ve yari saydam tutulur ki her renkten ikon okunabilsin.")]
+    [SerializeField] private Color normalColor = new(0.08f, 0.09f, 0.11f, 0.65f);
+    [SerializeField] private Color activeColor = new(0.16f, 0.18f, 0.22f, 0.9f);
+    [Tooltip("Secili slotun cercevesi (slot basina bir tane; yalnizca secili olan gorunur).")]
+    [SerializeField] private Image[] slotFrames;
+    [Tooltip("Secili slotun olcegi (digerleri 1).")]
+    [SerializeField, Min(1f)] private float activeScale = 1.12f;
 
     private PlayerInventory _inventory;
     private InputAction[] _hotbarActions;
@@ -92,8 +97,15 @@ public class HotbarUI : MonoBehaviour
                     slotIcons[i].sprite = itemType.Icon;
             }
 
+            bool active = i == activeIndex;
             if (slotBackgrounds != null && i < slotBackgrounds.Length && slotBackgrounds[i] != null)
-                slotBackgrounds[i].color = i == activeIndex ? activeColor : normalColor;
+            {
+                slotBackgrounds[i].color = active ? activeColor : normalColor;
+                slotBackgrounds[i].rectTransform.localScale = Vector3.one * (active ? activeScale : 1f);
+            }
+
+            if (slotFrames != null && i < slotFrames.Length && slotFrames[i] != null)
+                slotFrames[i].enabled = active;
         }
     }
 }

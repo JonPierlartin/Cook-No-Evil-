@@ -132,6 +132,7 @@ Sınırı" bölümünde. Burada yalnızca 18 Eylül'de yapılan kapsam değişik
 | 16a+16b | `NumericValue` + `Selection<T>`, `LevelConfig`, `BurgerVariant`, kanallar, istasyon kimlikleri, sunucu çözümlemesi — property drawer'sız | ✅ kod; oyun testi bekliyor |
 | 13a+13b | Veri odaklı sinyal çarkı `R` + sinyal yayını (`09f733c`); cooldown ve rol kısıtları kalktı, etkileşim jesti iptal ediyor (PLAN 12 de burada kapandı). Genel `E` çarkı (14) açık | ✅ kod; oyun testi bekliyor |
 | 15 | Duvar malzeme panosu (İstasyon + Kasa, replike eşleşmeden) + ikon üretici editör aracı; çarkta yön değerleri kendi yönünde | ✅ kod; oyun testi bekliyor |
+| 15b | Pano yeniden düzenlendi (kod yazmaz, yerleşim anlatır; resim + ad) · Tavuk/Balık/Veji türleri (yalnızca pano; alınamaz) · hotbar görünümü | ✅ kod; oyun testi bekliyor |
 
 **Envanter tahmini (21 Eyl, 4.0 raporu):** Claude Code'un tahmini 11-14 sa + ~2 sa test; danışman 5-6 sa demişti. Raporun 4.3'ü (test amaçlı köfte yuvası + kullanıcısız `BurgerAssembly` iskeleti) **kaldırıldı**: `ServerProgress` ve kategori değerleri ızgara adımına, `BurgerAssembly` birleştirme adımına (Adım 6) taşındı. Kalan envanter işi ~8-10 sa. `ServerProgress` zaten ızgaranın 6 saatinin içindeydi.
 
@@ -350,8 +351,9 @@ hata sayacı + kazanma/kaybetme. Bunlardan biri düşerse video konsepti kanıtl
 | 30 Eyl 2026 | Pencereler iki yönlü, 3'er hamburger yuvası (Mutfak: Şef+Komi, Kasa: Komi+Kasiyer) | Ersel'in kararı; GDD §5.1.1/5.1.2 güncellendi. Kasa penceresinin sayısı GDD'de yoktu. |
 | 30 Eyl 2026 | Protein zorunlu; etsiz hamburger kapatılamaz | Ersel'in kararı; GDD §6.7.3'teki "garnitürden önce protein" kuralının netleşmesi. |
 | 30 Eyl 2026 | Her odada kendi rolünün çöp kutusu, aynı script | Ersel'in kararı; GDD §5.3.2. |
-| 30 Eyl 2026 | Fazla müşteriler ve yedek havuz **varsayılan sipariş slotunu** kullanır | Ersel'in kararı (16b). GDD §7.3.1 slot ile müşteri sayısı farkını tanımlamıyordu. **GDD'ye işlenmedi** (16b GDD düzenlemeyi yasakladı) — Ersel işleyecek. |
-| 30 Eyl 2026 | Varyantta malzeme başına "çıkarılabilir" işareti; "komple randomize" yalnızca işaretlileri alır | Ersel'in kararı (16b). Adım "tüm malzemeler" diyordu, GDD §7.3.2 "çıkarılabilir"; tümü alınırsa etsiz (yapılamaz) sipariş çıkabilirdi. **GDD'ye işlenmedi** — Ersel işleyecek. |
+| 30 Eyl 2026 | Fazla müşteriler ve yedek havuz **varsayılan sipariş slotunu** kullanır | Ersel'in kararı (16b). GDD §7.3.1 slot ile müşteri sayısı farkını tanımlamıyordu. GDD §7.3.1'e işlendi (3 Eki). |
+| 30 Eyl 2026 | Varyantta malzeme başına "çıkarılabilir" işareti; "komple randomize" yalnızca işaretlileri alır | Ersel'in kararı (16b). Adım "tüm malzemeler" diyordu, GDD §7.3.2 "çıkarılabilir"; tümü alınırsa etsiz (yapılamaz) sipariş çıkabilirdi. GDD §7.3.2'ye işlendi (3 Eki). |
+| 3 Eki 2026 | Panoda numara/yön oku yazmaz; kod malzemenin panodaki yerinden okunur (proteinler yön düzeninde, garnitürler sırayla), giriş = resim + ad | Ersel'in kararı: oyuncular dili kendileri bulduklarını hissetsin. GDD §3.6.2 / §3.6.3'e işlendi. |
 | 30 Eyl 2026 | Kaplar sınırsız; malzeme/stok editörden ayarlanınca değişecek | Ersel'in kararı. LevelConfig'te stok alanları tanımlı ve boş. |
 | 3 Eki 2026 | Sabır süresi ve müşteriler arası bekleme **her müşteri için ayrı** çekilir | Ersel'in kararı. GDD §7.3.3'e işlendi. |
 | 3 Eki 2026 | Duvar malzeme listesinde eşleşme değişimi **satırın yer değiştirmesiyle** görünür; pano diğer kanalların eşleşmelerini de gösterebilir | Ersel'in notu; GDD §3.6.3'e işlendi. Pano adımı (15) çözülmüş eşleşmeyi (`ResolvedLevel` kanal sırası) okuyacak — istemcilere replikasyon o adımda gerekir. |

@@ -248,6 +248,9 @@ MonoBehaviour:
       source: 0
       fixedItems:
       - {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}
+      - {fileID: 11400000, guid: abf4dc0fda1f52742a6607831ad1e55a, type: 2}
+      - {fileID: 11400000, guid: 436dff3004498da488c698fc7728a585, type: 2}
+      - {fileID: 11400000, guid: 50b8668ad4b9d1e479b72a980b143752, type: 2}
       pool: []
       count:
         source: 0

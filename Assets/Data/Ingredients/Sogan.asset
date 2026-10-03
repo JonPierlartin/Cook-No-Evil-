@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemType
   id: 6
   localizationKey: ingredient.sogan
+  displayName: "SO\u011EAN"
   icon: {fileID: 21300000, guid: e0fc5d60dcf4a2c4b8545a4b71389499, type: 3}
   visualPrefab: {fileID: 4091066173357890317, guid: 4c49db677fd5ae14a86f2e0142ce1346, type: 3}
   itemPrefab: {fileID: 8038282843011107679, guid: 27ad8c3100a62e5468eb54d03a00c779, type: 3}

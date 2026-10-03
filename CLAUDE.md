@@ -704,14 +704,18 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     böyle olacak; hangi tarafın "sağ" sayılacağı playtest konusu).
   - `GameLoopManager.CanPlayersAct` (round aktif **ve** duraklatılmamış): etkileşim, crosshair, sinyal ve emote
     çarkı — istemci ve sunucu — aynı koşulu buradan okur. Yeni bir oyuncu eylemi ayrı kontrol yazmaz.
-- **Duvar malzeme panosu (Adım 15, 3 Eki 2026):** `SignalMappingBoard` + `SignalMappingBoardRow`
+- **Duvar malzeme panosu (Adım 15 + düzeltme, 3 Eki 2026):** `SignalMappingBoard` + `SignalMappingBoardEntry`
   (`Assets/Prefabs/MalzemePanosu.prefab`; gövde + dünya uzayı Canvas, collider yok, ağ nesnesi değil). İçerik
-  yalnızca `LevelDirector.SignalRows`'tan: eşleşmesi (`ItemId`) olan her satır için şablondan bir satır — değer
-  (`SignalValue.icon` varsa ikon, yoksa `displayName` yazısı) + malzeme ikonu. Satır sayısı ve sırası veriden;
-  dikey layout satırları panoya eşit böler. Sahnede `MalzemePanosu_Istasyon` (duvarın kuzey yüzü, z=−3,58) ve
-  `MalzemePanosu_Kasa` (güney yüzü, z=−3,88), ikisi de x=6,72 / y=1,95 — pencerenin (x 7,3–9,0) batısında.
-  Kökün +Z'si duvarın içine bakar. **Pencerenin tam önünden bakış açısı ~57°** (bir adım geriden ~20°); okunurluk
-  playtest konusu. Pano Şef'in görüşünde yalnızca gövde konturu olarak görünür (UI derinliğe yazmaz).
+  yalnızca `LevelDirector.SignalRows`'tan: eşleşmesi olan her kanal için bir **bölüm** (yan yana), her eşleşme
+  için bir giriş (resim + `ItemType.displayName`). **Kod panoya yazılmaz** (GDD §3.6.2): kanalın tüm eşleşen
+  değerlerinde `useWheelAngle` varsa girişler o açılarda merkezin çevresine (yön), yoksa değer sırasıyla alt alta
+  (sayı) dizilir. Yerleşim çapalarla, bölüm boyutuna oranla; giriş sayısına duyarsız. Sahnede
+  `MalzemePanosu_Istasyon` (duvarın kuzey yüzü, z=−3,58) ve `MalzemePanosu_Kasa` (güney yüzü, z=−3,88), ikisi de
+  x=6,22 / y=1,95, 1,7×1,0 m — pencerenin (x 7,3–9,0) batısında. Kökün +Z'si duvarın içine bakar. Pano Şef'in
+  görüşünde yalnızca gövde konturu olarak görünür (UI derinliğe yazmaz).
+- **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
+  panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
+  eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.
 - **İkon üretici (Adım 15):** `IconGenerator` (menü: *Cook No Evil → İkon Üret*). `PreviewRenderUtility` ile ayrı
   önizleme sahnesinde, saydam arka planlı 256 px sprite üretir ve asset'e atar: `ItemType.visualPrefab` → `icon`
   (köfte ilk fazıyla), `SignalValue.visualPrefab` → `icon` (karşıdan; yalnızca seçili asset'ler için — Sayı
@@ -776,6 +780,8 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   (`Assets/Audio/Izgara_Cizirti.ogg`, BigSoundBank "Frying pan #2", CC0); faz değişiminde ses değişmez.
 - Hotbar ikonları: `Assets/Data/Icons/` — `IconGenerator` ile üretilir (bkz. İkon üretici). Yeni türde menüden
   yeniden üretilir.
+- **Hotbar görünümü (3 Eki):** slot zemini koyu yarı saydam (her renkten ikon okunur); seçili slot beyaz çerçeve
+  (`HotbarUI.slotFrames`) + hafif büyüme (`activeScale`) ile belli olur, zemin rengiyle değil. Slot numarası köşede.
 - **Envanter doluyken hamburger kapatılabilir (D3, `9ba8091`):** üst ekmek gate'i boş slot aramaz;
   ekmek slottan alınınca hamburger aynı slottan başlayan kuralla eklenir.
 - `HoldOrPressInteractable` (Press/Hold primitive'i; olayları etkileşen clientId'yi taşır,

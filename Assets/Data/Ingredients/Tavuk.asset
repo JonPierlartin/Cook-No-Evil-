@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd982d1c9ae4344d9358a57f1b7e2c4, type: 3}
-  m_Name: Ekmek
+  m_Name: Tavuk
   m_EditorClassIdentifier: Assembly-CSharp::ItemType
-  id: 0
-  localizationKey: ingredient.ekmek
-  displayName: EKMEK
-  icon: {fileID: 21300000, guid: 2e79503c00b86a3479213c141a6627ed, type: 3}
-  visualPrefab: {fileID: 6684167163416274769, guid: c1db76746817ea74b86de94fa5ab3df9, type: 3}
-  itemPrefab: {fileID: 8505585916998070737, guid: 82abb2c3cbb359f468bdfef18b4b745e, type: 3}
-  category: 1
+  id: 8
+  localizationKey: ingredient.tavuk
+  displayName: TAVUK
+  icon: {fileID: 21300000, guid: 8de48aa31ec107a4db9e3ef3f2866ff6, type: 3}
+  visualPrefab: {fileID: 5333732507073108216, guid: cb43f3049add26842a253224a727c708, type: 3}
+  itemPrefab: {fileID: 0}
+  category: 2
   phaseColors: []
