@@ -165,10 +165,11 @@ public class GameLoopManager : NetworkBehaviour
         if (CurrentRoundState.Value == RoundState.RoundActive)
             return true;
 
-        if (RoleManager.Instance == null || RoleManager.Instance.AssignedRoleCount < RoleManager.MaxPlayers)
+        // GDD 8.1: tam kadro VE her rolden tam bir tane (lobide ayni rolu iki kisi sectiyse baslamaz).
+        if (RoleManager.Instance == null || !RoleManager.Instance.AreRolesReady)
         {
             int count = RoleManager.Instance != null ? RoleManager.Instance.AssignedRoleCount : 0;
-            Debug.LogWarning($"[GameLoopManager] Round baslatilamiyor, {count}/{RoleManager.MaxPlayers} oyuncu var.");
+            Debug.LogWarning($"[GameLoopManager] Round baslatilamiyor: {count}/{RoleManager.MaxPlayers} oyuncu var ya da roller her rolden bir tane olacak sekilde dagilmamis.");
             return false;
         }
 

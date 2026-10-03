@@ -75,7 +75,7 @@ içindeyse (örn. sinyal çarkının 5 kategoriyi desteklemesi), sistem **veri o
 
 **Sistemi de kapsam dışı — hiç yazılmayacak:**
 yangın olayı (tüp, kapı, alarm, söndürme, ızgara kilidi) · intercom · malzeme stok sistemi ·
-yıldız sistemi · seviye seçim haritası · lobide rol seçimi · Şef→Komi gibberish sesi ·
+yıldız sistemi · seviye seçim haritası · Şef→Komi gibberish sesi ·
 final sanat ve ses geçişi.
 
 **Yalnızca içeriği kapsam dışı — sistemi veri odaklı yazılır, içerik kapalı gelir:**
@@ -644,7 +644,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 102 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 103 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -836,6 +836,23 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     varyantın proteinidir** (ayrı kategori alanı/listesi yok — yeni protein = yeni kategori). Kodda sayfa sayısı yok.
   - Açık varyantlar istemcilere `LevelDirector.OpenVariantIndices` (replike, round başında) ile gider;
     `GetOpenVariants()` asset'e çözer. Açılımın resmi `BurgerVariant.Image` — pop-up ve paket fotoğrafıyla aynı.
+- **Lobide rol seçimi ve ESC menüsü (3 Eki 2026, Ersel'in isteği):**
+  - Varsayılan dağıtım değişmedi (katılma sırası). `RoleManager.RequestRoleServerRpc(role)` yalnızca **Lobby**
+    durumunda rolü değiştirir; aynı rolü birden fazla oyuncu seçebilir. `AreRolesReady` (tam `MaxPlayers` oyuncu +
+    her rolden tam bir tane) sağlanmadan `GameLoopManager.StartRound` başlatmaz. `OnRolesChanged` her istemcide
+    liste değişince tetiklenir.
+  - `LobbyUIController`: `RolSecimi` paneli (üç rol düğmesi + oyuncu listesi), yalnızca lobide ve bağlıyken; "Başlat"
+    roller hazır değilken kapalı. Yeni metinler Inspector'da düz metin (Localization borcu).
+  - `PauseMenuUI` (GameplayCanvas/`PauseMenu`): ESC ile açılır/kapanır, **yereldir, oyunu durdurmaz** (K9). Açıkken
+    yalnızca yerel bakış/hareket/tıklama/çarklar durur. "Lobiye dön" → `LobbyUIController.LeaveToInitialScreen()`
+    (oturumdan ayrıl, ilk ekran). ESC önceliği: kitap açıksa (ya da aynı karede kapandıysa —
+    `RecipeBookUI.LastCloseFrame`) ESC kitabındır. **İstemci round sırasında ayrılırsa** bu bir kopmadır: diğerlerinde
+    "DURDURULDU" başlar; host ayrılırsa herkes ilk ekrana döner.
+  - **Sipariş pop-up'ı yalnızca Kasiyer'e çizilir** (`CustomerOrderDisplay.visibleToRoles`): Komi pencereden
+    müşterileri görebiliyordu ve sipariş bilgisi sinyal zincirini atlıyordu.
+  - **"Grain" araştırması:** projede Film Grain kapalı (`DefaultVolumeProfile` yoğunluk 0), oyuncu kamerasında
+    post-processing kapalı. Titreşen kumlanmanın olası kaynağı `PC_Renderer`'daki **SSAO** (Blue Noise yöntemi, kare
+    başına değişen gürültü, TAA yok). Şef'te görüldüyse aday K2 ek yeri pırıltısıdır. Karar/ölçüm bekliyor.
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.
@@ -982,7 +999,7 @@ yeni özellik inşa edilmeden önce düzeltilmelidir. *(30 Eyl 2026'da gerçek k
 | ~~`VoIPController.komiLowPassCutoffHz` (Komi'de low-pass)~~ — Faz 0: Komi hiçbir oyuncuyu duymaz (`1d4d1b2`) | Şef→Komi: **gibberish** (RMS ile sürülen maymun sesi), low-pass değil | §10.4 | Faz 0 kısmı ✅; gibberish **Faz 0.5'e ertelendi** (18 Eyl 2026) |
 | ~~Kopmada "DURDURULDU" arayüzü ve 5 dk zaman aşımı yok~~ | Duraklatma görünür; süre dolunca oturum kapanır, bölüm başarısız | §8.2 | ✅ `fed5b33` |
 | ~~`RoundEnded`'a geçiş mantığı yok~~ | Kazanma/kaybetme koşulları bağlanmalı | §3.4 | ✅ Adım 25 |
-| `SequentialRoleAssignmentStrategy` (katılma sırası) | Lobide rol seçimi (çakışma varsa hazır verilemez) | §8.1 | **Faz 0.5'e ertelendi** (18 Eyl 2026) |
+| ~~`SequentialRoleAssignmentStrategy` (katılma sırası)~~ — varsayılan dağıtım olarak kaldı, üstüne lobide seçim eklendi | Lobide rol seçimi (çakışma varsa hazır verilemez) | §8.1 | ✅ 3 Eki 2026 (Ersel'in isteğiyle Faz 0'a alındı) |
 
 ---
 

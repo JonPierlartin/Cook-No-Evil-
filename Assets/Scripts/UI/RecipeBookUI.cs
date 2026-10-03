@@ -18,6 +18,9 @@ public class RecipeBookUI : MonoBehaviour
     // PlayerController / PlayerInteractor / çarklar bunu okur.
     public static bool IsOpen { get; private set; }
 
+    // Kitabın kapandığı kare: aynı ESC basışı ESC menüsünü de açmasın diye (PauseMenuUI okur).
+    public static int LastCloseFrame { get; private set; } = -1;
+
     [Tooltip("Kitabın kökü; kapalıyken gizlidir.")]
     [SerializeField] private GameObject root;
 
@@ -78,6 +81,7 @@ public class RecipeBookUI : MonoBehaviour
             return;
 
         IsOpen = false;
+        LastCloseFrame = Time.frameCount;
         root.SetActive(false);
 
         // Kitap imleci serbest bırakmıştı (içindekilerde tıklama); round sürüyorsa yeniden kilitlenir.

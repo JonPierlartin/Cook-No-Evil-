@@ -139,6 +139,10 @@ public class PlayerController : NetworkBehaviour
         if (RecipeBookUI.IsOpen)
             return;
 
+        // ESC menusu yereldir (K9): oyun durmaz, yalnizca bu oyuncunun karakteri bekler.
+        if (PauseMenuUI.IsOpen)
+            return;
+
         // Bolum bitti (sonuc ekrani): karakter durur, fare sonuc ekranindaki dugmeler icin serbesttir.
         if (GameLoopManager.Instance != null && GameLoopManager.Instance.CurrentRoundState.Value == RoundState.RoundEnded)
             return;

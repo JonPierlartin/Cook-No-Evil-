@@ -95,7 +95,7 @@ public class EmoteWheelUI : MonoBehaviour
     {
         // Sunucunun SelectEmoteServerRpc'de uyguladigi kosullarin aynisi (istemci tahmin eder, sunucu karar
         // verir): round oynanabilir olmali ve oynayan jest bitmis olmali. Sinyal carki acikken acilmaz.
-        if (_wheelOpen || SignalWheelUI.IsWheelOpen || RecipeBookUI.IsOpen || !GameLoopManager.CanPlayersAct
+        if (_wheelOpen || SignalWheelUI.IsWheelOpen || RecipeBookUI.IsOpen || PauseMenuUI.IsOpen || !GameLoopManager.CanPlayersAct
             || EmoteSystem.Instance == null || EmoteSystem.Instance.IsLocalBusy)
             return;
 

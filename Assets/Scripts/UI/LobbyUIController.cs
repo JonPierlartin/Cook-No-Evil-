@@ -34,6 +34,21 @@ public class LobbyUIController : MonoBehaviour
     // tiklayamamasina (imlec gorunmez/kilitli kaldigi icin) yol acan kritik bir bug.
     // Bu bayrak SADECE bizim kendi UI gecislerimizde (round basladi/bitti, host
     // disconnect) guncellenir, hicbir zaman ag durumundan yeniden turetilmez.
+    [Header("Rol seçimi (GDD 8.1)")]
+    [Tooltip("Rol düğmelerinin ve oyuncu listesinin kökü; yalnızca lobide ve bağlıyken görünür.")]
+    [SerializeField] private GameObject rolePanel;
+    [Tooltip("Rol düğmeleri; roleButtonRoles ile aynı sırada.")]
+    [SerializeField] private Button[] roleButtons;
+    [SerializeField] private PlayerRole[] roleButtonRoles;
+    [Tooltip("Bağlı oyuncuların rollerini listeleyen yazı.")]
+    [SerializeField] private Text rosterText;
+    [SerializeField] private Color roleNormalColor = Color.white;
+    [SerializeField] private Color roleSelectedColor = new(0.55f, 0.9f, 0.55f);
+    [Header("Metinler (Localization tablosuna bağlanana kadar düz metin)")]
+    [SerializeField] private string rosterLineFormat = "Oyuncu {0}: {1}{2}";
+    [SerializeField] private string rosterSelfSuffix = "  (sen)";
+    [SerializeField] private string rolesNotReadyText = "Başlamak için 3 oyuncu ve her rolden birer tane gerekli.";
+
     public bool ShouldLockCursor { get; private set; }
 
     private void Awake()
@@ -50,6 +65,15 @@ public class LobbyUIController : MonoBehaviour
         startGameButton.gameObject.SetActive(false);
         leaveButton.gameObject.SetActive(false);
         connectionLostPanel.SetActive(false);
+
+        for (int i = 0; i < roleButtons.Length && i < roleButtonRoles.Length; i++)
+        {
+            var role = roleButtonRoles[i];
+            roleButtons[i].onClick.AddListener(() => HandleRoleClicked(role));
+        }
+
+        if (rolePanel != null)
+            rolePanel.SetActive(false);
     }
 
     private void Start()
@@ -72,6 +96,7 @@ public class LobbyUIController : MonoBehaviour
         if (RoleManager.Instance != null)
         {
             RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
+            RoleManager.Instance.OnRolesChanged += RefreshRolePanel;
         }
         else
         {
@@ -106,7 +131,10 @@ public class LobbyUIController : MonoBehaviour
         }
 
         if (RoleManager.Instance != null)
+        {
             RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
+            RoleManager.Instance.OnRolesChanged -= RefreshRolePanel;
+        }
 
         if (GameLoopManager.Instance != null)
         {
@@ -138,6 +166,64 @@ public class LobbyUIController : MonoBehaviour
     {
         SteamLobbyManager.Instance.LeaveLobby();
         ResetToInitialScreen();
+    }
+
+    // Oyun içinden (ESC menüsü) ilk ekrana dönüş: oturumdan ayrılır, oyun arayüzünü kapatır, lobi ekranını açar.
+    // Uygulamayı kapatıp açmadan yeniden host/join yapılabilsin diye.
+    public void LeaveToInitialScreen()
+    {
+        SteamLobbyManager.Instance.LeaveLobby();
+        SetGameplayCanvasVisible(false);
+        connectionLostPanel.SetActive(false);
+        lobbyPanel.SetActive(true);
+        ResetToInitialScreen();
+    }
+
+    // İstemci yalnızca niyet gönderir; rolü sunucu yazar (RoleManager).
+    private void HandleRoleClicked(PlayerRole role)
+    {
+        if (RoleManager.Instance != null && RoleManager.Instance.IsSpawned)
+            RoleManager.Instance.RequestRoleServerRpc(role);
+    }
+
+    // Rol paneli: yalnızca lobide ve bu oyuncu bağlıyken. Oyuncu listesi replike rol listesinden yazılır; host'un
+    // "Başlat" düğmesi her rolden bir tane olana kadar kapalıdır (asıl kontrol sunucuda: GameLoopManager.StartRound).
+    private void RefreshRolePanel()
+    {
+        if (rolePanel == null)
+            return;
+
+        var roles = RoleManager.Instance;
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        bool connected = roles != null && roles.IsSpawned && network != null && network.IsListening && roles.LocalRole != PlayerRole.None;
+        bool inLobby = GameLoopManager.Instance != null && GameLoopManager.Instance.CurrentRoundState.Value == RoundState.Lobby;
+        bool show = connected && inLobby;
+        rolePanel.SetActive(show);
+        if (!show)
+            return;
+
+        var localRole = roles.LocalRole;
+        for (int i = 0; i < roleButtons.Length && i < roleButtonRoles.Length; i++)
+        {
+            if (roleButtons[i].targetGraphic != null)
+                roleButtons[i].targetGraphic.color = roleButtonRoles[i] == localRole ? roleSelectedColor : roleNormalColor;
+        }
+
+        var lines = new System.Text.StringBuilder();
+        for (int i = 0; i < roles.AssignedRoleCount; i++)
+        {
+            if (!roles.TryGetAssignedRoleAt(i, out var clientId, out var role))
+                continue;
+
+            lines.AppendLine(string.Format(rosterLineFormat, i + 1, LocalizeRole(role), clientId == network.LocalClientId ? rosterSelfSuffix : ""));
+        }
+
+        bool ready = roles.AreRolesReady;
+        if (!ready)
+            lines.AppendLine().Append(rolesNotReadyText);
+
+        rosterText.text = lines.ToString();
+        startGameButton.interactable = ready;
     }
 
     private void HandleLobbyCreated()
@@ -178,6 +264,7 @@ public class LobbyUIController : MonoBehaviour
         // once/sonra gelirse gelsin ekran dogru durumu yakaliyor.
         bool roundActive = GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
         ApplyRoundActiveState(roundActive);
+        RefreshRolePanel();
     }
 
     private void HandleRoundStateChanged(RoundState previous, RoundState current)
@@ -192,6 +279,7 @@ public class LobbyUIController : MonoBehaviour
 
         RefreshStatusText();
         ApplyRoundActiveState(isActive);
+        RefreshRolePanel();
 
         // TESHIS: gercek cok-makineli testte "Rolun:" adinin bos kalma raporunu local testte
         // tekrar uretemedik. Bug hala gorulurse Player.log'daki bu satiri kontrol et — LocalRole
@@ -350,6 +438,9 @@ public class LobbyUIController : MonoBehaviour
         startGameButton.gameObject.SetActive(false);
         leaveButton.gameObject.SetActive(false);
         statusText.text = "";
+        startGameButton.interactable = true;
+        if (rolePanel != null)
+            rolePanel.SetActive(false);
     }
 
     private static string LocalizeRole(PlayerRole role)

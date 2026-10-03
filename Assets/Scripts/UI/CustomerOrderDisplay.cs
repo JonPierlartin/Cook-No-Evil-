@@ -18,6 +18,9 @@ public class CustomerOrderDisplay : MonoBehaviour
     [SerializeField] private RectTransform missingContainer;
     [Tooltip("Eksik malzeme şablonu (kökünde malzeme ikonu, üstünde çarpı). Her eksik malzeme için kopyalanır.")]
     [SerializeField] private Image missingEntryTemplate;
+    [Tooltip("Pop-up'ı görebilen roller. Sipariş bilgisi Kasiyer'den Komi'ye yalnızca sinyallerle geçmeli (GDD 3.6); " +
+        "Komi pencereden müşteriyi görse de pop-up'ı görmez.")]
+    [SerializeField] private PlayerRole[] visibleToRoles = { PlayerRole.Kasiyer };
 
     private readonly List<GameObject> _entries = new();
     private bool _dirty = true;
@@ -41,7 +44,9 @@ public class CustomerOrderDisplay : MonoBehaviour
 
     private void LateUpdate()
     {
-        bool visible = customer.IsSpawned && customer.State.Value == CustomerState.Ordered;
+        bool visible = customer.IsSpawned && customer.State.Value == CustomerState.Ordered
+            && RoleManager.Instance != null
+            && System.Array.IndexOf(visibleToRoles, RoleManager.Instance.LocalRole) >= 0;
         if (popupRoot.activeSelf != visible)
             popupRoot.SetActive(visible);
 

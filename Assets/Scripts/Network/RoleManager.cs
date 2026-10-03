@@ -39,6 +39,9 @@ public class RoleManager : NetworkBehaviour
     // NetworkManager.OnClientConnectedCallback'e ayrica abone olmak yerine).
     public event Action<ulong, PlayerRole> OnServerRoleAssigned;
 
+    // Her istemcide: rol listesi degisti (biri katildi, ayrildi ya da rol secti). Lobi arayuzu bunu dinler.
+    public event Action OnRolesChanged;
+
     // Round State mimarisi TEK OTORITEYE (GameLoopManager.CurrentRoundState) konsolide
     // edildi — RoleManager artik round acik/kapali durumunu TUTMUYOR, sadece rol
     // atamasindan sorumlu. Round durumuna ihtiyac duyan kod GameLoopManager.Instance.
@@ -311,8 +314,61 @@ public class RoleManager : NetworkBehaviour
         return true;
     }
 
+    // Lobide rol secimi (GDD 8.1): oyuncu istedigi rolu secer. Varsayilan dagitim (katilma sirasi) degismez; bu
+    // yalnizca uzerine yazar. Ayni rolu birden fazla oyuncu secebilir — o durumda oyun BASLAMAZ (AreRolesReady).
+    // Yalnizca lobide gecerlidir; round sirasinda ve bolum sonunda rol degismez. Istemci niyet gonderir, sunucu yazar.
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void RequestRoleServerRpc(PlayerRole role, RpcParams rpcParams = default)
+    {
+        ulong senderId = rpcParams.Receive.SenderClientId;
+        if (role == PlayerRole.None)
+            return;
+
+        if (GameLoopManager.Instance == null || GameLoopManager.Instance.CurrentRoundState.Value != RoundState.Lobby)
+        {
+            Debug.LogWarning($"[RoleManager] Rol secimi reddedildi (client={senderId}): yalnizca lobide secilebilir.");
+            return;
+        }
+
+        for (int i = 0; i < _assignedRoles.Count; i++)
+        {
+            if (_assignedRoles[i].ClientId != senderId)
+                continue;
+
+            var entry = _assignedRoles[i];
+            if (entry.Role == role)
+                return;
+
+            _assignedRoles[i] = new ClientRoleEntry(entry.ClientId, role, entry.SteamId, entry.IsFrozen);
+            Debug.Log($"[RoleManager] Client {senderId} rol secti: {entry.Role} -> {role}");
+            OnServerRoleAssigned?.Invoke(senderId, role);
+            return;
+        }
+    }
+
+    // Oyun baslayabilir mi: tam MaxPlayers oyuncu ve her rolden TAM bir tane (GDD 8.1: cakisma varsa baslamaz).
+    public bool AreRolesReady
+    {
+        get
+        {
+            if (_assignedRoles.Count != MaxPlayers)
+                return false;
+
+            var seen = new HashSet<PlayerRole>();
+            foreach (var entry in _assignedRoles)
+            {
+                if (entry.Role == PlayerRole.None || !seen.Add(entry.Role))
+                    return false;
+            }
+
+            return true;
+        }
+    }
+
     private void HandleAssignedRolesChanged(NetworkListEvent<ClientRoleEntry> change)
     {
+        OnRolesChanged?.Invoke();
+
         if (change.Value.ClientId != NetworkManager.LocalClientId)
             return;
 

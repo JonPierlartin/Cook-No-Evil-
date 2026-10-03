@@ -75,7 +75,7 @@ public class SignalWheelUI : MonoBehaviour
     private static bool CanOpen()
     {
         // Tarif kitapçığı açıkken çark açılmaz (GDD 3.6.2: oyuncu kitaba kilitlidir).
-        return GameLoopManager.CanPlayersAct && !RecipeBookUI.IsOpen
+        return GameLoopManager.CanPlayersAct && !RecipeBookUI.IsOpen && !PauseMenuUI.IsOpen
             && EmoteSystem.Instance != null && RoleManager.Instance != null
             && EmoteSystem.Instance.CanRoleSignal(RoleManager.Instance.LocalRole);
     }

@@ -192,7 +192,7 @@ public class PlayerInteractor : NetworkBehaviour
             return;
 
         // Tarif kitapcigi acikken sol tik sayfa cevirir (RecipeBookUI); dunya etkilesimi tetiklenmez.
-        if (RecipeBookUI.IsOpen)
+        if (RecipeBookUI.IsOpen || PauseMenuUI.IsOpen)
             return;
 
         // Round aktif degilken (lobi) veya oyun durdurulmusken etkilesim yok. Bu yalnizca gereksiz bir RPC'yi
