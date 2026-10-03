@@ -208,10 +208,11 @@ public class GameLoopManager : NetworkBehaviour
         Debug.Log($"[GameLoopManager] Bölüm bitti: {(outcome == RoundOutcome.Won ? "KAZANILDI" : "KAYBEDİLDİ")} (hata {ErrorCount.Value}/{maxErrors}).");
     }
 
-    // Sunucu (host'un sonuç ekranı): bölümü TEMİZ yeniden başlatır. Önce herkes kendini temizler
-    // (ServerRoundResetting), sonra round yeniden başlar ve seviye yeniden çözülür. Sızıntı denetimi: temizlikten
-    // sonra ağda yalnızca sahneye yerleştirilmiş nesneler kalmalıdır.
-    public bool ServerRestartRound()
+    // Sunucu (host'un sonuç ekranı): bölüm bittikten sonra herkesi LOBİYE döndürür (oturum açık kalır; lobide rol
+    // ve bölüm seçilip yeniden başlatılır). Önce dünya temizlenir (ServerRoundResetting — herkes kendini temizler),
+    // sonra durum Lobby olur. Sızıntı denetimi: temizlikten sonra ağda yalnızca sahneye yerleştirilmiş nesneler
+    // kalmalıdır.
+    public bool ServerReturnToLobby()
     {
         if (!IsServer || CurrentRoundState.Value != RoundState.RoundEnded)
             return false;
@@ -228,11 +229,13 @@ public class GameLoopManager : NetworkBehaviour
         }
 
         if (dynamic == 0)
-            Debug.Log($"[GameLoopManager] Yeniden başlatma temizliği: ağ nesnesi {before} -> {after} (hepsi sahne nesnesi, sızıntı yok).");
+            Debug.Log($"[GameLoopManager] Lobiye dönüş temizliği: ağ nesnesi {before} -> {after} (hepsi sahne nesnesi, sızıntı yok).");
         else
-            Debug.LogError($"[GameLoopManager] Yeniden başlatma temizliğinde SIZINTI: ağ nesnesi {before} -> {after}, {dynamic} dinamik nesne kaldı.");
+            Debug.LogError($"[GameLoopManager] Lobiye dönüş temizliğinde SIZINTI: ağ nesnesi {before} -> {after}, {dynamic} dinamik nesne kaldı.");
 
-        return StartRound();
+        _isPaused.Value = false;
+        CurrentRoundState.Value = RoundState.Lobby;
+        return true;
     }
 
     // Lobby/RoundEnded'da pause anlamsiz/no-op (kullanici istegi) — RoundActive

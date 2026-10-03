@@ -27,16 +27,38 @@ public class LevelDirector : NetworkBehaviour
     private LevelConfig levelConfig =>
         CurrentLevelIndex.Value >= 0 && CurrentLevelIndex.Value < levels.Count ? levels[CurrentLevelIndex.Value] : null;
 
-    public bool HasNextLevel => CurrentLevelIndex.Value + 1 < levels.Count;
+    // Açılmış bölüm sayısı: oturum başında yalnızca ilk bölüm açıktır; bir bölüm kazanılınca sıradaki açılır.
+    // Oturum boyunca (host kapanana kadar) geçerlidir, diske yazılmaz. Yalnızca sunucu yazar.
+    public readonly NetworkVariable<int> UnlockedLevelCount =
+        new(1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    // Sunucu: bir sonraki seviyeyi seçer (round yeniden başlatılmadan ÖNCE çağrılır).
-    public bool ServerAdvanceLevel()
+    public int LevelCount => levels.Count;
+
+    // Sunucu (host'un lobi ekranı): oynanacak bölümü seçer. Yalnızca lobide ve yalnızca açılmış bölümler arasında.
+    public bool ServerSelectLevel(int index)
     {
-        if (!IsServer || !HasNextLevel)
+        if (!IsServer || GameLoopManager.Instance == null || GameLoopManager.Instance.CurrentRoundState.Value != RoundState.Lobby)
             return false;
 
-        CurrentLevelIndex.Value++;
+        if (index < 0 || index >= levels.Count || index >= UnlockedLevelCount.Value)
+            return false;
+
+        CurrentLevelIndex.Value = index;
         return true;
+    }
+
+    // Bölüm kazanıldı: sıradaki bölüm açılır (varsa).
+    private void HandleOutcomeChanged(RoundOutcome previous, RoundOutcome current)
+    {
+        if (!IsServer || current != RoundOutcome.Won)
+            return;
+
+        int unlocked = Mathf.Min(levels.Count, CurrentLevelIndex.Value + 2);
+        if (unlocked > UnlockedLevelCount.Value)
+        {
+            UnlockedLevelCount.Value = unlocked;
+            Debug.Log($"[LevelDirector] Bölüm {CurrentLevelIndex.Value + 1} kazanıldı; açık bölüm sayısı {unlocked}/{levels.Count}.");
+        }
     }
 
     public readonly NetworkList<SignalRow> SignalRows = new();
@@ -105,7 +127,10 @@ public class LevelDirector : NetworkBehaviour
     {
         // Singleton'lara Awake'te erişilmez (CLAUDE.md NGO notu).
         if (GameLoopManager.Instance != null)
+        {
             GameLoopManager.Instance.CurrentRoundState.OnValueChanged += HandleRoundStateChanged;
+            GameLoopManager.Instance.Outcome.OnValueChanged += HandleOutcomeChanged;
+        }
         else
             Debug.LogError("[LevelDirector] GameLoopManager.Instance bulunamadı.");
     }
@@ -119,13 +144,17 @@ public class LevelDirector : NetworkBehaviour
             OpenVariantIndices.Clear();
             Current = null;
             CurrentLevelIndex.Value = 0;
+            UnlockedLevelCount.Value = 1;
         }
     }
 
     public override void OnDestroy()
     {
         if (GameLoopManager.Instance != null)
+        {
             GameLoopManager.Instance.CurrentRoundState.OnValueChanged -= HandleRoundStateChanged;
+            GameLoopManager.Instance.Outcome.OnValueChanged -= HandleOutcomeChanged;
+        }
 
         if (Instance == this)
             Instance = null;

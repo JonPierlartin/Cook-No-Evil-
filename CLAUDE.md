@@ -644,7 +644,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 103 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 104 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -806,7 +806,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 - **Bölüm sonu (Adım 25, 3 Eki 2026):**
   - `GameLoopManager`: `maxErrors` (3; **kaybetme eşiğinin ve paneldeki X sayısının tek yeri**), `Outcome`
     (`RoundOutcome` None/Won/Lost, replike), `ServerEndRound(outcome)` (yalnızca RoundActive'de; ilk sonuç kalır),
-    `ServerRestartRound()` ve `ServerRoundResetting` olayı. Kayıp: `ServerAddError` eşiğe ulaşınca. Kazanç:
+    `ServerReturnToLobby()` ve `ServerRoundResetting` olayı. Kayıp: `ServerAddError` eşiğe ulaşınca. Kazanç:
     `CustomerDirector` tüm müşteriler bitince `ServerEndRound(Won)` çağırır. Round timer yok (K1).
   - **Temiz yeniden başlatma olayla yapılır; GameLoopManager kimseyi tanımaz.** `ServerRoundResetting` dinleyenler:
     `RoundCleanup` (GameSystems; `ItemMover.DespawnAll` — elde, yuvada, pakette tüm öğeler), `PlayerSpawner`
@@ -817,8 +817,11 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - `LevelDirector.levels` (sıralı liste; eski tekil `levelConfig` alanının yerine) + `CurrentLevelIndex` (replike;
     oturum başında 0) + `HasNextLevel` / `ServerAdvanceLevel()`. `Config` aktif dizindeki seviyedir; varyant dizini
     seviyeye göre yeniden kurulur. Sahnede: `Seviye1_Taslak`, `Seviye2_Taslak` (1'in kopyası, müşteri +1).
-  - `RoundResultUI` (GameplayCanvas/`RoundResult`): üç oyuncuda sonuç; düğmeler yalnızca host'ta ("Sonraki seviye"
-    kazanıldıysa ve `HasNextLevel` ise). Metinler Inspector'da düz metin (Localization borcu).
+  - **Bölüm sonu → lobi → bölüm seçimi (4 Eki, Ersel):** `RoundResultUI`'da host'un tek düğmesi "Lobiye dön" →
+    `GameLoopManager.ServerReturnToLobby()` (temizlik + `Lobby`; oturum açık kalır). Lobide host bölümü
+    `<` / `>` düğmeleri ya da sol/sağ ok tuşlarıyla seçer (`LevelDirector.ServerSelectLevel`; yalnızca lobide ve
+    yalnızca açık bölümler). `UnlockedLevelCount` (replike): oturum başında 1; bir bölüm kazanılınca sıradaki açılır.
+    **Oturumluktur, diske yazılmaz.** "Tekrar oyna" / "Sonraki seviye" düğmeleri kalktı. Metinler düz metin.
   - `LobbyUIController`: RoundEnded'da lobi paneli açılmaz, oyun arayüzü açık kalır, **imleç serbest**.
     `PlayerController` RoundEnded'da hareket/bakış işlemez.
   - `HataPaneli` prefab'ı ×3: `HataPaneli_Kasa` / `_Istasyon` (pano üstü, x=6,22) / `_Mutfak` (x=3,2), y=2,85.
@@ -860,6 +863,18 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     başarısızsa önce portu kimin tuttuğuna bakılır.
   - Kese kağıdı modelleri: `NewAssets/PaperBags/SM_PaperBag_{Fold,Open,Closed}` → `KeseKagidi_Visual`'da 0,7 ölçekli,
     geniş yüzü −Z'ye (fotoğraf yüzü) bakacak şekilde 90° çevrili; materyal yer tutucu (FBX'te materyal yok).
+- **Karakter modelleri (4 Eki 2026):** `PlayerCharacterVisual` (Player kökü): rol → model eşleşmesi Inspector'da
+  (Şef `Karakter_Hamburger`, Komi `Karakter_Ketcap`, Kasiyer `Karakter_Kasa`; `Assets/Prefabs/Characters/`). Model
+  her istemcide replike rolden yerel kurulur, `Visual` altına ayak hizasında; yer tutucu kapsül kapanır. **Sahibi
+  kendi modelini görmez** (ShadowsOnly). Kaynak: `NewAssets/Characters/*.fbx` — karakterler FBX içinde dağınık
+  konumlarda ve **−Z'ye bakıyor**; prefab'da `Model` çocuğu ortalanıp 180° çevrildi (kök ayakta, ön +Z).
+  - **Yürüme animasyonu yalnızca Ketçap'ta var.** FBX, nesne × aksiyon matrisi olarak 35 klip veriyor; doğrusu her
+    nesnenin KENDİ aksiyonu (`X|XAction`) — beşi `Assets/Animations/Ketcap_Yuruyus.anim`'de birleştirildi (döngülü,
+    yerinde). `Ketcap.controller`: Idle ↔ Walk, `Moving` (bool). Parametre karakterin yataydaki gerçek hızından
+    sürülür (yumuşatılmış; uzak oyuncuda NetworkTransform konumundan) — animasyon için ağ verisi yok.
+    Hamburger ve Kasa'nın animasyonu/iskeleti yok (statik).
+  - `PlayerEmoteReactor`'ın renk parlaması yer tutucu kapsüle yazıyor (artık görünmez); zıplama/eğilme modele de
+    uygulanır. Üçüncü şahıs tutma noktası (z 0,55) Hamburger'in yarıçapının (0,6) içinde kalıyor — ayarlanacak.
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

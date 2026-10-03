@@ -44,6 +44,15 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private Text rosterText;
     [SerializeField] private Color roleNormalColor = Color.white;
     [SerializeField] private Color roleSelectedColor = new(0.55f, 0.9f, 0.55f);
+    [Header("Bölüm seçimi")]
+    [Tooltip("Seçili bölümü gösteren yazı (herkes görür).")]
+    [SerializeField] private Text levelText;
+    [Tooltip("Önceki / sonraki bölüm düğmeleri (yalnızca host). Klavyede sol / sağ ok aynı işi yapar.")]
+    [SerializeField] private Button previousLevelButton;
+    [SerializeField] private Button nextLevelButton;
+    [SerializeField] private string levelFormat = "Bölüm {0} / {1}";
+    [SerializeField] private string levelLockedSuffix = "   (açık bölüm: {0})";
+
     [Header("Metinler (Localization tablosuna bağlanana kadar düz metin)")]
     [SerializeField] private string rosterLineFormat = "Oyuncu {0}: {1}{2}";
     [SerializeField] private string rosterSelfSuffix = "  (sen)";
@@ -72,8 +81,68 @@ public class LobbyUIController : MonoBehaviour
             roleButtons[i].onClick.AddListener(() => HandleRoleClicked(role));
         }
 
+        if (previousLevelButton != null)
+            previousLevelButton.onClick.AddListener(() => ChangeLevel(-1));
+        if (nextLevelButton != null)
+            nextLevelButton.onClick.AddListener(() => ChangeLevel(1));
+
         if (rolePanel != null)
             rolePanel.SetActive(false);
+    }
+
+    // Bölüm seçimi yalnızca host'tadır (host = sunucu; doğrudan sunucu işlemini çağırır). Kilitli bölüme geçilmez —
+    // asıl kontrol LevelDirector.ServerSelectLevel'dadır.
+    private void ChangeLevel(int direction)
+    {
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network == null || !network.IsServer || LevelDirector.Instance == null)
+            return;
+
+        LevelDirector.Instance.ServerSelectLevel(LevelDirector.Instance.CurrentLevelIndex.Value + direction);
+    }
+
+    private void Update()
+    {
+        if (rolePanel == null || !rolePanel.activeInHierarchy)
+            return;
+
+        // Replike bölüm bilgisi her istemcide güncel gösterilir.
+        RefreshLevelSelector();
+
+        var keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard == null)
+            return;
+
+        if (keyboard.rightArrowKey.wasPressedThisFrame)
+            ChangeLevel(1);
+        else if (keyboard.leftArrowKey.wasPressedThisFrame)
+            ChangeLevel(-1);
+    }
+
+    private void RefreshLevelSelector()
+    {
+        var director = LevelDirector.Instance;
+        if (director == null || levelText == null)
+            return;
+
+        int index = director.CurrentLevelIndex.Value;
+        int unlocked = director.UnlockedLevelCount.Value;
+        levelText.text = string.Format(levelFormat, index + 1, director.LevelCount)
+            + (unlocked < director.LevelCount ? string.Format(levelLockedSuffix, unlocked) : "");
+
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        bool isHost = network != null && network.IsServer;
+        if (previousLevelButton != null)
+        {
+            previousLevelButton.gameObject.SetActive(isHost);
+            previousLevelButton.interactable = index > 0;
+        }
+
+        if (nextLevelButton != null)
+        {
+            nextLevelButton.gameObject.SetActive(isHost);
+            nextLevelButton.interactable = index + 1 < unlocked;
+        }
     }
 
     private void Start()
@@ -275,6 +344,16 @@ public class LobbyUIController : MonoBehaviour
         {
             startGameButton.gameObject.SetActive(false);
             inviteButton.gameObject.SetActive(false);
+        }
+
+        // Sonuç ekranından lobiye dönüş (oturum açık): host'un düğmeleri geri gelir.
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (current == RoundState.Lobby && previous != RoundState.Lobby && network != null && network.IsListening)
+        {
+            hostButton.gameObject.SetActive(false);
+            leaveButton.gameObject.SetActive(true);
+            startGameButton.gameObject.SetActive(network.IsServer);
+            inviteButton.gameObject.SetActive(SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.IsHost);
         }
 
         RefreshStatusText();

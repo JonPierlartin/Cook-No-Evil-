@@ -207,6 +207,7 @@ GameObject:
   - component: {fileID: 7100000000000000005}
   - component: {fileID: 7100000000000000006}
   - component: {fileID: 9000799983818460152}
+  - component: {fileID: 37509965985435541}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -629,3 +630,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 809440094147439709}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &37509965985435541
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4359626687582447755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baff60b4a1ac391489bd1e2d871a228a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterVisual
+  ShowTopMostFoldoutHeaderGroup: 1
+  models:
+  - role: 3
+    prefab: {fileID: 7283977927493308109, guid: 31d498c57a058ed4888de116abcfc805, type: 3}
+  - role: 2
+    prefab: {fileID: 7194873630545591713, guid: feac00d5fb1e83d43a656ffe65301b96, type: 3}
+  - role: 1
+    prefab: {fileID: 4658194249758719795, guid: e68912e78185da34eb761910151fdde1, type: 3}
+  visualRoot: {fileID: 809440094147439709}
+  placeholderBody: {fileID: 8939325543183038944}
+  feetLocalPosition: {x: 0, y: -1.08, z: 0}
+  movingParameter: Moving
+  movingSpeedThreshold: 0.15

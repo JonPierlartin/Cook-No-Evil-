@@ -3,16 +3,16 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Bölüm sonu ekranı (GDD 3.4): round bitince üç oyuncuda da sonuç yazar. Yalnızca gösterir; sonuç sunucudadır
-// (GameLoopManager.Outcome, replike). Düğmeler yalnızca host'ta görünür ve doğrudan sunucu işlemlerini çağırır
-// (host = sunucu): "Tekrar oyna" aynı seviyeyi, "Sonraki seviye" (kazanıldıysa ve son seviye değilse) sıradaki
-// seviyeyi temiz yeniden başlatır.
+// (GameLoopManager.Outcome, replike). Tek düğme yalnızca host'ta görünür: herkesi lobiye döndürür (host = sunucu,
+// doğrudan sunucu işlemini çağırır). Lobide rol ve bölüm seçilip yeniden başlatılır.
 public class RoundResultUI : MonoBehaviour
 {
     [Tooltip("Sonuç ekranının kökü; round bitmeden kapalıdır.")]
     [SerializeField] private GameObject panel;
     [SerializeField] private Text title;
-    [SerializeField] private Button replayButton;
-    [SerializeField] private Button nextLevelButton;
+    [Tooltip("Host'un 'Lobiye dön' düğmesi.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("replayButton")]
+    [SerializeField] private Button lobbyButton;
     [Tooltip("Host olmayan oyunculara gösterilen bekleme yazısı.")]
     [SerializeField] private GameObject waitingForHost;
 
@@ -23,8 +23,7 @@ public class RoundResultUI : MonoBehaviour
     private void Start()
     {
         panel.SetActive(false);
-        replayButton.onClick.AddListener(HandleReplayClicked);
-        nextLevelButton.onClick.AddListener(HandleNextLevelClicked);
+        lobbyButton.onClick.AddListener(HandleLobbyClicked);
     }
 
     private void Update()
@@ -37,26 +36,16 @@ public class RoundResultUI : MonoBehaviour
         if (!ended)
             return;
 
-        bool won = loop.Outcome.Value == RoundOutcome.Won;
-        title.text = won ? wonText : lostText;
+        title.text = loop.Outcome.Value == RoundOutcome.Won ? wonText : lostText;
 
         bool isHost = NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer;
-        bool hasNext = LevelDirector.Instance != null && LevelDirector.Instance.HasNextLevel;
-        replayButton.gameObject.SetActive(isHost);
-        nextLevelButton.gameObject.SetActive(isHost && won && hasNext);
+        lobbyButton.gameObject.SetActive(isHost);
         waitingForHost.SetActive(!isHost);
     }
 
-    private void HandleReplayClicked()
+    private void HandleLobbyClicked()
     {
         if (GameLoopManager.Instance != null)
-            GameLoopManager.Instance.ServerRestartRound();
-    }
-
-    private void HandleNextLevelClicked()
-    {
-        // Sıra: önce seviye seçilir, sonra round yeniden başlar (seviye round başında çözülür).
-        if (LevelDirector.Instance != null && LevelDirector.Instance.ServerAdvanceLevel() && GameLoopManager.Instance != null)
-            GameLoopManager.Instance.ServerRestartRound();
+            GameLoopManager.Instance.ServerReturnToLobby();
     }
 }
