@@ -637,7 +637,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 89 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 93 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -754,6 +754,29 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - Varyant görselleri `IconGenerator` ile üretildi (`Assets/Data/Icons/Varyant_*.png`). **İnce malzemeler ekmeğin
     altında neredeyse görünmüyor; iki taslak varyant birbirine çok benziyor** — varyantları ayırt edilebilir kılmak
     (açı, patlatılmış görünüm ya da artist çizimi) içerik işi.
+- **Paketleme (Adım 23, 3 Eki 2026):**
+  - `KeseKagidi` türü (id 11) + `KeseKagidi_Item` (NetworkObject + `Item` + `Package`) + `KeseKagidi_Visual`
+    (`PackageVisualParts`: Katlı / Açık / Kapalı + fotoğraf Canvas'ı). Kap: `Kap_KeseKagidi` (Komi).
+  - **İçerik = paketin çocuğu olan `Item`'lar** (ayrı ağ alanı yok): `ItemMover.PackInto` ürünü pakete
+    `TrySetParent` eder, `Presence = Contained` (yeni değer; dünya görseli kapalı). Ürün kendi durumunu
+    (katmanlar, faz) taşır. Paketten geri alma yok. Paket N öğe alır, hamburgere özel değil.
+  - `PackingArea : ItemSlot` (`PaketlemeAlani_1-2`, İstasyon masasındaki iki tepsi): kağıdı koy/al normal yuva
+    kuralı; alanda paket varken elinde `packableTypes`'tan (Hamburger) bir ürün olan tıklarsa ürün pakete girer.
+    `ItemSlot.TryEvaluate` ve `HandleInteractionCompleted` bunun için `protected virtual`. Faz 0: pişmişlik
+    engeli **yok** (çiğ köfteli hamburger de girer).
+  - Paketin hâli yerel türetilir: ebeveyni `PackingArea` → açık; değilse içi doluysa kapalı, boşsa katlı
+    (`OnTransformParentChanged` / `OnTransformChildrenChanged`, sunucu ve istemcide aynı).
+  - **`ItemMover.Despawn` içindeki öğeleri önce, açıkça despawn eder** ve spawn edilmiş öğe sayısını öncesi/sonrası
+    karşılaştırıp loglar (sızıntıda `LogError`). Çöp ve gelecekteki teslim aynı yoldan geçer.
+  - **Paket fotoğrafı:** `PackagePhoto` (saf) — paketin gerçek içeriğinden; **sipariş verisi okunmaz.** Hamburgerin
+    malzemeleri (ekmek hariç) `LevelConfig.CollectVariants()` ile karşılaştırılır: tam uyum → varyant görseli; alt
+    küme → görsel + eksiklerin X'i (en az eksikli varyant); uymuyorsa → görsel yok, malzeme ikonları. Pişmişlik
+    gösterilmez. **Bilinen belirsizlik:** aynı sayıda eksikle iki varyanta uyan içerik (taslak veride "Köfte +
+    Peynir") listedeki ilk varyant olarak çizilir; `Entry.Ambiguous` işaretlenir. Varyantlar tasarlanırken dikkat.
+  - Fotoğraf bir Canvas'tır (Renderer değil), `Item.Presence` onu gizlemez: `Package` taşınırken dünya görselinin
+    kökünü kapatır. Fotoğraf paketin −Z yüzündedir (yuvada güneyden bakan görür; elde kameraya bakar).
+  - Kasa penceresi (`KasaPencere_Yuva_1-3`): yalnızca `KeseKagidi`; koyma Komi, alma Komi + Kasiyer. Yuva sayısı =
+    sahnedeki yuva nesnesi sayısı (sahne içi ağ nesneleri; sayaçla üretilmiyor).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

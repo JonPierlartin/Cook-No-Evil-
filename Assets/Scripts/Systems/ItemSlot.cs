@@ -75,7 +75,8 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
         return TryEvaluate(context, out _, out _, out reason);
     }
 
-    private bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out Item occupant, out string reason)
+    // Türeyen yuvalar (PackingArea) ek etkileşim ekleyebilir; kural yine tek sorgudan geçer.
+    protected virtual bool TryEvaluate(InteractionContext context, out PlayerInventory inventory, out Item occupant, out string reason)
     {
         inventory = null;
         occupant = null;
@@ -131,7 +132,7 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
         return true;
     }
 
-    private void HandleInteractionCompleted(InteractionContext context)
+    protected virtual void HandleInteractionCompleted(InteractionContext context)
     {
         if (!IsServer)
             return;
@@ -146,6 +147,12 @@ public class ItemSlot : NetworkBehaviour, IInteractionGate
             ItemMover.TakeFromSlot(this, inventory, context.SlotIndex);
         else
             ItemMover.PlaceInSlot(this, inventory, context.SlotIndex);
+    }
+
+    protected bool CanRolePlace(ulong clientId)
+    {
+        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(clientId) : PlayerRole.None;
+        return IsRoleIn(placeRoles, role);
     }
 
     // Bos liste = herkes.

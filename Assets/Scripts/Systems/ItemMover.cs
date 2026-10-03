@@ -44,7 +44,54 @@ public static class ItemMover
     }
 
     // Ogeyi ag uzerinden yok eder. Cagirmadan once oge yuvalardan (slot vb.) cikarilmis olmali.
+    // Icinde baska ogeler varsa (paket) ONCE onlar acikca despawn edilir: ebeveyni despawn edilen ag nesnesinin
+    // cocuklarina guvenilmez (sahipsiz kalabilirler). Sizinti denetimi: islemden once/sonra spawn edilmis oge sayisi.
     public static bool Despawn(Item item)
+    {
+        if (item != null && item.transform.childCount > 0)
+        {
+            var contents = new System.Collections.Generic.List<Item>();
+            foreach (var child in item.GetComponentsInChildren<Item>(true))
+            {
+                if (child != item)
+                    contents.Add(child);
+            }
+
+            if (contents.Count > 0)
+            {
+                int before = CountSpawnedItems();
+                // Icteki ogeler once (en derindeki en once): GetComponentsInChildren ebeveynden cocuga siralar.
+                for (int i = contents.Count - 1; i >= 0; i--)
+                    DespawnSingle(contents[i]);
+
+                bool result = DespawnSingle(item);
+                int after = CountSpawnedItems();
+                int expected = before - contents.Count - 1;
+                if (after == expected)
+                    Debug.Log($"[ItemMover] '{item.name}' icindeki {contents.Count} oge ile birlikte yok edildi (oge sayisi {before} -> {after}, sizinti yok).");
+                else
+                    Debug.LogError($"[ItemMover] '{item.name}' yok edilirken SIZINTI: oge sayisi {before} -> {after}, beklenen {expected}.");
+
+                return result;
+            }
+        }
+
+        return DespawnSingle(item);
+    }
+
+    private static int CountSpawnedItems()
+    {
+        int count = 0;
+        foreach (var networkObject in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
+        {
+            if (networkObject != null && networkObject.TryGetComponent<Item>(out _))
+                count++;
+        }
+
+        return count;
+    }
+
+    private static bool DespawnSingle(Item item)
     {
         if (!IsServerRunning("Despawn"))
             return false;
@@ -164,6 +211,45 @@ public static class ItemMover
             return false;
         }
 
+        return true;
+    }
+
+    // Etkilesim baglamindaki (slotIndex) slottaki urunu paketin ICINE koyar (GDD 5.3.1): slottan al -> pakete
+    // TrySetParent -> Presence = Contained. Urun yok edilmez; paketin cocugu olarak kendi durumunu (katmanlar,
+    // faz) tasir. Kural denetimi PackingArea'nin gate'indedir. Basarisizlikta urun AYNI slota geri konur.
+    public static bool PackInto(Package package, PlayerInventory inventory, int slotIndex)
+    {
+        if (!IsServerRunning("PackInto"))
+            return false;
+
+        if (package == null || inventory == null)
+        {
+            Debug.LogError("[ItemMover] PackInto: paket veya envanter null.");
+            return false;
+        }
+
+        if (!inventory.ServerTryTakeItemAt(slotIndex, out var item))
+        {
+            Debug.LogError($"[ItemMover] '{package.name}': baglam slotunda (index {slotIndex}) urun yok.", package);
+            return false;
+        }
+
+        item.transform.SetPositionAndRotation(package.transform.position, package.transform.rotation);
+        if (!TryAttach(item, package.NetworkObject))
+        {
+            Debug.LogError($"[ItemMover] '{item.name}' '{package.name}' paketine konamadi; urun {slotIndex}. slota geri konuyor.", package);
+            item.Presence.Value = ItemPresence.Carried;
+
+            if (!inventory.ServerTrySetItemAt(slotIndex, item))
+            {
+                Debug.LogError($"[ItemMover] '{item.name}' {slotIndex}. slota geri konamadi; sahipsiz kalmamasi icin despawn ediliyor.", package);
+                Despawn(item);
+            }
+
+            return false;
+        }
+
+        item.Presence.Value = ItemPresence.Contained;
         return true;
     }
 
