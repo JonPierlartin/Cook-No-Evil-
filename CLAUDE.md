@@ -843,7 +843,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     liste değişince tetiklenir.
   - `LobbyUIController`: `RolSecimi` paneli (üç rol düğmesi + oyuncu listesi), yalnızca lobide ve bağlıyken; "Başlat"
     roller hazır değilken kapalı. Yeni metinler Inspector'da düz metin (Localization borcu).
-  - `PauseMenuUI` (GameplayCanvas/`PauseMenu`): ESC ile açılır/kapanır, **yereldir, oyunu durdurmaz** (K9). Açıkken
+  - `PauseMenuUI` (GameplayCanvas/`PauseMenu`): ESC ile açılır/kapanır, **yereldir, oyunu durdurmaz** (K9). **Sonuç ekranında (RoundEnded) açılmaz.** Açıkken
     yalnızca yerel bakış/hareket/tıklama/çarklar durur. "Lobiye dön" → `LobbyUIController.LeaveToInitialScreen()`
     (oturumdan ayrıl, ilk ekran). ESC önceliği: kitap açıksa (ya da aynı karede kapandıysa —
     `RecipeBookUI.LastCloseFrame`) ESC kitabındır. **İstemci round sırasında ayrılırsa** bu bir kopmadır: diğerlerinde

@@ -33,6 +33,20 @@ public class PauseMenuUI : MonoBehaviour
 
     private void Update()
     {
+        // Sonuç ekranında ESC menüsü çalışmaz (Ersel, 3 Eki): orada tek akış host'un seçimidir. Açıkken bölüm
+        // biterse menü kapanır.
+        bool resultScreen = GameLoopManager.Instance != null && GameLoopManager.Instance.CurrentRoundState.Value == RoundState.RoundEnded;
+        if (resultScreen)
+        {
+            if (IsOpen)
+            {
+                IsOpen = false;
+                panel.SetActive(false);
+            }
+
+            return;
+        }
+
         var keyboard = Keyboard.current;
         if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
         {
