@@ -133,6 +133,7 @@ Sınırı" bölümünde. Burada yalnızca 18 Eylül'de yapılan kapsam değişik
 | 13a+13b | Veri odaklı sinyal çarkı `R` + sinyal yayını (`09f733c`); cooldown ve rol kısıtları kalktı, etkileşim jesti iptal ediyor (PLAN 12 de burada kapandı). Genel `E` çarkı (14) açık | ✅ kod; oyun testi bekliyor |
 | 15 | Duvar malzeme panosu (İstasyon + Kasa, replike eşleşmeden) + ikon üretici editör aracı; çarkta yön değerleri kendi yönünde | ✅ kod; oyun testi bekliyor |
 | 15b | Pano yeniden düzenlendi (kod yazmaz, yerleşim anlatır; resim + ad) · Tavuk/Balık/Veji türleri (yalnızca pano; alınamaz) · hotbar görünümü | ✅ kod; oyun testi bekliyor |
+| 17a | Müşteri akışı (çözümlenmiş seviyeden), sipariş alma, sabır + çark (yalnızca Kasiyer), hata sayacı, bölüm sonu altyapısı | ✅ kod; oyun testi bekliyor |
 
 **Envanter tahmini (21 Eyl, 4.0 raporu):** Claude Code'un tahmini 11-14 sa + ~2 sa test; danışman 5-6 sa demişti. Raporun 4.3'ü (test amaçlı köfte yuvası + kullanıcısız `BurgerAssembly` iskeleti) **kaldırıldı**: `ServerProgress` ve kategori değerleri ızgara adımına, `BurgerAssembly` birleştirme adımına (Adım 6) taşındı. Kalan envanter işi ~8-10 sa. `ServerProgress` zaten ızgaranın 6 saatinin içindeydi.
 

@@ -25,6 +25,9 @@ public class LevelDirector : NetworkBehaviour
 
     public LevelConfig Config => levelConfig;
 
+    // Yalnızca sunucuda: seviye çözüldü (round başı). Müşteri akışı gibi sunucu tüketicileri buradan başlar.
+    public event System.Action<ResolvedLevel> ServerLevelResolved;
+
     private void Awake()
     {
         Instance = this;
@@ -79,6 +82,7 @@ public class LevelDirector : NetworkBehaviour
             SignalRows.Add(row);
 
         Debug.Log(Current.Describe(levelConfig.name));
+        ServerLevelResolved?.Invoke(Current);
     }
 
     // Çözülmüş kanal eşleşmelerinden replike satırları üretir. Saf: Edit modunda da çağrılabilir.

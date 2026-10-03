@@ -51,6 +51,11 @@ public class GameLoopManager : NetworkBehaviour
     private readonly NetworkVariable<bool> _isPaused =
         new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    // Bölümün hata sayacı (GDD 3.4: 3 Hata'da seviye kaybedilir). TEK kayıt: sabır hatası, geç ve yanlış teslim
+    // buraya yazar. Yalnızca sunucu yazar; duvar göstergesi ve kaybetme kararı ayrı adımlarda bunu okur.
+    public readonly NetworkVariable<int> ErrorCount =
+        new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     public bool IsRoundActive => CurrentRoundState.Value == RoundState.RoundActive;
 
     // Tum eski "GameLoopManager.Instance.IsGamePaused.Value" cagri yerleri artik bu
@@ -89,6 +94,7 @@ public class GameLoopManager : NetworkBehaviour
             // notu) bir onceki hosting oturumundan kalma durum burada acikca sifirlanir.
             CurrentRoundState.Value = RoundState.Lobby;
             _isPaused.Value = false;
+            ErrorCount.Value = 0;
         }
 
         _pausedSeconds = 0f;
@@ -151,9 +157,20 @@ public class GameLoopManager : NetworkBehaviour
             return false;
         }
 
+        ErrorCount.Value = 0;
         CurrentRoundState.Value = RoundState.RoundActive;
         _isPaused.Value = false;
         return true;
+    }
+
+    // Sunucu: bölüme 1 Hata yazar. Sebep yalnızca log içindir.
+    public void ServerAddError(string reason)
+    {
+        if (!IsServer || !IsRoundActive)
+            return;
+
+        ErrorCount.Value++;
+        Debug.LogWarning($"[GameLoopManager] 1 HATA: {reason}. Toplam hata: {ErrorCount.Value}.");
     }
 
     // Lobby/RoundEnded'da pause anlamsiz/no-op (kullanici istegi) — RoundActive

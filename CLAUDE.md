@@ -637,7 +637,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 82 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 86 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -713,6 +713,28 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   `MalzemePanosu_Istasyon` (duvarın kuzey yüzü, z=−3,58) ve `MalzemePanosu_Kasa` (güney yüzü, z=−3,88), ikisi de
   x=6,22 / y=1,95, 1,7×1,0 m — pencerenin (x 7,3–9,0) batısında. Kökün +Z'si duvarın içine bakar. Pano Şef'in
   görüşünde yalnızca gövde konturu olarak görünür (UI derinliğe yazmaz).
+- **Müşteri akışı (Adım 17a, 3 Eki 2026):**
+  - `Customer` (`Assets/Prefabs/Musteri.prefab`; ağ prefab listesinde): sunucu sahipli ağ nesnesi, kökü ayakta
+    (zemin y=0,30), `NetworkTransform` sunucu otoriteli. `State` (Arriving / WaitingToOrder / Ordered / Leaving),
+    `PatienceRemaining`, `PatienceTotal` replike; yalnızca sunucu yazar. Sipariş (`ResolvedLevel.Order`) sunucuda
+    müşterinin üstünde. Sipariş alma = mevcut etkileşim (gate: rol `orderTakerRoles` + durum WaitingToOrder).
+    Sabır, müşteri sipariş yerine **vardığında** başlar; duraklatmada sayaç ve yürüyüş durur.
+  - `CustomerDirector` (sahne: `MusteriYonetimi`; ağ durumu yok, yalnızca sunucuda çalışır):
+    `LevelDirector.ServerLevelResolved` ile başlar. Müşteri sayısı, aralık (× `intervalCurve`), sabır, yedek havuz
+    `ResolvedLevel`'den. **Eşzamanlı sınır `maxConcurrentCustomers` (3) — tek yer.** İlk müşteri hazırlık fazı
+    biter bitmez gelir; aralık sonraki müşterilere uygulanır ve bir öncekinin **gelişinden** sayılır. Yedek, sabır
+    hatasında yer olur olmaz gelir. Yer, müşteri ayrılmaya **başladığı** anda açılır. Teslim adımı
+    `ServerCustomerServed(customer)` çağırır. `AllCustomersFinished` / `ServerAllCustomersFinished` bölüm sonu
+    altyapısıdır (kazan/kaybet kararı yok).
+  - Haritada ayrı sipariş/teslim penceresi yok, tek `PF_DeliveryCounter` (açıklık x 0…3,75, z −7,6…−6,7, üst y 1,4):
+    doğu ucu sipariş (`SiparisYeri_1-3`, x 2,3/2,9/3,5), batısı teslim (`TeslimYeri_1-3`, x 0,3/0,9/1,5), hepsi
+    z=−7,95; `Giris` (12, −9,5). **Sipariş bekleyenler de yan yana** (kuyruk olursa arkadakinin sabrı işlerken
+    siparişi alınamaz) — GDD'de yazmıyor, Ersel'e soruldu.
+  - `GameLoopManager.ErrorCount` (replike) + `ServerAddError(reason)`: bölümün **tek** hata sayacı; round başında
+    sıfırlanır. 3 Hata kararı ve duvar göstergesi ayrı adımda.
+  - `CustomerPatienceDisplay`: sabır çarkı; "kim görür" kuralının tek yeri (`visibleToRoles`, Kasiyer). Çark
+    müşterinin arkasına (kuzeye) bakar, billboard değil. `CustomerVisual`: duruma göre gövde rengi (yer tutucu).
+  - Müşterinin collider'ı var (tıklanır); müşteri alanında oyuncu yok, hareket düz çizgi (engel bilmez).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.
