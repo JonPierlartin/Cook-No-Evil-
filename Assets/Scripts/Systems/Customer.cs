@@ -15,9 +15,11 @@ public enum CustomerState : byte
 }
 
 // Müşteri (GDD 3.4.2, 3.4.4, 3.6.1): sunucu sahipli ağ nesnesi. Durumu, sabır sayacını ve hareketini YALNIZCA sunucu
-// işletir (K6); istemciler replike durumu gösterir (CustomerVisual, CustomerPatienceDisplay). Nereye gideceğine ve
+// işletir (K6); istemciler replike durumu gösterir (CustomerVisual, CustomerTimerDisplay). Nereye gideceğine ve
 // ne zaman geleceğine CustomerDirector karar verir; müşteri kendi sabrını sayar ve siparişinin alınmasını yönetir.
-// Siparişin içeriği (çözümlenmiş slot) sunucuda müşterinin üstünde tutulur; pop-up ve sipariş süresi sonraki adımda.
+// Siparişin içeriği (çözümlenmiş slot) sunucuda müşterinin üstünde tutulur; pop-up için gereken kısmı (varyant +
+// eksik malzemeler) replike edilir. İki ayrı sayaç (GDD 3.4.4): sabır (sipariş alınana kadar) ve sipariş süresi
+// (alındıktan teslimata kadar) — ikisini de sunucu işletir.
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(HoldOrPressInteractable))]
 public class Customer : NetworkBehaviour, IInteractionGate
@@ -35,6 +37,18 @@ public class Customer : NetworkBehaviour, IInteractionGate
     public readonly NetworkVariable<float> PatienceTotal =
         new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    // Sipariş süresi (GDD 3.4.1): sipariş alınınca başlar. Yalnızca sunucu yazar.
+    public readonly NetworkVariable<float> OrderTimeRemaining =
+        new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public readonly NetworkVariable<float> OrderTimeTotal =
+        new(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    // Pop-up içeriği (GDD 3.6.1): varyantın dizini (LevelDirector.TryGetVariant; -1 = hamburger yok) ve istenmeyen
+    // malzemelerin tür id'leri. Yalnızca sunucu yazar.
+    public readonly NetworkVariable<int> OrderVariantIndex =
+        new(-1, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public readonly NetworkList<int> OrderMissingItemIds = new();
+
     // Yalnızca sunucuda dolu.
     public ResolvedLevel.Order Order { get; private set; }
     public bool IsBackup { get; private set; }
@@ -43,6 +57,7 @@ public class Customer : NetworkBehaviour, IInteractionGate
     // Sunucu olayları (CustomerDirector dinler). Parametre: bu müşteri (+ siparişi alan client).
     public event Action<Customer, ulong> ServerOrderTaken;
     public event Action<Customer> ServerPatienceExpired;
+    public event Action<Customer> ServerOrderTimeExpired;
 
     private HoldOrPressInteractable _interactable;
     private Vector3 _target;
@@ -74,6 +89,18 @@ public class Customer : NetworkBehaviour, IInteractionGate
         State.Value = CustomerState.Arriving;
         PatienceTotal.Value = order.Patience;
         PatienceRemaining.Value = order.Patience;
+
+        OrderVariantIndex.Value = LevelDirector.Instance != null ? LevelDirector.Instance.GetVariantIndex(order.Variant) : -1;
+        OrderMissingItemIds.Clear();
+        foreach (var missing in order.Missing)
+            OrderMissingItemIds.Add(missing.Id);
+    }
+
+    // Sipariş alındı: sipariş süresi başlar (süreyi yönetici hesaplar — OrderTimeCalculator).
+    public void ServerStartOrderTimer(float seconds)
+    {
+        OrderTimeTotal.Value = seconds;
+        OrderTimeRemaining.Value = seconds;
     }
 
     public void ServerMoveTo(Vector3 position, Quaternion rotation, Action<Customer> onArrived)
@@ -98,12 +125,18 @@ public class Customer : NetworkBehaviour, IInteractionGate
         if (_moving)
             Move();
 
-        if (State.Value != CustomerState.WaitingToOrder)
-            return;
-
-        PatienceRemaining.Value = Mathf.Max(0f, PatienceRemaining.Value - Time.deltaTime);
-        if (PatienceRemaining.Value <= 0f)
-            ServerPatienceExpired?.Invoke(this);
+        if (State.Value == CustomerState.WaitingToOrder)
+        {
+            PatienceRemaining.Value = Mathf.Max(0f, PatienceRemaining.Value - Time.deltaTime);
+            if (PatienceRemaining.Value <= 0f)
+                ServerPatienceExpired?.Invoke(this);
+        }
+        else if (State.Value == CustomerState.Ordered && OrderTimeTotal.Value > 0f)
+        {
+            OrderTimeRemaining.Value = Mathf.Max(0f, OrderTimeRemaining.Value - Time.deltaTime);
+            if (OrderTimeRemaining.Value <= 0f)
+                ServerOrderTimeExpired?.Invoke(this);
+        }
     }
 
     private void Move()

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Müşterinin yer tutucu görsel geri bildirimi: gövde rengi replike duruma göre değişir (geliyor / sipariş bekliyor /
-// siparişi alındı / ayrılıyor). Herkes görür; süre bilgisi taşımaz (o yalnızca Kasiyer'e — CustomerPatienceDisplay).
+// siparişi alındı / ayrılıyor). Herkes görür; süre bilgisi taşımaz (o yalnızca Kasiyer'e — CustomerTimerDisplay).
 // Final karakter ve animasyon gelince bu bileşen değişir, Customer değişmez.
 public class CustomerVisual : MonoBehaviour
 {

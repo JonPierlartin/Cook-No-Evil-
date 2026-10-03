@@ -125,5 +125,33 @@ public class LevelConfig : ScriptableObject
     public NumericValue PrepPhaseSeconds => prepPhaseSeconds;
     public bool ShowControlHints => showControlHints;
     public bool UseFixedSeed => useFixedSeed;
+
+    // Bu seviyede geçebilecek TÜM varyantlar (açık varyantlar + sipariş slotlarının sabit seçimleri ve havuzları),
+    // tekrarsız ve her makinede AYNI sırada. Ağ üzerinden varyant, bu listedeki diziniyle anılır (asset referansı
+    // ağdan gitmez; herkes aynı LevelConfig'i taşır).
+    public List<BurgerVariant> CollectVariants()
+    {
+        var result = new List<BurgerVariant>();
+        AddVariants(result, openVariants);
+        foreach (var slot in orderSlots)
+            AddVariants(result, slot.variant);
+        AddVariants(result, defaultOrderSlot.variant);
+        return result;
+    }
+
+    private static void AddVariants(List<BurgerVariant> result, Selection<BurgerVariant> selection)
+    {
+        foreach (var variant in selection.fixedItems)
+        {
+            if (variant != null && !result.Contains(variant))
+                result.Add(variant);
+        }
+
+        foreach (var variant in selection.pool)
+        {
+            if (variant != null && !result.Contains(variant))
+                result.Add(variant);
+        }
+    }
     public int Seed => seed;
 }

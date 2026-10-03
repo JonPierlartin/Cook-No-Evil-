@@ -637,7 +637,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 86 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 89 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -732,9 +732,26 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     siparişi alınamaz) — GDD'de yazmıyor, Ersel'e soruldu.
   - `GameLoopManager.ErrorCount` (replike) + `ServerAddError(reason)`: bölümün **tek** hata sayacı; round başında
     sıfırlanır. 3 Hata kararı ve duvar göstergesi ayrı adımda.
-  - `CustomerPatienceDisplay`: sabır çarkı; "kim görür" kuralının tek yeri (`visibleToRoles`, Kasiyer). Çark
-    müşterinin arkasına (kuzeye) bakar, billboard değil. `CustomerVisual`: duruma göre gövde rengi (yer tutucu).
+  - `CustomerTimerDisplay` (17a'da `CustomerPatienceDisplay`): sabır çarkı, sipariş alınınca yerini sipariş süresi
+    çarkına bırakır; "kim görür" kuralının tek yeri (`visibleToRoles`, Kasiyer). Çark müşterinin arkasına (kuzeye)
+    bakar, billboard değil. `CustomerVisual`: duruma göre gövde rengi (yer tutucu).
   - Müşterinin collider'ı var (tıklanır); müşteri alanında oyuncu yok, hareket düz çizgi (engel bilmez).
+- **Sipariş pop-up'ı ve sipariş süresi (Adım 17b, 3 Eki 2026):**
+  - Süre = `(taban + sinyal × katsayı) × seviye çarpanı`. Taban/katsayı `OrderTimeSettings`
+    (`Assets/Data/OrderTimeSettings.asset`: 32 / 4,3), çarpan `ResolvedLevel.TimeMultiplier`. **Çarpan toplamın
+    tamamına uygulanır** (adım metni iki türlü okunabiliyordu; GDD "seviye bazında bir çarpan" diyor).
+  - `OrderTimeCalculator` (saf): sinyal sayısı = siparişin içeriğinde (varyant malzemeleri − eksikler + içecek /
+    dondurma / yan) olup **açık bir kanalda eşleşmesi bulunan** her öğe + 1 "Sipariş Bitti". Kanal adı/listesi kodda
+    yok; yeni kanal veride açılınca kendiliğinden sayılır. Eşleşmesi olmayan öğe sayılmaz ve uyarı loglanır.
+  - `Customer`: `OrderTimeRemaining/Total` (sipariş alınınca başlar, sunucu işletir), `OrderVariantIndex`,
+    `OrderMissingItemIds` (pop-up içeriği). **Varyant ağda dizinle anılır:** `LevelConfig.CollectVariants()` sırası
+    (`LevelDirector.GetVariantIndex` / `TryGetVariant`). Süre dolunca 1 Hata, müşteri ayrılır, yedek **gelmez**.
+  - `CustomerOrderDisplay`: pop-up müşterinin üstünde (y 2,67–3,07; tezgah açıklığı y 1,40–2,90, Kasiyer'in
+    gözünden ~3,1'e kadar görünür), yalnızca `Ordered` durumunda. Görsel `BurgerVariant.Image` — kitapçık da aynı
+    alanı kullanacak. Eksik malzeme = ikon + üstünde X. Pop-up herkese çizilir (GDD: pratikte yalnızca Kasiyer görür).
+  - Varyant görselleri `IconGenerator` ile üretildi (`Assets/Data/Icons/Varyant_*.png`). **İnce malzemeler ekmeğin
+    altında neredeyse görünmüyor; iki taslak varyant birbirine çok benziyor** — varyantları ayırt edilebilir kılmak
+    (açı, patlatılmış görünüm ya da artist çizimi) içerik işi.
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

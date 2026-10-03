@@ -15258,6 +15258,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CustomerDirector
   customerPrefab: {fileID: 2413441583592971078, guid: 9a28af893236bf249ab335ee93848aed, type: 3}
+  orderTimeSettings: {fileID: 11400000, guid: 502df7f7395fea841967a9cd4ba2af71, type: 2}
   maxConcurrentCustomers: 3
   entrancePoint: {fileID: 700281390}
   orderSpots:

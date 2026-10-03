@@ -13,6 +13,8 @@ public class CustomerDirector : MonoBehaviour
     public static CustomerDirector Instance { get; private set; }
 
     [SerializeField] private Customer customerPrefab;
+    [Tooltip("Sipariş süresi formülünün taban ve katsayısı (GDD 3.4.1). Seviye çarpanı LevelConfig'ten gelir.")]
+    [SerializeField] private OrderTimeSettings orderTimeSettings;
     [Tooltip("Restoranda aynı anda bulunabilecek en fazla müşteri. GDD 3.4.2: global sabit (3) — seviye parametresi DEĞİL.")]
     [SerializeField, Min(1)] private int maxConcurrentCustomers = 3;
 
@@ -149,6 +151,7 @@ public class CustomerDirector : MonoBehaviour
         customer.ServerInitialize(order, isBackup, isBackup ? $"Yedek müşteri {_backupsUsed}" : $"Müşteri {_nextOrderIndex}");
         customer.ServerOrderTaken += HandleOrderTaken;
         customer.ServerPatienceExpired += HandlePatienceExpired;
+        customer.ServerOrderTimeExpired += HandleOrderTimeExpired;
 
         _active.Add(customer);
         _orderOccupants[spot] = customer;
@@ -169,7 +172,36 @@ public class CustomerDirector : MonoBehaviour
 
         _deliveryOccupants[spot] = customer;
         customer.ServerMoveTo(deliverySpots[spot].position, deliverySpots[spot].rotation, null);
-        Debug.Log($"[Müşteri] {customer.Label} siparişi alındı (client {clientId}); teslim penceresinde {spot + 1}. yere geçiyor. Sabırdan kalan {customer.PatienceRemaining.Value:0.#} sn.");
+
+        // Sipariş süresi (GDD 3.4.1): sinyal sayısı siparişin içeriğinden, taban/katsayı SO'dan, çarpan seviyeden.
+        var unmapped = new List<ItemType>();
+        int signals = OrderTimeCalculator.CountSignals(customer.Order, _level, unmapped);
+        float seconds = OrderTimeCalculator.ComputeSeconds(signals, orderTimeSettings, _level.TimeMultiplier);
+        customer.ServerStartOrderTimer(seconds);
+
+        foreach (var item in unmapped)
+            Debug.LogWarning($"[Müşteri] {customer.Label} siparişindeki '{item.name}' hiçbir açık kanalda eşleşmiyor; Kasiyer bunu iletemez (seviye verisini kontrol et).");
+        Debug.Log($"[Müşteri] {customer.Label} siparişi alındı (client {clientId}); teslim penceresinde {spot + 1}. yere geçiyor. " +
+            $"Sipariş: {DescribeOrder(customer.Order)} · {signals} sinyal · süre {seconds:0.#} sn.");
+    }
+
+    // GDD 3.4.4: sipariş süresi dolarsa 1 Hata, müşteri ayrılır; yedek havuz TETİKLENMEZ (yalnızca sabır hatasında).
+    private void HandleOrderTimeExpired(Customer customer)
+    {
+        Release(_deliveryOccupants, customer);
+        GameLoopManager.Instance.ServerAddError($"{customer.Label} siparişi süresinde teslim edilmedi");
+        Leave(customer);
+    }
+
+    private static string DescribeOrder(ResolvedLevel.Order order)
+    {
+        if (order.Variant == null)
+            return "hamburger yok";
+
+        var missing = new List<string>();
+        foreach (var item in order.Missing)
+            missing.Add(item.name);
+        return order.Variant.name + (missing.Count > 0 ? " (eksik: " + string.Join(", ", missing) + ")" : " (tam)");
     }
 
     // GDD 3.4.4: sabır dolarsa 1 Hata, müşteri ayrılır, yedek havuzdan (varsa) yenisi gelir.
@@ -208,6 +240,7 @@ public class CustomerDirector : MonoBehaviour
         _active.Remove(customer);
         customer.ServerOrderTaken -= HandleOrderTaken;
         customer.ServerPatienceExpired -= HandlePatienceExpired;
+        customer.ServerOrderTimeExpired -= HandleOrderTimeExpired;
         customer.ServerStartLeaving();
         customer.ServerMoveTo(entrancePoint.position, entrancePoint.rotation, gone =>
         {

@@ -25,6 +25,22 @@ public class LevelDirector : NetworkBehaviour
 
     public LevelConfig Config => levelConfig;
 
+    private List<BurgerVariant> _variants;
+
+    // Varyant <-> ağ dizini (LevelConfig.CollectVariants sırası; her makinede aynı). Yoksa -1 / false.
+    public int GetVariantIndex(BurgerVariant variant)
+    {
+        _variants ??= levelConfig != null ? levelConfig.CollectVariants() : new List<BurgerVariant>();
+        return variant != null ? _variants.IndexOf(variant) : -1;
+    }
+
+    public bool TryGetVariant(int index, out BurgerVariant variant)
+    {
+        _variants ??= levelConfig != null ? levelConfig.CollectVariants() : new List<BurgerVariant>();
+        variant = index >= 0 && index < _variants.Count ? _variants[index] : null;
+        return variant != null;
+    }
+
     // Yalnızca sunucuda: seviye çözüldü (round başı). Müşteri akışı gibi sunucu tüketicileri buradan başlar.
     public event System.Action<ResolvedLevel> ServerLevelResolved;
 
