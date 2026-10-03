@@ -9,6 +9,13 @@ public class SignalValue : ScriptableObject
     [SerializeField] private string displayName;
     [SerializeField] private Sprite icon;
 
+    [Header("Çark")]
+    [Tooltip("İşaretliyse bu değer çarkta sabit bir açıda durur (yön değerleri: Sağ sağda, Aşağı aşağıda). " +
+        "Bir kattaki TÜM seçenekler işaretliyse açılar kullanılır; değilse seçenekler eşit aralıkla dizilir.")]
+    [SerializeField] private bool useWheelAngle;
+    [Tooltip("Derece: 0 = sağ, 90 = yukarı, 180 = sol, 270 = aşağı.")]
+    [SerializeField, Range(0f, 360f)] private float wheelAngle;
+
     [Header("Oynatma (GDD 3.6.0)")]
     [Tooltip("Yer tutucu işaret: sinyal oynarken Kasiyer'in üzerinde gösterilir. Collider taşımamalı. Animasyon gelince boşaltılır.")]
     [SerializeField] private GameObject visualPrefab;
@@ -19,6 +26,8 @@ public class SignalValue : ScriptableObject
 
     public string DisplayName => displayName;
     public Sprite Icon => icon;
+    public bool UseWheelAngle => useWheelAngle;
+    public float WheelAngle => wheelAngle;
     public GameObject VisualPrefab => visualPrefab;
     public AnimationClip Clip => clip;
 

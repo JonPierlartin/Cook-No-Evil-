@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Yon_Sag
   m_EditorClassIdentifier: Assembly-CSharp::SignalValue
   displayName: "Sa\u011F"
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 2f1673a8d0996934299ed2d876138b5d, type: 3}
+  useWheelAngle: 1
+  wheelAngle: 0
   visualPrefab: {fileID: 6619611922005792272, guid: d24c382f9463a0f4cbd7de057a9e6e16, type: 3}
   clip: {fileID: 0}
   durationSeconds: 1.3

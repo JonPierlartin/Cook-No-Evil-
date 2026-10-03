@@ -16,6 +16,8 @@ public static class SignalWheelModel
         public Sprite Icon;
         public int ChannelIndex;
         public int ValueIndex;
+        // Veride sabit çark açısı varsa (SignalValue.UseWheelAngle) o açı; yoksa null.
+        public float? FixedAngle;
         // Doluysa bu bir kategoridir (seçilince içine girilir); boşsa yapraktır (seçilince sinyal gönderilir).
         public List<Option> Children;
 
@@ -58,7 +60,8 @@ public static class SignalWheelModel
                     Label = value.DisplayName,
                     Icon = value.Icon,
                     ChannelIndex = row.ChannelIndex,
-                    ValueIndex = row.ValueIndex
+                    ValueIndex = row.ValueIndex,
+                    FixedAngle = value.UseWheelAngle ? value.WheelAngle : (float?)null
                 });
             }
         }
@@ -67,5 +70,22 @@ public static class SignalWheelModel
             top.Add(new Option { Label = orderDone.DisplayName, Icon = orderDone.Icon, ChannelIndex = OrderDoneChannel });
 
         return top;
+    }
+
+    // Bir kattaki seçeneklerin çarktaki açıları (derece; 0 = sağ, 90 = yukarı). Hepsinin sabit açısı varsa veri
+    // kullanılır; biri bile eksikse hepsi yukarıdan başlayıp eşit aralıkla dizilir (çakışma olmasın diye karışık
+    // kullanılmaz).
+    public static float[] ResolveAngles(IReadOnlyList<Option> options)
+    {
+        var angles = new float[options.Count];
+        bool allFixed = options.Count > 0;
+        foreach (var option in options)
+            allFixed &= option.FixedAngle.HasValue;
+
+        float step = options.Count > 0 ? 360f / options.Count : 0f;
+        for (int i = 0; i < options.Count; i++)
+            angles[i] = allFixed ? options[i].FixedAngle.Value : 90f + i * step;
+
+        return angles;
     }
 }

@@ -37,6 +37,7 @@ public class SignalWheelUI : MonoBehaviour
     private InputAction _openAction;
     private List<SignalWheelModel.Option> _top;
     private List<SignalWheelModel.Option> _current;
+    private float[] _angles;
     private int _highlighted = -1;
     private Vector2 _accumulated;
     private bool _open;
@@ -120,14 +121,14 @@ public class SignalWheelUI : MonoBehaviour
             Destroy(slice.gameObject);
         _slices.Clear();
 
-        // Dilim i, yukarıdan (90°) başlayıp saat yönünün tersine eşit aralıkla dizilir.
-        float step = 360f / options.Count;
+        // Açılar veriden (yön değerleri kendi yönünde durur) ya da eşit aralıkla — bkz. SignalWheelModel.
+        _angles = SignalWheelModel.ResolveAngles(options);
         for (int i = 0; i < options.Count; i++)
         {
             var sliceObject = Instantiate(sliceTemplate, sliceTemplate.transform.parent);
             sliceObject.SetActive(true);
 
-            float angle = (90f + i * step) * Mathf.Deg2Rad;
+            float angle = _angles[i] * Mathf.Deg2Rad;
             ((RectTransform)sliceObject.transform).anchoredPosition = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
 
             var label = sliceObject.GetComponentInChildren<Text>(true);
@@ -159,11 +160,18 @@ public class SignalWheelUI : MonoBehaviour
         _accumulated += mouse.delta.ReadValue();
         if (_accumulated.sqrMagnitude >= 4f)
         {
-            float angle = Mathf.Atan2(_accumulated.y, _accumulated.x) * Mathf.Rad2Deg - 90f;
-            if (angle < 0f)
-                angle += 360f;
-
-            _highlighted = Mathf.RoundToInt(angle / (360f / _current.Count)) % _current.Count;
+            // Fare yönüne açıca en yakın dilim.
+            float angle = Mathf.Atan2(_accumulated.y, _accumulated.x) * Mathf.Rad2Deg;
+            float best = float.MaxValue;
+            for (int i = 0; i < _angles.Length; i++)
+            {
+                float distance = Mathf.Abs(Mathf.DeltaAngle(angle, _angles[i]));
+                if (distance < best)
+                {
+                    best = distance;
+                    _highlighted = i;
+                }
+            }
         }
 
         RefreshVisuals();
