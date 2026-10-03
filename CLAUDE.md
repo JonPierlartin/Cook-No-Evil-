@@ -850,9 +850,16 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     "DURDURULDU" başlar; host ayrılırsa herkes ilk ekrana döner.
   - **Sipariş pop-up'ı yalnızca Kasiyer'e çizilir** (`CustomerOrderDisplay.visibleToRoles`): Komi pencereden
     müşterileri görebiliyordu ve sipariş bilgisi sinyal zincirini atlıyordu.
-  - **"Grain" araştırması:** projede Film Grain kapalı (`DefaultVolumeProfile` yoğunluk 0), oyuncu kamerasında
-    post-processing kapalı. Titreşen kumlanmanın olası kaynağı `PC_Renderer`'daki **SSAO** (Blue Noise yöntemi, kare
-    başına değişen gürültü, TAA yok). Şef'te görüldüyse aday K2 ek yeri pırıltısıdır. Karar/ölçüm bekliyor.
+  - **"Grain" (3 Eki):** Şef dışındaki rollerde ekranda sürekli kıpırdayan noktacıklar görüldü (özellikle başka
+    bilgisayarlarda). Film Grain kapalı, oyuncu kamerasında post-processing kapalı. Kaynak aday: `PC_Renderer`'daki
+    **SSAO, Blue Noise yöntemi** (gürültü deseni her karede değişir, TAA yok). `AOMethod` Interleaved Gradient'e
+    (sabit desen) çevrildi; build'de doğrulanacak. Sürerse SSAO kapatılır ya da kök neden ölçülür.
+  - **Localhost "address already in use" (3 Eki):** 7777, Play'de OLMAYAN ana editör sürecinin elinde kalmıştı
+    (`Get-NetUDPEndpoint -LocalPort 7777`); domain reload boşaltmadı, yalnızca editörü yeniden başlatmak boşaltır.
+    `LocalDebugLobby.OnApplicationQuit` artık çıkışta transport'u açıkça kapatıyor. **Teşhis:** Local Host
+    başarısızsa önce portu kimin tuttuğuna bakılır.
+  - Kese kağıdı modelleri: `NewAssets/PaperBags/SM_PaperBag_{Fold,Open,Closed}` → `KeseKagidi_Visual`'da 0,7 ölçekli,
+    geniş yüzü −Z'ye (fotoğraf yüzü) bakacak şekilde 90° çevrili; materyal yer tutucu (FBX'te materyal yok).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

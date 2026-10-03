@@ -54,6 +54,23 @@ public class LocalDebugLobby : MonoBehaviour
     // Host kapandi (orn. GDD 8.2 zaman asimi): tekrar Local Host/Join yapilabilsin.
     private void HandleServerStopped(bool wasHost) => SetLocalButtonsVisible(true);
 
+    // Play Mode'dan (ya da uygulamadan) ag acikken cikilirsa NGO'nun kapanis sirasi UDP soketini acik birakabiliyor;
+    // editor sureci 7777'yi tutmaya devam ediyor ve sonraki Local Host "address already in use" ile basarisiz oluyor
+    // (3 Eki 2026: port, Play'de olmayan editorun elinde bulundu; yalnizca editoru yeniden baslatmak bosaltiyordu).
+    // Cikista transport acikca kapatilir: surucu ve soket hemen serbest kalir. UnityTransport.Shutdown tekrar
+    // cagrilmaya dayaniklidir; NGO'nun kendi kapanisi sonradan yine calisir.
+    private void OnApplicationQuit()
+    {
+        var networkManager = Unity.Netcode.NetworkManager.Singleton;
+        if (networkManager == null || !networkManager.IsListening)
+            return;
+
+        var transport = networkManager.NetworkConfig.NetworkTransport;
+        networkManager.Shutdown(true);
+        if (transport != null)
+            transport.Shutdown();
+    }
+
     private UnityEngine.UI.Button CreateButton(string label, UnityEngine.Events.UnityAction onClick, int siblingOffset)
     {
         var button = Instantiate(buttonTemplate, buttonTemplate.transform.parent);
