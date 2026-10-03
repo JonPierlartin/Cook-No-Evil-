@@ -191,6 +191,10 @@ public class PlayerInteractor : NetworkBehaviour
         if (SignalWheelUI.IsWheelOpen)
             return;
 
+        // Tarif kitapcigi acikken sol tik sayfa cevirir (RecipeBookUI); dunya etkilesimi tetiklenmez.
+        if (RecipeBookUI.IsOpen)
+            return;
+
         // Round aktif degilken (lobi) veya oyun durdurulmusken etkilesim yok. Bu yalnizca gereksiz bir RPC'yi
         // onleyen ON-kontroldur; asil yetki RequestInteractServerRpc'deki ayni kosuldadir (K6).
         if (!GameLoopManager.CanPlayersAct)

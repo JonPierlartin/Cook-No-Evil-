@@ -41,6 +41,10 @@ public class LevelDirector : NetworkBehaviour
 
     public readonly NetworkList<SignalRow> SignalRows = new();
 
+    // Bu bölümde AÇIK varyantlar (tarif kitapçığı bunlardan üretilir), varyant diziniyle (bkz. GetVariantIndex).
+    // Yalnızca sunucu yazar, round başında.
+    public readonly NetworkList<int> OpenVariantIndices = new();
+
     // Yalnızca sunucuda dolu; round başında üretilir.
     public ResolvedLevel Current { get; private set; }
 
@@ -76,6 +80,19 @@ public class LevelDirector : NetworkBehaviour
         return variant != null;
     }
 
+    // Bu bölümde açık varyantlar, replike dizinlerden asset'e çözülmüş (her istemcide çalışır).
+    public List<BurgerVariant> GetOpenVariants()
+    {
+        var result = new List<BurgerVariant>();
+        for (int i = 0; i < OpenVariantIndices.Count; i++)
+        {
+            if (TryGetVariant(OpenVariantIndices[i], out var variant))
+                result.Add(variant);
+        }
+
+        return result;
+    }
+
     // Yalnızca sunucuda: seviye çözüldü (round başı). Müşteri akışı gibi sunucu tüketicileri buradan başlar.
     public event System.Action<ResolvedLevel> ServerLevelResolved;
 
@@ -99,6 +116,7 @@ public class LevelDirector : NetworkBehaviour
         if (IsServer)
         {
             SignalRows.Clear();
+            OpenVariantIndices.Clear();
             Current = null;
             CurrentLevelIndex.Value = 0;
         }
@@ -132,6 +150,14 @@ public class LevelDirector : NetworkBehaviour
         SignalRows.Clear();
         foreach (var row in BuildSignalRows(Current))
             SignalRows.Add(row);
+
+        OpenVariantIndices.Clear();
+        foreach (var variant in Current.OpenVariants)
+        {
+            int index = GetVariantIndex(variant);
+            if (index >= 0)
+                OpenVariantIndices.Add(index);
+        }
 
         Debug.Log(Current.Describe(levelConfig.name));
         ServerLevelResolved?.Invoke(Current);

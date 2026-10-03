@@ -74,7 +74,8 @@ public class SignalWheelUI : MonoBehaviour
     // Çarkı açma koşulu — sunucunun RequestSignalServerRpc'de uyguladığı kuralların aynısı (rol + round).
     private static bool CanOpen()
     {
-        return GameLoopManager.CanPlayersAct
+        // Tarif kitapçığı açıkken çark açılmaz (GDD 3.6.2: oyuncu kitaba kilitlidir).
+        return GameLoopManager.CanPlayersAct && !RecipeBookUI.IsOpen
             && EmoteSystem.Instance != null && RoleManager.Instance != null
             && EmoteSystem.Instance.CanRoleSignal(RoleManager.Instance.LocalRole);
     }

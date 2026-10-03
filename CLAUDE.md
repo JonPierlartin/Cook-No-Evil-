@@ -644,7 +644,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 98 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 102 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -823,6 +823,19 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     `PlayerController` RoundEnded'da hareket/bakış işlemez.
   - `HataPaneli` prefab'ı ×3: `HataPaneli_Kasa` / `_Istasyon` (pano üstü, x=6,22) / `_Mutfak` (x=3,2), y=2,85.
   - Her hatada hata sesi: `DeliveryFeedback` zaten `ErrorCount` artışını dinliyor (sabır, süre, yanlış teslim).
+- **Tarif kitapçığı (Adım 22, 3 Eki 2026):**
+  - `RecipeBook` (sahne: `TarifKitapcigi`, teslim tezgahının doğu ucunda, Kasa tarafı): ağ nesnesi + gate
+    (`readerRoles`, Kasiyer). Etkileşim normal yoldan (K6); sunucu yalnızca tıklayana `OpenClientRpc` gönderir
+    (hedefli). Envantere girmez, ağ durumu yok.
+  - `RecipeBookUI` (GameplayCanvas/`RecipeBook`): yerel görünüm. `IsOpen` iken `PlayerController` hareket/bakışı,
+    `PlayerInteractor` dünya tıklamasını durdurur; `SignalWheelUI` ve `EmoteWheelUI` açılmaz. Sol tık ileri (sondan
+    sonra içindekiler), sağ tık geri, içindekilerde kategoriye tık atlar, **ESC yalnızca kitabı kapatır** (K9;
+    projede henüz ESC duraklatma menüsü yok — yazılırken `RecipeBookUI.IsOpen` kontrol edilmeli). Kitap açıkken
+    imleç serbesttir (her karede zorlanır; kapanınca round sürüyorsa yeniden kilitlenir).
+  - `RecipeBookModel.Build(openVariants)` (saf): açılım 1 = içindekiler, sonra her varyant bir açılım; **kategori
+    varyantın proteinidir** (ayrı kategori alanı/listesi yok — yeni protein = yeni kategori). Kodda sayfa sayısı yok.
+  - Açık varyantlar istemcilere `LevelDirector.OpenVariantIndices` (replike, round başında) ile gider;
+    `GetOpenVariants()` asset'e çözer. Açılımın resmi `BurgerVariant.Image` — pop-up ve paket fotoğrafıyla aynı.
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

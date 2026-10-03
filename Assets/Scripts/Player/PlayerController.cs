@@ -135,6 +135,10 @@ public class PlayerController : NetworkBehaviour
         if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
             return;
 
+        // Tarif kitapcigi acikken oyuncu kitaba kilitlidir (GDD 3.6.2): hareket ve bakis kapali.
+        if (RecipeBookUI.IsOpen)
+            return;
+
         // Bolum bitti (sonuc ekrani): karakter durur, fare sonuc ekranindaki dugmeler icin serbesttir.
         if (GameLoopManager.Instance != null && GameLoopManager.Instance.CurrentRoundState.Value == RoundState.RoundEnded)
             return;

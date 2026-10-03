@@ -138,6 +138,7 @@ Sınırı" bölümünde. Burada yalnızca 18 Eylül'de yapılan kapsam değişik
 | 23 | Kese kağıdı + kap, 2 paketleme alanı, pakete ürün koyma (gerçek öğe olarak içinde), içerikle birlikte çöp, içerikten türeyen paket fotoğrafı, Kasa penceresi rolleri | ✅ kod; oyun testi bekliyor |
 | 24 | Teslim (müşteriye paket), sunucu doğrulaması (birebir içerik + servis edilebilir faz), memnun/öfkeli ayrılış, başarı/hata sesleri (Kasa + mutfak); müşteri rotası duvarın dışından; pakete tek hamburger | ✅ kod; oyun testi bekliyor |
 | 25 | Duvar hata paneli (3 oda; Şef yalnızca yanan X'i görür), kazan/kaybet, sonuç ekranı, temiz yeniden başlatma, sıralı seviye listesi | ✅ kod; oyun testi bekliyor |
+| 22 | Tarif kitapçığı: Kasa'da nesne (yalnızca Kasiyer), yerel görünüm, içindekiler + varyant açılımları açık varyantlardan, ESC yalnızca kitabı kapatır | ✅ kod; oyun testi bekliyor |
 
 **Envanter tahmini (21 Eyl, 4.0 raporu):** Claude Code'un tahmini 11-14 sa + ~2 sa test; danışman 5-6 sa demişti. Raporun 4.3'ü (test amaçlı köfte yuvası + kullanıcısız `BurgerAssembly` iskeleti) **kaldırıldı**: `ServerProgress` ve kategori değerleri ızgara adımına, `BurgerAssembly` birleştirme adımına (Adım 6) taşındı. Kalan envanter işi ~8-10 sa. `ServerProgress` zaten ızgaranın 6 saatinin içindeydi.
 
