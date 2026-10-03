@@ -355,8 +355,12 @@ alanlar bundan türetilir. Ayrı ayrı yazılırsa tek-kaynak ilkesi çöker ve 
 - `LevelResolver.Resolve(config, seed)` — saf fonksiyon, `System.Random`, Edit modunda da çalışır.
   `LevelDirector` (GameSystems; **aktif LevelConfig'in tek seçim yeri**) round `RoundActive`'e geçince
   **yalnızca sunucuda, bir kez** çözer, `Current`'ta (`ResolvedLevel`) tutar ve konsola yazar. Replikasyon yok.
-- **Sabır her müşteri için ayrı çekilir** (`ResolvedLevel.Order.Patience`; 3 Eki kararı) — bölüm başında tek değer
-  çekilip herkese verilmez. Müşteri sayısı, yedek havuz, süre çarpanı bölüm başına tektir.
+- **Sabır ve müşteriler arası bekleme her müşteri için ayrı çekilir** (`ResolvedLevel.Order.Patience`,
+  `.IntervalBefore`; GDD §7.3.3, 3 Eki) — bölüm başında tek değer çekilip herkese verilmez. Müşteri sayısı, yedek
+  havuz, süre çarpanı bölüm başına tektir.
+- **Kanal eşleşmesinin sırası görseldir** (GDD §3.6.3, 3 Eki): `ChannelMapping.Items[i] ↔ Values[i]` aynı zamanda
+  duvar panosundaki satır sırasıdır; pano adımı bunu okuyup satırları o sırayla dizer. `ResolvedLevel` şu an yalnızca
+  sunucuda — pano istemcilerde de çizileceği için o adımda eşleşmenin replikasyonu gerekir.
 - Örnek: `Assets/Data/Levels/Seviye1_Taslak.asset` (içerik TASLAK). Property drawer yok (Inspector ham).
 
 ### K9 — ESC menüsü oyunu durdurmaz

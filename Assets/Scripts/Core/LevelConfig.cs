@@ -55,7 +55,7 @@ public class LevelConfig : ScriptableObject
     [Header("Müşteri akışı (GDD 3.4, 3.4.2, 3.4.4)")]
     [Tooltip("Toplam müşteri sayısı; oyunculara gösterilmez (GDD 3.4).")]
     [SerializeField] private NumericValue customerCount = NumericValue.Fixed(1);
-    [Tooltip("Müşteriler arası temel aralık (sn).")]
+    [Tooltip("Müşteriler arası temel bekleme (sn). Aralık verilirse HER MÜŞTERİ için ayrı çekilir.")]
     [SerializeField] private NumericValue customerInterval = NumericValue.Range(10f, 15f);
     [Tooltip("Aralık kısalma eğrisi: x = müşteri sırası (0..1), y = temel aralık çarpanı.")]
     [SerializeField] private AnimationCurve intervalCurve = AnimationCurve.Constant(0f, 1f, 1f);

@@ -11,16 +11,16 @@ public static class LevelResolver
         var result = new ResolvedLevel { Seed = seed };
 
         result.CustomerCount = System.Math.Max(0, config.CustomerCount.ResolveInt(rng));
-        result.CustomerInterval = config.CustomerInterval.ResolveFloat(rng);
         result.BackupPoolSize = System.Math.Max(0, config.BackupPoolSize.ResolveInt(rng));
         result.TimeMultiplier = config.TimeMultiplier.ResolveFloat(rng);
 
         // Sipariş slotları: i. müşteri i. slotu, fazlası ve yedek havuz varsayılan slotu kullanır (30 Eyl kararı).
-        // Sabır HER MÜŞTERİ için ayrı çekilir (3 Eki kararı) — aralık verildiyse müşteriden müşteriye değişir.
+        // Sabır ve müşteriler arası bekleme HER MÜŞTERİ için ayrı çekilir (3 Eki kararı).
         for (int i = 0; i < result.CustomerCount; i++)
         {
             var order = ResolveOrder(i < config.OrderSlots.Count ? config.OrderSlots[i] : config.DefaultOrderSlot, rng, result.Warnings, $"sipariş {i + 1}");
             order.Patience = config.Patience.ResolveFloat(rng);
+            order.IntervalBefore = config.CustomerInterval.ResolveFloat(rng);
             result.Orders.Add(order);
         }
 

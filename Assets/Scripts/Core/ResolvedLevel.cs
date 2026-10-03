@@ -11,6 +11,9 @@ public class ResolvedLevel
         // Bu müşterinin sabır süresi (sn). Her müşteri için AYRI çekilir (Ersel, 3 Eki 2026) — aralık verildiyse
         // 1. müşteri 22, 2. müşteri 28 olabilir; bölüm başında tek değer çekilip herkese verilmez.
         public float Patience;
+        // Bir önceki müşteriden kaç saniye sonra geleceği (temel aralık; kısalma eğrisi tüketicide uygulanır).
+        // Sabır gibi HER MÜŞTERİ için ayrı çekilir (3 Eki 2026). Yedek müşterilerde kullanılmaz (sabır hatasında gelirler).
+        public float IntervalBefore;
         public readonly List<ItemType> Missing = new();
         public ItemType Drink;
         public ItemType IceCream;
@@ -34,7 +37,6 @@ public class ResolvedLevel
 
     public int Seed;
     public int CustomerCount;
-    public float CustomerInterval;
     public int BackupPoolSize;
     public float TimeMultiplier;
     public readonly List<Order> Orders = new();
@@ -54,9 +56,9 @@ public class ResolvedLevel
     {
         var sb = new StringBuilder();
         sb.AppendLine($"[Seviye] '{levelName}' çözüldü (tohum {Seed})");
-        sb.AppendLine($"  Müşteri sayısı: {CustomerCount} · müşteriler arası bekleme: {CustomerInterval:0.#} sn · yedek müşteri: {BackupPoolSize} · sipariş süresi çarpanı: {TimeMultiplier:0.##}");
+        sb.AppendLine($"  Müşteri sayısı: {CustomerCount} · yedek müşteri: {BackupPoolSize} · sipariş süresi çarpanı: {TimeMultiplier:0.##}");
         for (int i = 0; i < Orders.Count; i++)
-            sb.AppendLine($"  Sipariş {i + 1}: {DescribeOrder(Orders[i])}");
+            sb.AppendLine($"  Sipariş {i + 1}: öncekinden {Orders[i].IntervalBefore:0.#} sn sonra gelir · {DescribeOrder(Orders[i])}");
         for (int i = 0; i < BackupOrders.Count; i++)
             sb.AppendLine($"  Yedek {i + 1}: {DescribeOrder(BackupOrders[i])}");
         sb.AppendLine($"  Açık varyantlar (kitapçık): {Names(OpenVariants)} · kategoriler: {OpenProductCategories}");

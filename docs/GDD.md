@@ -226,6 +226,15 @@ Kalan süreye Komi'nin sözlü aktarımı, Şef'in pişirme + birleştirme süre
 
 **Protein yönleri de değişir.** Garnitür numaraları gibi, yön→protein eşleşmesi de belli seviyelerde kayar (bir bölümde Yukarı=Et iken başkasında Yukarı=Balık olabilir). Duvardaki liste güncel eşleşmeyi gösterir. Şef bundan etkilenmez — köfteleri zaten siluetinden tanır (§4.1.1), yön kodu yalnızca Kasiyer→Komi kanalında yaşar.
 
+**Değişim duvar listesinde görsel olarak görünür (netleşti ✓, 3 Eki 2026).** Malzeme listesi (§3.6.2) hem
+Kasa hem İstasyon tarafında, Kasa/İstasyon penceresinin yanında durur; garnitürler **alt alta, numara sırasıyla**
+dizilidir. Kasiyer, kitaptan hamburgerin malzemelerine baktıktan sonra her garnitürü **bu listedeki sırasına göre**
+anlatır. Eşleşme değiştiğinde yalnızca yanındaki rakam değişmez — **malzemenin listedeki yeri kayar**: bir
+bölümde Marul 1. ve Domates 2. satırdayken, sonrakinde Marul 3. satıra, Domates 5. satıra iner. Liste her iki
+odada aynı sırayı gösterir. Sıra yalnızca garnitür gibi numarayla anlatılan malzemeler içindir; **aynı pano
+düzeni diğer kanalların eşleşmelerini de** (protein yönleri ve ileride sos, içecek, dondurma için kullanılan
+anlatım yöntemleri) gösterebilir.
+
 **Renkler değişmez.** Sos renkleri sabittir (Ketçap kırmızı, Hardal sarı, Mayonez beyaz, Barbekü kahverengi).
 
 *Gerekçe:* Sayı keyfi bir etikettir — Marul'un 1 ya da 4 olması eşit derecede anlamsızdır, yeniden atanması temizdir. Renk ise anlam taşır: ketçabın kırmızı olması sezgiseldir, ayrıca sos pompaları da fiziksel olarak o renktedir (§5.6). Rengi yeniden atamak oyuncunun sezgisiyle savaşır ve beceri değil keyfilik hissi yaratır. Ayrıca her kanalın **tek bir değişkenlik kaynağı** olması gerekir: garnitürde bu numara kaymasıdır, sosta ise pompaların **konum** değişimidir (§5.6). İkisi üst üste binerse kafa karışıklığı becerinin önüne geçer.
@@ -936,6 +945,11 @@ Bir seviyedeki her sipariş slotu **kendi başına** sabit veya rastgele olabili
 #### 7.3.3 Sayısal seviye parametreleri
 
 Toplam müşteri sayısı, müşteriler arası aralık, sabır süresi, yedek havuz boyutu, malzeme başlangıç stokları ve süre çarpanı — bunların **her biri** ya elle bir değerle ya da bir **min–max aralıkla** verilebilir. Aralık verildiğinde değer bölüm başında çekilir.
+
+**Müşteri başına çekilen değerler (netleşti ✓, 3 Eki 2026):** **sabır süresi** ve **müşteriler arası aralık**
+bölüm başında tek bir kez değil, **her müşteri için ayrı** çekilir. Örn. sabır 20–30 sn ise ilk müşteri 22 sn,
+ikincisi 28 sn bekleyebilir; aralık 10–15 sn ise her müşteri bir öncekinden farklı bir süre sonra gelir. Müşteri
+sayısı, yedek havuz boyutu, stoklar ve süre çarpanı ise bölüm başına tek değerdir.
 
 *Gerekçe:* "Birinci bölümde 1 müşteri olsun" dedikten sonra "çok hızlı bitti, 2 yapayım" demek bir kod değişikliği olmamalıdır. Bu değerlerin tamamı Inspector'dan ayarlanır.
 
