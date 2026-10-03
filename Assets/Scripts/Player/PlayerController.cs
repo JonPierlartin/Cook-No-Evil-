@@ -135,6 +135,10 @@ public class PlayerController : NetworkBehaviour
         if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
             return;
 
+        // Bolum bitti (sonuc ekrani): karakter durur, fare sonuc ekranindaki dugmeler icin serbesttir.
+        if (GameLoopManager.Instance != null && GameLoopManager.Instance.CurrentRoundState.Value == RoundState.RoundEnded)
+            return;
+
         // Mouse delta'sinin TEK tuketicisi ayni anda ya cark ya kamera olur: EmoteWheelUI
         // acikken artik kendi biriken-delta girdisi icin ham Mouse.current.delta'yi
         // okuyor (bkz. o sinif) — burada da okunmaya devam edilirse ikisi CAKISIR (cark

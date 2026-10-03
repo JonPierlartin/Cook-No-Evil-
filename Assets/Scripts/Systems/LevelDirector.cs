@@ -15,8 +15,29 @@ public class LevelDirector : NetworkBehaviour
 {
     public static LevelDirector Instance { get; private set; }
 
-    [Tooltip("Bu sahnede oynanan seviye. Tek kaynak (K8).")]
-    [SerializeField] private LevelConfig levelConfig;
+    [Tooltip("Sıralı seviye listesi (K8: aktif seviyenin tek seçim yeri). Oyun ilk seviyeden başlar; kazanınca host " +
+        "'Sonraki seviye' ile bir sonrakine geçer.")]
+    [SerializeField] private List<LevelConfig> levels = new();
+
+    // Aktif seviyenin listedeki dizini. Yalnızca sunucu yazar; istemciler aynı listeyi taşıdığı için aynı
+    // LevelConfig'e çözer (asset referansı ağdan gitmez).
+    public readonly NetworkVariable<int> CurrentLevelIndex =
+        new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private LevelConfig levelConfig =>
+        CurrentLevelIndex.Value >= 0 && CurrentLevelIndex.Value < levels.Count ? levels[CurrentLevelIndex.Value] : null;
+
+    public bool HasNextLevel => CurrentLevelIndex.Value + 1 < levels.Count;
+
+    // Sunucu: bir sonraki seviyeyi seçer (round yeniden başlatılmadan ÖNCE çağrılır).
+    public bool ServerAdvanceLevel()
+    {
+        if (!IsServer || !HasNextLevel)
+            return false;
+
+        CurrentLevelIndex.Value++;
+        return true;
+    }
 
     public readonly NetworkList<SignalRow> SignalRows = new();
 
@@ -26,18 +47,32 @@ public class LevelDirector : NetworkBehaviour
     public LevelConfig Config => levelConfig;
 
     private List<BurgerVariant> _variants;
+    private LevelConfig _variantsOf;
+
+    private List<BurgerVariant> Variants
+    {
+        get
+        {
+            // Seviye değişince varyant dizini de değişir.
+            if (_variants == null || _variantsOf != levelConfig)
+            {
+                _variantsOf = levelConfig;
+                _variants = levelConfig != null ? levelConfig.CollectVariants() : new List<BurgerVariant>();
+            }
+
+            return _variants;
+        }
+    }
 
     // Varyant <-> ağ dizini (LevelConfig.CollectVariants sırası; her makinede aynı). Yoksa -1 / false.
     public int GetVariantIndex(BurgerVariant variant)
     {
-        _variants ??= levelConfig != null ? levelConfig.CollectVariants() : new List<BurgerVariant>();
-        return variant != null ? _variants.IndexOf(variant) : -1;
+        return variant != null ? Variants.IndexOf(variant) : -1;
     }
 
     public bool TryGetVariant(int index, out BurgerVariant variant)
     {
-        _variants ??= levelConfig != null ? levelConfig.CollectVariants() : new List<BurgerVariant>();
-        variant = index >= 0 && index < _variants.Count ? _variants[index] : null;
+        variant = index >= 0 && index < Variants.Count ? Variants[index] : null;
         return variant != null;
     }
 
@@ -65,6 +100,7 @@ public class LevelDirector : NetworkBehaviour
         {
             SignalRows.Clear();
             Current = null;
+            CurrentLevelIndex.Value = 0;
         }
     }
 

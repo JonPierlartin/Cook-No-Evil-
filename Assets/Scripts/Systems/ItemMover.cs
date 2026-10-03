@@ -79,6 +79,35 @@ public static class ItemMover
         return DespawnSingle(item);
     }
 
+    // Yeniden baslatma: dunyadaki TUM ogeleri (elde, yuvada, pakette) yok eder. Kac oge yok edildigini dondurur.
+    public static int DespawnAll()
+    {
+        if (!IsServerRunning("DespawnAll"))
+            return 0;
+
+        var items = new System.Collections.Generic.List<Item>();
+        foreach (var networkObject in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
+        {
+            if (networkObject != null && networkObject.TryGetComponent(out Item item))
+                items.Add(item);
+        }
+
+        // Icteki ogeler once: ebeveyni bir oge olanlar (paketin icindekiler) ilk turda gider.
+        foreach (var item in items)
+        {
+            if (item != null && item.NetworkObject.IsSpawned && item.transform.parent != null && item.transform.parent.GetComponent<Item>() != null)
+                DespawnSingle(item);
+        }
+
+        foreach (var item in items)
+        {
+            if (item != null && item.NetworkObject.IsSpawned)
+                DespawnSingle(item);
+        }
+
+        return items.Count;
+    }
+
     private static int CountSpawnedItems()
     {
         int count = 0;

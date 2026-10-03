@@ -58,7 +58,10 @@ public class PlayerSpawner : NetworkBehaviour
             Debug.LogError("[PlayerSpawner] RoleManager.Instance bulunamadi.");
 
         if (GameLoopManager.Instance != null)
+        {
             GameLoopManager.Instance.CurrentRoundState.OnValueChanged += HandleRoundStateChanged;
+            GameLoopManager.Instance.ServerRoundResetting += HandleRoundResetting;
+        }
         else
             Debug.LogError("[PlayerSpawner] GameLoopManager.Instance bulunamadi.");
     }
@@ -72,7 +75,23 @@ public class PlayerSpawner : NetworkBehaviour
             RoleManager.Instance.OnServerRoleAssigned -= HandleServerRoleAssigned;
 
         if (GameLoopManager.Instance != null)
+        {
             GameLoopManager.Instance.CurrentRoundState.OnValueChanged -= HandleRoundStateChanged;
+            GameLoopManager.Instance.ServerRoundResetting -= HandleRoundResetting;
+        }
+    }
+
+    // Yeniden baslatma: karakterler yok edilir; round RoundActive'e gecince HandleRoundStateChanged onlari dogma
+    // noktalarinda, bos envanterle yeniden dogurur (konum/envanter sifirlamak icin ayri bir yol yazilmaz).
+    private void HandleRoundResetting()
+    {
+        foreach (var playerObject in _spawnedPlayerObjects.Values)
+        {
+            if (playerObject != null && playerObject.IsSpawned)
+                playerObject.Despawn();
+        }
+
+        _spawnedPlayerObjects.Clear();
     }
 
     // Lobi -> RoundActive gecisinde (host "Oyunu Baslat"a bastiginda) o ana kadar SADECE

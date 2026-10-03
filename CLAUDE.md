@@ -235,6 +235,13 @@ Kenarlar **depth + normal** tamponlarından üretilir, **renk tamponundan ASLA**
 Sobel filtresi kullanılırsa yüzeye basılı desenler/etiketler kenar olarak görünür ve Şef nesneleri
 yüzey deseninden ayırt etmeye başlar — sos konum bağımlılığı çöker. *(GDD §4.1.1, §5.6)*
 
+**Duvar paneli uygulaması (Adım 25, 3 Eki 2026) — GDD'nin YEDEK planı kullanıldı.** GDD'nin ilk yöntemi
+(rendering layer mask + kontur feature'ında filtre) bu projede uygulanamaz: kontur, derinlik/normal tamponu
+üstünde çalışan tam ekran bir geçiş (`FullScreenPassRendererFeature`); nesne başına filtreleme noktası yok.
+`ErrorWallPanel`: **sönük X geometri değil**, panel yüzeyindeki dünya uzayı Canvas'ta bir işaret (derinliğe
+yazmaz → Şef'te yok; diğer roller soluk görür); **yanan X gerçek geometri**, panelden öne çıkan parlak X (Şef
+kontur olarak, diğerleri parlak renk olarak görür). Oyun durumuna göre Şef'e görünür olma yalnızca bu bileşende.
+
 **Tek istisna — duvar hata sayacı (§7.1.2).** Yanan X, kontur pass'ine bir oyun durumuna göre dahil
 edilir. Bu, kontur pass'ine dahil olma kararının bir oyun durumu tarafından sürüldüğü **tek yerdir**;
 emsal değildir. Başka hiçbir nesne için "Şef bunu da görsün" diye bu yola başvurulmaz.
@@ -637,7 +644,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 95 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 98 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -796,6 +803,26 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     düz çizgide zaten dışarıda (küre taramasıyla doğrulandı).
   - **Pakete tek hamburger** (Ersel, 3 Eki): `PackingArea.onePerType` — pakette aynı türden ürün varsa ikincisi
     girmez (farklı türler girer).
+- **Bölüm sonu (Adım 25, 3 Eki 2026):**
+  - `GameLoopManager`: `maxErrors` (3; **kaybetme eşiğinin ve paneldeki X sayısının tek yeri**), `Outcome`
+    (`RoundOutcome` None/Won/Lost, replike), `ServerEndRound(outcome)` (yalnızca RoundActive'de; ilk sonuç kalır),
+    `ServerRestartRound()` ve `ServerRoundResetting` olayı. Kayıp: `ServerAddError` eşiğe ulaşınca. Kazanç:
+    `CustomerDirector` tüm müşteriler bitince `ServerEndRound(Won)` çağırır. Round timer yok (K1).
+  - **Temiz yeniden başlatma olayla yapılır; GameLoopManager kimseyi tanımaz.** `ServerRoundResetting` dinleyenler:
+    `RoundCleanup` (GameSystems; `ItemMover.DespawnAll` — elde, yuvada, pakette tüm öğeler), `PlayerSpawner`
+    (karakterleri despawn eder; RoundActive'de doğma noktasında, boş envanterle yeniden doğarlar),
+    `BurgerAssemblyStation` (yığın). Müşteriler round RoundActive'den çıkınca `CustomerDirector` tarafından zaten
+    kaldırılır. Hata sayacı ve sonuç `StartRound`'da sıfırlanır; seviye yeniden çözülür. **Dünyada durum tutan
+    yeni bir sistem yazılırsa bu olaya abone olur.** Temizlikten sonra ağda sahne dışı nesne kalırsa `LogError`.
+  - `LevelDirector.levels` (sıralı liste; eski tekil `levelConfig` alanının yerine) + `CurrentLevelIndex` (replike;
+    oturum başında 0) + `HasNextLevel` / `ServerAdvanceLevel()`. `Config` aktif dizindeki seviyedir; varyant dizini
+    seviyeye göre yeniden kurulur. Sahnede: `Seviye1_Taslak`, `Seviye2_Taslak` (1'in kopyası, müşteri +1).
+  - `RoundResultUI` (GameplayCanvas/`RoundResult`): üç oyuncuda sonuç; düğmeler yalnızca host'ta ("Sonraki seviye"
+    kazanıldıysa ve `HasNextLevel` ise). Metinler Inspector'da düz metin (Localization borcu).
+  - `LobbyUIController`: RoundEnded'da lobi paneli açılmaz, oyun arayüzü açık kalır, **imleç serbest**.
+    `PlayerController` RoundEnded'da hareket/bakış işlemez.
+  - `HataPaneli` prefab'ı ×3: `HataPaneli_Kasa` / `_Istasyon` (pano üstü, x=6,22) / `_Mutfak` (x=3,2), y=2,85.
+  - Her hatada hata sesi: `DeliveryFeedback` zaten `ErrorCount` artışını dinliyor (sabır, süre, yanlış teslim).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.
@@ -941,7 +968,7 @@ yeni özellik inşa edilmeden önce düzeltilmelidir. *(30 Eyl 2026'da gerçek k
 | VoIP oda-bağımsız (`ReceiveVoiceClientRpc` hedefsiz broadcast; `GetOrCreateSpeakerPlayer` konuşmacı AudioSource'unu gerçek oyuncu pozisyonuna değil `VoIPController` transform'una parent ediyor) | Ses mekânsal olmalı (K4) | §10.4 | Faz 0 |
 | ~~`VoIPController.komiLowPassCutoffHz` (Komi'de low-pass)~~ — Faz 0: Komi hiçbir oyuncuyu duymaz (`1d4d1b2`) | Şef→Komi: **gibberish** (RMS ile sürülen maymun sesi), low-pass değil | §10.4 | Faz 0 kısmı ✅; gibberish **Faz 0.5'e ertelendi** (18 Eyl 2026) |
 | ~~Kopmada "DURDURULDU" arayüzü ve 5 dk zaman aşımı yok~~ | Duraklatma görünür; süre dolunca oturum kapanır, bölüm başarısız | §8.2 | ✅ `fed5b33` |
-| `RoundEnded`'a geçiş mantığı yok | Kazanma/kaybetme koşulları bağlanmalı | §3.4 | Faz 0 |
+| ~~`RoundEnded`'a geçiş mantığı yok~~ | Kazanma/kaybetme koşulları bağlanmalı | §3.4 | ✅ Adım 25 |
 | `SequentialRoleAssignmentStrategy` (katılma sırası) | Lobide rol seçimi (çakışma varsa hazır verilemez) | §8.1 | **Faz 0.5'e ertelendi** (18 Eyl 2026) |
 
 ---

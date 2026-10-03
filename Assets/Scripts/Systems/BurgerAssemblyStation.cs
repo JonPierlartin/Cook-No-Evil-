@@ -44,6 +44,21 @@ public class BurgerAssemblyStation : NetworkBehaviour, IInteractionGate
         _interactable.OnInteractionCompleted -= HandleInteractionCompleted;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        if (IsServer && GameLoopManager.Instance != null)
+            GameLoopManager.Instance.ServerRoundResetting += HandleRoundResetting;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsServer && GameLoopManager.Instance != null)
+            GameLoopManager.Instance.ServerRoundResetting -= HandleRoundResetting;
+    }
+
+    // Yeniden baslatma: tezgahta yarim kalan yigin silinir.
+    private void HandleRoundResetting() => PlacedIngredients.Clear();
+
     private void HandleInteractionCompleted(InteractionContext context)
     {
         if (!IsServer)

@@ -56,6 +56,20 @@ public class GameLoopManager : NetworkBehaviour
     public readonly NetworkVariable<int> ErrorCount =
         new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    [Tooltip("Kaybetme eşiği: bu kadar hatada seviye kaybedilir (GDD 3.4: 3 — global sabit, seviye parametresi DEĞİL). " +
+        "Duvar panelindeki X sayısı da budur. TEK yer.")]
+    [SerializeField, Min(1)] private int maxErrors = 3;
+
+    // Biten bölümün sonucu; RoundEnded'da anlamlıdır. Yalnızca sunucu yazar.
+    public readonly NetworkVariable<RoundOutcome> Outcome =
+        new(RoundOutcome.None, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    // Yalnızca sunucuda: yeniden başlatmadan hemen önce. Dünyada durum tutan her sistem (müşteriler, öğeler,
+    // tezgah yığınları, oyuncu nesneleri) kendini burada temizler; GameLoopManager onları tanımaz.
+    public event Action ServerRoundResetting;
+
+    public int MaxErrors => maxErrors;
+
     public bool IsRoundActive => CurrentRoundState.Value == RoundState.RoundActive;
 
     // Tum eski "GameLoopManager.Instance.IsGamePaused.Value" cagri yerleri artik bu
@@ -95,6 +109,7 @@ public class GameLoopManager : NetworkBehaviour
             CurrentRoundState.Value = RoundState.Lobby;
             _isPaused.Value = false;
             ErrorCount.Value = 0;
+            Outcome.Value = RoundOutcome.None;
         }
 
         _pausedSeconds = 0f;
@@ -158,6 +173,7 @@ public class GameLoopManager : NetworkBehaviour
         }
 
         ErrorCount.Value = 0;
+        Outcome.Value = RoundOutcome.None;
         CurrentRoundState.Value = RoundState.RoundActive;
         _isPaused.Value = false;
         return true;
@@ -170,7 +186,52 @@ public class GameLoopManager : NetworkBehaviour
             return;
 
         ErrorCount.Value++;
-        Debug.LogWarning($"[GameLoopManager] 1 HATA: {reason}. Toplam hata: {ErrorCount.Value}.");
+        Debug.LogWarning($"[GameLoopManager] 1 HATA: {reason}. Toplam hata: {ErrorCount.Value}/{maxErrors}.");
+
+        // GDD 3.4: eşiğe ulaşılınca seviye kaybedilir.
+        if (ErrorCount.Value >= maxErrors)
+            ServerEndRound(RoundOutcome.Lost);
+    }
+
+    // Sunucu: bölümü bitirir. Round geri sayımı YOKTUR (K1) — kayıp hata eşiğinden, kazanç tüm müşterilerin
+    // bitmesinden (CustomerDirector) gelir. Yalnızca RoundActive iken geçerlidir; ilk gelen sonuç kalır (aynı karede
+    // hem son hata hem son müşteri olursa kayıp önce yazılır).
+    public void ServerEndRound(RoundOutcome outcome)
+    {
+        if (!IsServer || !IsRoundActive || outcome == RoundOutcome.None)
+            return;
+
+        Outcome.Value = outcome;
+        _isPaused.Value = false;
+        CurrentRoundState.Value = RoundState.RoundEnded;
+        Debug.Log($"[GameLoopManager] Bölüm bitti: {(outcome == RoundOutcome.Won ? "KAZANILDI" : "KAYBEDİLDİ")} (hata {ErrorCount.Value}/{maxErrors}).");
+    }
+
+    // Sunucu (host'un sonuç ekranı): bölümü TEMİZ yeniden başlatır. Önce herkes kendini temizler
+    // (ServerRoundResetting), sonra round yeniden başlar ve seviye yeniden çözülür. Sızıntı denetimi: temizlikten
+    // sonra ağda yalnızca sahneye yerleştirilmiş nesneler kalmalıdır.
+    public bool ServerRestartRound()
+    {
+        if (!IsServer || CurrentRoundState.Value != RoundState.RoundEnded)
+            return false;
+
+        int before = NetworkManager.SpawnManager.SpawnedObjectsList.Count;
+        ServerRoundResetting?.Invoke();
+
+        int after = 0, dynamic = 0;
+        foreach (var networkObject in NetworkManager.SpawnManager.SpawnedObjectsList)
+        {
+            after++;
+            if (!networkObject.InScenePlaced)
+                dynamic++;
+        }
+
+        if (dynamic == 0)
+            Debug.Log($"[GameLoopManager] Yeniden başlatma temizliği: ağ nesnesi {before} -> {after} (hepsi sahne nesnesi, sızıntı yok).");
+        else
+            Debug.LogError($"[GameLoopManager] Yeniden başlatma temizliğinde SIZINTI: ağ nesnesi {before} -> {after}, {dynamic} dinamik nesne kaldı.");
+
+        return StartRound();
     }
 
     // Lobby/RoundEnded'da pause anlamsiz/no-op (kullanici istegi) — RoundActive

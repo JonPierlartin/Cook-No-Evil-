@@ -1,12 +1,16 @@
-// Round'un tek otoriteli yasam dongusu (bkz. GameLoopManager). RoleManager.IsRoundActive
-// ve GameLoopManager.IsGamePaused'un birbirinden habersiz iki ayri bayrak olmasindan
-// kaynaklanan riskleri (disconnect sirasinda sipariş süresinin işlemeye devam etmesi,
-// pause sirasinda round bitişinin tetiklenebilmesi) onlemek icin tek NetworkVariable
-// uzerinden senkronize edilir. RoundEnded'a gecis mantigi Bilesen 2 ile gelecek —
-// simdilik hicbir kod bu state'e gecmiyor, sadece makine burada tanimli.
+// Round'un tek otoriteli yaşam döngüsü (bkz. GameLoopManager). Tek NetworkVariable üzerinden senkronize edilir.
 public enum RoundState
 {
     Lobby,
     RoundActive,
+    // Bölüm bitti (kazanıldı ya da kaybedildi — bkz. RoundOutcome); sonuç ekranı gösterilir.
     RoundEnded
+}
+
+// Biten bölümün sonucu (GDD 3.4). Yalnızca sunucu yazar.
+public enum RoundOutcome : byte
+{
+    None,
+    Won,
+    Lost
 }

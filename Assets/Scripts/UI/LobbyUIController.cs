@@ -213,8 +213,14 @@ public class LobbyUIController : MonoBehaviour
     // tarafindan cagrilir — ikisi de gerekli, yukarida detayli aciklama var.
     private void ApplyRoundActiveState(bool active)
     {
-        lobbyPanel.SetActive(!active);
-        SetGameplayCanvasVisible(active);
+        // Bolum bittiginde (RoundEnded) lobiye donulmez: oyun arayuzu acik kalir (sonuc ekrani orada), imlec
+        // dugmeler icin serbest birakilir. Replike durum yalnizca ag acikken gecerlidir (kopmadan sonra bayat kalir).
+        bool ended = !active
+            && Unity.Netcode.NetworkManager.Singleton != null && Unity.Netcode.NetworkManager.Singleton.IsListening
+            && GameLoopManager.Instance != null && GameLoopManager.Instance.CurrentRoundState.Value == RoundState.RoundEnded;
+
+        lobbyPanel.SetActive(!active && !ended);
+        SetGameplayCanvasVisible(active || ended, active);
     }
 
     // BULUNAN HATA: burada eskiden GameObject.Find("GameplayCanvas") kullaniliyordu.
@@ -226,16 +232,18 @@ public class LobbyUIController : MonoBehaviour
     // gorulen bug buydu (cark, inactive GameplayCanvas'in child'i oldugu icin calismiyordu).
     // Duzeltme: Inspector'dan sabit atanan referans kullaniliyor, aktif/inaktif durumundan
     // bagimsiz her zaman bulunuyor.
-    private void SetGameplayCanvasVisible(bool visible)
+    private void SetGameplayCanvasVisible(bool visible) => SetGameplayCanvasVisible(visible, visible);
+
+    private void SetGameplayCanvasVisible(bool visible, bool lockCursor)
     {
         if (gameplayCanvas != null)
             gameplayCanvas.SetActive(visible);
         else
             Debug.LogError("[LobbyUIController] gameplayCanvas Inspector referansi atanmamis.");
 
-        ShouldLockCursor = visible;
-        Cursor.lockState = visible ? CursorLockMode.Locked : CursorLockMode.None;
-        Cursor.visible = !visible;
+        ShouldLockCursor = lockCursor;
+        Cursor.lockState = lockCursor ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !lockCursor;
     }
 
     // Windows/Unity, pencere fokusu kaybedildiginde imlec kilidini/gizliligini

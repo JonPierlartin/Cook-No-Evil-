@@ -294,6 +294,9 @@ public class CustomerDirector : MonoBehaviour
             return;
 
         AllCustomersFinished = true;
+        // GDD 3.4: tüm müşteriler bitti ve hata eşiği aşılmadıysa seviye kazanılır (eşik aşıldıysa round zaten bitti;
+        // GameLoopManager ilk sonucu korur).
+        GameLoopManager.Instance.ServerEndRound(RoundOutcome.Won);
         Debug.Log($"[Müşteri] Bölümün tüm müşterileri bitti ({_spawnedCount} müşteri geldi, {_backupsUsed} yedek kullanıldı, hata {GameLoopManager.Instance.ErrorCount.Value}).");
         ServerAllCustomersFinished?.Invoke();
     }
