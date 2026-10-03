@@ -131,6 +131,7 @@ Sınırı" bölümünde. Burada yalnızca 18 Eylül'de yapılan kapsam değişik
 | 8 | Çöp kutusu — D8'de yapıldı · input temizliği (Previous/Next) | ⏳ input |
 | 16a+16b | `NumericValue` + `Selection<T>`, `LevelConfig`, `BurgerVariant`, kanallar, istasyon kimlikleri, sunucu çözümlemesi — property drawer'sız | ✅ kod; oyun testi bekliyor |
 | 13a+13b | Veri odaklı sinyal çarkı `R` + sinyal yayını (`09f733c`); cooldown ve rol kısıtları kalktı, etkileşim jesti iptal ediyor (PLAN 12 de burada kapandı). Genel `E` çarkı (14) açık | ✅ kod; oyun testi bekliyor |
+| 15 | Duvar malzeme panosu (İstasyon + Kasa, replike eşleşmeden) + ikon üretici editör aracı; çarkta yön değerleri kendi yönünde | ✅ kod; oyun testi bekliyor |
 
 **Envanter tahmini (21 Eyl, 4.0 raporu):** Claude Code'un tahmini 11-14 sa + ~2 sa test; danışman 5-6 sa demişti. Raporun 4.3'ü (test amaçlı köfte yuvası + kullanıcısız `BurgerAssembly` iskeleti) **kaldırıldı**: `ServerProgress` ve kategori değerleri ızgara adımına, `BurgerAssembly` birleştirme adımına (Adım 6) taşındı. Kalan envanter işi ~8-10 sa. `ServerProgress` zaten ızgaranın 6 saatinin içindeydi.
 

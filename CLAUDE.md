@@ -359,8 +359,7 @@ alanlar bundan türetilir. Ayrı ayrı yazılırsa tek-kaynak ilkesi çöker ve 
   `.IntervalBefore`; GDD §7.3.3, 3 Eki) — bölüm başında tek değer çekilip herkese verilmez. Müşteri sayısı, yedek
   havuz, süre çarpanı bölüm başına tektir.
 - **Kanal eşleşmesinin sırası görseldir** (GDD §3.6.3, 3 Eki): `ChannelMapping.Items[i] ↔ Values[i]` aynı zamanda
-  duvar panosundaki satır sırasıdır; pano adımı bunu okuyup satırları o sırayla dizer. `ResolvedLevel` şu an yalnızca
-  sunucuda — pano istemcilerde de çizileceği için o adımda eşleşmenin replikasyonu gerekir.
+  duvar panosundaki satır sırasıdır. Eşleşme `LevelDirector.SignalRows` ile replike edilir (Adım 13a); pano onu okur.
 - Örnek: `Assets/Data/Levels/Seviye1_Taslak.asset` (içerik TASLAK). Property drawer yok (Inspector ham).
 
 ### K9 — ESC menüsü oyunu durdurmaz
@@ -638,7 +637,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 80 .cs dosyası (3 Eki 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 82 .cs dosyası + `Assets/Editor/IconGenerator.cs` (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -705,7 +704,25 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     böyle olacak; hangi tarafın "sağ" sayılacağı playtest konusu).
   - `GameLoopManager.CanPlayersAct` (round aktif **ve** duraklatılmamış): etkileşim, crosshair, sinyal ve emote
     çarkı — istemci ve sunucu — aynı koşulu buradan okur. Yeni bir oyuncu eylemi ayrı kontrol yazmaz.
+- **Duvar malzeme panosu (Adım 15, 3 Eki 2026):** `SignalMappingBoard` + `SignalMappingBoardRow`
+  (`Assets/Prefabs/MalzemePanosu.prefab`; gövde + dünya uzayı Canvas, collider yok, ağ nesnesi değil). İçerik
+  yalnızca `LevelDirector.SignalRows`'tan: eşleşmesi (`ItemId`) olan her satır için şablondan bir satır — değer
+  (`SignalValue.icon` varsa ikon, yoksa `displayName` yazısı) + malzeme ikonu. Satır sayısı ve sırası veriden;
+  dikey layout satırları panoya eşit böler. Sahnede `MalzemePanosu_Istasyon` (duvarın kuzey yüzü, z=−3,58) ve
+  `MalzemePanosu_Kasa` (güney yüzü, z=−3,88), ikisi de x=6,72 / y=1,95 — pencerenin (x 7,3–9,0) batısında.
+  Kökün +Z'si duvarın içine bakar. **Pencerenin tam önünden bakış açısı ~57°** (bir adım geriden ~20°); okunurluk
+  playtest konusu. Pano Şef'in görüşünde yalnızca gövde konturu olarak görünür (UI derinliğe yazmaz).
+- **İkon üretici (Adım 15):** `IconGenerator` (menü: *Cook No Evil → İkon Üret*). `PreviewRenderUtility` ile ayrı
+  önizleme sahnesinde, saydam arka planlı 256 px sprite üretir ve asset'e atar: `ItemType.visualPrefab` → `icon`
+  (köfte ilk fazıyla), `SignalValue.visualPrefab` → `icon` (karşıdan; yalnızca seçili asset'ler için — Sayı
+  değerlerine ikon üretilirse pano rakam yerine çubuk gösterir), `BurgerVariant` → `image` (yığın
+  `BurgerStackBuilder` ile; düz listeden kuran overload eklendi). **Işık yalnızca `preview.Render` ile gelir;**
+  `camera.Render` doğrudan çağrılırsa görüntü karanlık kalır. Hamburger türünün `visualPrefab`'ı yok, ikonu eski.
+- **Çarkta sabit açı:** `SignalValue.useWheelAngle` + `wheelAngle` (0 = sağ, 90 = yukarı). Bir kattaki tüm
+  seçenekler işaretliyse açılar veriden gelir (Yön değerleri kendi yönünde durur), değilse eşit aralık
+  (`SignalWheelModel.ResolveAngles`).
 - `EmoteWheelUI` (E, eski tek katmanlı çark; rol kısıtı yok) + `PlayerEmoteReactor` — GDD'deki genel emote
+
   çarkı henüz yazılmadı.
 - `VoIPController` (`IVoiceProvider` soyutlaması). Round sırasında Kasiyer'in paketi sunucuda relay
   edilmez; **Komi hiçbir oyuncunun sesini duymaz** — gelen paket hiç çözülmez (`1d4d1b2`, K3).
@@ -757,8 +774,8 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   dışında ve duraklatmada pişme durur. `Grill.IsCooking` pişirme ve ses için **tek kural**.
   `GrillSizzle` (GDD §10.5, `fed5b33`): köfte ızgaradayken sabit 3B cızırtı döngüsü
   (`Assets/Audio/Izgara_Cizirti.ogg`, BigSoundBank "Frying pan #2", CC0); faz değişiminde ses değişmez.
-- Hotbar ikonları: `Assets/Data/Icons/` — Ekmek, Köfte, Hamburger ve 5 garnitür kendi modellerinden
-  editörde render edildi (saydam arka plan). TestItem hâlâ emote ikonu kullanıyor.
+- Hotbar ikonları: `Assets/Data/Icons/` — `IconGenerator` ile üretilir (bkz. İkon üretici). Yeni türde menüden
+  yeniden üretilir.
 - **Envanter doluyken hamburger kapatılabilir (D3, `9ba8091`):** üst ekmek gate'i boş slot aramaz;
   ekmek slottan alınınca hamburger aynı slottan başlayan kuralla eklenir.
 - `HoldOrPressInteractable` (Press/Hold primitive'i; olayları etkileşen clientId'yi taşır,

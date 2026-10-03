@@ -34,6 +34,16 @@ public static class BurgerStackBuilder
     // yerel Y ekseninde) döndürür.
     public static float Build(NetworkList<BurgerLayerEntry> layers, ItemRegistry registry, Transform root, List<GameObject> created)
     {
+        var copy = new List<BurgerLayerEntry>(layers.Count);
+        for (int i = 0; i < layers.Count; i++)
+            copy.Add(layers[i]);
+
+        return Build(copy, registry, root, created);
+    }
+
+    // Ağdan bağımsız sürüm: aynı kural, düz listeden (editörde varyant görseli üretmek için de kullanılır).
+    public static float Build(IReadOnlyList<BurgerLayerEntry> layers, ItemRegistry registry, Transform root, List<GameObject> created)
+    {
         float top = 0f;
         for (int i = 0; i < layers.Count; i++)
         {
