@@ -166,12 +166,9 @@ public class PlayerInteractor : NetworkBehaviour
         // Round aktif degilken (lobi) etkilesim yok — sunucunun RequestInteractServerRpc'de
         // uyguladigi AYNI kontrol (asagida). Crosshair bunu atlarsa "kullanilabilir" gosterip
         // sunucu reddeder, geri bildirim yalan soylemis olur (K6).
-        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
-            return CrosshairState.Neutral;
-
-        // Oyun durdurulmusken (bir oyuncu koptu) sunucu etkilesimi reddeder (RequestInteractServerRpc) —
-        // crosshair da ayni kosulla notr kalir, "kullanilabilir" deyip yalan soylemez.
-        if (GameLoopManager.Instance.IsGamePaused)
+        // Round disi VE duraklatma tek paylasilan kosuldur (GameLoopManager.CanPlayersAct); sinyal ve
+        // emote carklari da ayni kosulu okur.
+        if (!GameLoopManager.CanPlayersAct)
             return CrosshairState.Neutral;
 
         if (target == null)
@@ -194,17 +191,9 @@ public class PlayerInteractor : NetworkBehaviour
         if (SignalWheelUI.IsWheelOpen)
             return;
 
-        // Round aktif degilken (lobi) etkilesim yok — asil yetki asagidaki
-        // RequestInteractServerRpc icindeki sunucu-taraf kontrolundedir (K6 geregi), bu
-        // sadece gereksiz bir RPC gonderimini onleyen ON-kontroldur.
-        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
-            return;
-
-        // "Oyun durduruldu" (round sirasinda bir oyuncu koptugunda, bkz. GameLoopManager)
-        // TUM oyuncular icin gecerli — sadece kopan oyuncunun kendi objesi degil. Bu, gereksiz
-        // bir RPC gonderimini onlemek icin sadece bir ON-kontroldur; asil yetki asagidaki
-        // RequestInteractServerRpc icindeki sunucu-taraf kontrolundedir (K6 geregi).
-        if (GameLoopManager.Instance.IsGamePaused)
+        // Round aktif degilken (lobi) veya oyun durdurulmusken etkilesim yok. Bu yalnizca gereksiz bir RPC'yi
+        // onleyen ON-kontroldur; asil yetki RequestInteractServerRpc'deki ayni kosuldadir (K6).
+        if (!GameLoopManager.CanPlayersAct)
             return;
 
         if (!TryGetCurrentTarget(out var target))
@@ -242,17 +231,11 @@ public class PlayerInteractor : NetworkBehaviour
         // kontroluyle degil"): istemcideki on-kontroller (HandleAttackStarted) bypass edilse
         // bile sunucu, round aktif degilken (lobi) veya durdurulmusken hicbir yeni etkilesimi
         // kabul etmez. Crosshair'in kullandigi ComputeFeedback ile AYNI kosul (paylasilan
-        // GameLoopManager.Instance.IsRoundActive) — istemci "kullanilabilir" derken sunucu
+        // GameLoopManager.CanPlayersAct) — istemci "kullanilabilir" derken sunucu
         // reddetmez.
-        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
+        if (!GameLoopManager.CanPlayersAct)
         {
-            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): round aktif degil.");
-            return;
-        }
-
-        if (GameLoopManager.Instance.IsGamePaused)
-        {
-            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): oyun durduruldu.");
+            Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): round aktif degil veya oyun durduruldu.");
             return;
         }
 
@@ -276,6 +259,11 @@ public class PlayerInteractor : NetworkBehaviour
             Debug.LogWarning($"[PlayerInteractor] Sunucu etkilesim istegini reddetti (client={senderId}): {reason}");
             return;
         }
+
+        // GDD 3.6.0: etkilesim, oyuncunun oynayan sinyalini/emote'unu aninda iptal eder (herkese yansir) ve
+        // etkilesim gerceklesir. Yalnizca KABUL edilen etkilesim iptal eder; reddedilen tiklama etmez.
+        if (EmoteSystem.Instance != null)
+            EmoteSystem.Instance.ServerCancelPlayback(senderId);
 
         _serverPressedInteractable = interactable;
         interactable.BeginPress(context);

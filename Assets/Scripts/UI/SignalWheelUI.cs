@@ -80,7 +80,7 @@ public class SignalWheelUI : MonoBehaviour
 
     private void HandleOpenStarted(InputAction.CallbackContext context)
     {
-        if (_open || !CanOpen() || LevelDirector.Instance == null)
+        if (_open || EmoteWheelUI.IsWheelOpen || !CanOpen() || LevelDirector.Instance == null)
             return;
 
         _rowBuffer.Clear();

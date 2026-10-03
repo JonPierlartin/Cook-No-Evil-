@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// Kasiyer VE Komi icin aktif E-basili-tutma radyal emote menusu (Sef'te hic acilmaz;
-// Komi'nin secimi Kasiyer'e gore kisitli — bkz. EmoteSystem.KomiEmoteLimit).
+// E-basili-tutma radyal emote menusu. Rol kisiti yoktur (GDD 3.6.0). Bu, eski tek katmanli carktir; GDD'deki
+// genel emote carki ayri bir adimda yazilacak. Acma kosulu sinyal carki ve etkilesimle AYNIDIR
+// (GameLoopManager.CanPlayersAct) ve oynayan jest bitmeden acilmaz (EmoteSystem.IsLocalBusy; cooldown yok).
 // HoldOrPressInteractable'dan BAGIMSIZ (bu bir dunya-objesi etkilesimi degil, rol-bazli
 // bir UI menusu) — kendi ham Interact (E) basma/birakma girisini okur. Rust'in insa
 // carki gibi: imlec HER ZAMAN kilitli/gizli kalir, dilim secimi carktan beri biriken
@@ -22,7 +23,7 @@ public class EmoteWheelUI : MonoBehaviour
 
     [SerializeField] private InputActionAsset inputActions;
 
-    [Header("Kasiyer - Cark")]
+    [Header("Cark")]
     [SerializeField] private GameObject wheelRoot;
     [SerializeField] private Image[] slotIcons;
     [SerializeField] private Color normalColor = Color.white;
@@ -55,15 +56,15 @@ public class EmoteWheelUI : MonoBehaviour
 
         InitializeWheelIcons();
 
-        if (RoleManager.Instance != null)
-            RoleManager.Instance.OnLocalRoleAssigned += HandleLocalRoleAssigned;
+        var playerMap = inputActions.FindActionMap("Player");
+        playerMap.Enable();
+        _interactAction = playerMap.FindAction("Interact");
+        _interactAction.started += HandleInteractStarted;
+        _interactAction.canceled += HandleInteractCanceled;
     }
 
     private void OnDestroy()
     {
-        if (RoleManager.Instance != null)
-            RoleManager.Instance.OnLocalRoleAssigned -= HandleLocalRoleAssigned;
-
         if (_interactAction != null)
         {
             _interactAction.started -= HandleInteractStarted;
@@ -90,52 +91,18 @@ public class EmoteWheelUI : MonoBehaviour
         }
     }
 
-    // Kasiyer tam listeyle, Komi kisitli (ilk N) listeyle carka erisebilir (bkz.
-    // EmoteSystem.KomiEmoteLimit). Sef'in carka hic erisimi yok.
-    private static bool IsWheelRole(PlayerRole role) => role == PlayerRole.Kasiyer || role == PlayerRole.Komi;
-
-    private void HandleLocalRoleAssigned(PlayerRole role)
-    {
-        if (!IsWheelRole(role) || _interactAction != null)
-            return;
-
-        var playerMap = inputActions.FindActionMap("Player");
-        playerMap.Enable();
-        _interactAction = playerMap.FindAction("Interact");
-        _interactAction.started += HandleInteractStarted;
-        _interactAction.canceled += HandleInteractCanceled;
-    }
-
     private void HandleInteractStarted(InputAction.CallbackContext context)
     {
-        // Savunma amacli tekrar kontrol: HandleLocalRoleAssigned zaten Kasiyer-disi
-        // rollerde bu callback'i hic abone etmiyor, ama gercek 3-kisilik testte Komi'de
-        // da imlecin acildigi bildirildi — GUNCEL rolu burada da dogrulamak (onbellege
-        // guvenmek yerine, RoleManager'in gecmis round-baslama senkron sorunlarindaki
-        // ayni "canli oku" duzeltmesiyle tutarli) bu sinifi kokten kapatiyor.
-        if (RoleManager.Instance == null || !IsWheelRole(RoleManager.Instance.LocalRole))
+        // Sunucunun SelectEmoteServerRpc'de uyguladigi kosullarin aynisi (istemci tahmin eder, sunucu karar
+        // verir): round oynanabilir olmali ve oynayan jest bitmis olmali. Sinyal carki acikken acilmaz.
+        if (_wheelOpen || SignalWheelUI.IsWheelOpen || !GameLoopManager.CanPlayersAct
+            || EmoteSystem.Instance == null || EmoteSystem.Instance.IsLocalBusy)
             return;
 
-        // "Oyun durduruldu" (bkz. PlayerController/PlayerInteractor ayni kontrol) carki
-        // da kapsar — YENI bir cark acilamaz. Zaten acik bir cark varsa (HandleInteractCanceled)
-        // kapatilmasini BILEREK engellemiyoruz, PlayerInteractor'daki ayni prensiple tutarli.
-        if (GameLoopManager.Instance != null && GameLoopManager.Instance.IsGamePaused)
+        int emoteCount = EmoteSystem.Instance.AvailableEmotes != null ? EmoteSystem.Instance.AvailableEmotes.Length : 0;
+        _activeSlotCount = Mathf.Min(slotIcons.Length, emoteCount);
+        if (_activeSlotCount == 0)
             return;
-
-        // Ayni/farkli emote farketmeksizin, son secimden itibaren cooldown suresi
-        // dolmadan cark hic acilmiyor (komiEmoteLimit gibi client tarafinda da
-        // kontrol edilir — sunucu zaten SelectEmoteServerRpc icinde ayrica reddeder).
-        // Cark acilamadigi icin secim yapilamaz, ekstra bir "kilitli dilim" gosterimine
-        // gerek kalmiyor.
-        if (EmoteSystem.Instance != null && EmoteSystem.Instance.IsOnCooldown)
-            return;
-
-        // Kasiyer icin tum dilimler, Komi icin sadece ilk N dilim aktif/tiklanabilir
-        // olur (kisitli liste — bkz. EmoteSystem.KomiEmoteLimit). Geri kalan dilimler
-        // gizlenir ki Komi yanlislikla erisimi olmayan bir emote'u secmeye calismasin.
-        bool isKasiyer = RoleManager.Instance.LocalRole == PlayerRole.Kasiyer;
-        int komiLimit = EmoteSystem.Instance != null ? EmoteSystem.Instance.KomiEmoteLimit : 0;
-        _activeSlotCount = isKasiyer ? slotIcons.Length : Mathf.Clamp(komiLimit, 0, slotIcons.Length);
 
         for (int i = 0; i < slotIcons.Length; i++)
         {
@@ -161,7 +128,7 @@ public class EmoteWheelUI : MonoBehaviour
 
     private void HandleInteractCanceled(InputAction.CallbackContext context)
     {
-        if (RoleManager.Instance == null || !IsWheelRole(RoleManager.Instance.LocalRole))
+        if (!_wheelOpen)
             return;
 
         _wheelOpen = false;

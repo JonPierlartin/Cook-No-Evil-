@@ -401,7 +401,6 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   visualRoot: {fileID: 809440094147439709}
   visualRenderer: {fileID: 8939325543183038944}
-  flashDuration: 0.6
   bounceHeight: 0.2
   tiltAngle: 12
 --- !u!1 &5548880153533344472

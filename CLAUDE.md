@@ -638,7 +638,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 
 Özet:
 
-**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 76 .cs dosyası (30 Eyl 2026).
+**Klasörler:** `Assets/Scripts/{Core, Network, Player, Systems, UI}` — 80 .cs dosyası (3 Eki 2026).
 
 **Kurulu ve doğrulanmış:**
 - Steam lobi/host/client (3 gerçek hesapla uçtan uca test edildi)
@@ -680,7 +680,33 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 - Faz rengi: `ItemType.phaseColors` → `ItemPhaseColoring` (tek kural) → `ItemPhaseVisual` (dünya
   görseli) ve `HeldItemVisual` (elde kopya, kaynağın `ServerProgress`'ine abone). Şef'te renk
   görünmez (K2).
-- `EmoteSystem` + `EmoteWheelUI` (tek katmanlı çark), `PlayerEmoteReactor`
+- **Sinyal çarkı ve jest kuralları (Adım 13, 3 Eki 2026):**
+  - `LevelDirector` artık `NetworkBehaviour`: çözülmüş kanal eşleşmesi `SignalRows`
+    (`NetworkList<SignalRow>`: `LevelConfig.Channels` dizini, kanalın `values` dizini, eşleşen öğe id'si;
+    yalnızca sunucu yazar, round başında bir kez). Asset referansı ağdan gitmez — her istemci aynı
+    `LevelConfig`'i taşır, dizinle çözer. **Duvar panosu da bu listeyi okur; ayrı replikasyon yazılmaz.**
+  - `SignalWheelModel.Build` (saf) çark ağacını yalnızca bu satırlardan kurar; kodda kategori/değer listesi
+    yoktur. "Sipariş Bitti" kanala ait değildir (`OrderDoneChannel = -1`), asset'i `EmoteSystem.orderDoneSignal`.
+  - `SignalWheelUI` (GameplayCanvas/`SignalWheelPanel`; `SignalWheel` action = R, basılı tut): sol tık seçer
+    (kategori → içine gir, değer → gönder), sağ tık üst kata döner. Çark açıkken bakış ve etkileşim tıklaması
+    kapalı (`PlayerController`, `PlayerInteractor` `IsWheelOpen` okur). Sinyal rolleri `EmoteSystem.signalRoles`.
+  - `EmoteSystem` jestlerin tek sunucu otoritesi: `RequestSignalServerRpc` (rol → `CanPlayersAct` → sinyal bu
+    bölümde açık → oynayan yok) ve `SelectEmoteServerRpc` (E; rol kısıtı yok). **Cooldown yok**; tek kayıt
+    `_serverBusyUntil` (oyuncu başına bitiş anı), süre veriden (`SignalValue.Duration` klip varsa klip uzunluğu,
+    yoksa `durationSeconds`; `EmoteDefinition.Duration`). İstemci `IsLocalBusy` ile tahmin eder — yayın gelince
+    başladığı için sunucudan geç biter (istemci daha katı).
+  - **Etkileşim jesti iptal eder:** `PlayerInteractor` sunucuda etkileşimi **kabul ettiği** anda
+    `EmoteSystem.ServerCancelPlayback` çağırır; iptal herkese yayılır (`OnPlaybackCancelled`). Reddedilen
+    tıklama iptal etmez. Yeni bir jest görseli yazılırsa bu olaya abone olur.
+  - `PlayerSignalDisplay` (Player kökü; işaret `Visual/SignalAnchor`'da, yerel (0, 0,35, 0,55)): yer tutucu
+    işaretler `Assets/Prefabs/Signals/` (ok, 1–5 çubuk, çerçeve), `SignalValue.visualPrefab`'dan. Final
+    animasyon gelince yalnızca veri değişir. **Pencere açıklığı y 1,50–2,30** (ölçüldü); işaret 1,51–1,95
+    arasında kalır. Yön okları Kasiyer'in yerel uzayındadır (Komi karşıdan aynalı görür — final animasyonda da
+    böyle olacak; hangi tarafın "sağ" sayılacağı playtest konusu).
+  - `GameLoopManager.CanPlayersAct` (round aktif **ve** duraklatılmamış): etkileşim, crosshair, sinyal ve emote
+    çarkı — istemci ve sunucu — aynı koşulu buradan okur. Yeni bir oyuncu eylemi ayrı kontrol yazmaz.
+- `EmoteWheelUI` (E, eski tek katmanlı çark; rol kısıtı yok) + `PlayerEmoteReactor` — GDD'deki genel emote
+  çarkı henüz yazılmadı.
 - `VoIPController` (`IVoiceProvider` soyutlaması). Round sırasında Kasiyer'in paketi sunucuda relay
   edilmez; **Komi hiçbir oyuncunun sesini duymaz** — gelen paket hiç çözülmez (`1d4d1b2`, K3).
 - `DeafHearing` (oyuncu kamerası, AudioListener): "sağır mı" kuralının **tek yeri** (sağır rol + round
@@ -800,9 +826,9 @@ yeni özellik inşa edilmeden önce düzeltilmelidir. *(30 Eyl 2026'da gerçek k
 | Mevcut durum | GDD'nin gerektirdiği | Referans | Durum |
 |---|---|---|---|
 | ~~`PlayerRole.Yamak`~~ | `PlayerRole.Komi` (mekanik yeniden adlandırma) | §4.2 | ✅ Adım 3 (`f6026b2`) |
-| `EmoteSystem.selectionCooldown` (2.5 sn cooldown) | **Cooldown YOK** — emote bitmeden yenisi başlatılamaz | §3.6.0 | Faz 0 |
-| `EmoteSystem.komiEmoteLimit` (Komi'ye kısıtlı liste; Adım 3'te `yamakEmoteLimit`'ten yeniden adlandırıldı, kavram hâlâ geçersiz) | Kavram geçersiz — Kasiyer'de `R` sinyal çarkı, herkeste `E` genel çark | §3.6.0 | Faz 0 |
-| `EmoteWheelUI` tek katmanlı, rol-kapılı (`IsWheelRole` Şef'i dışlıyor) | İç içe, **veri odaklı** sinyal çarkı (N kategori × M değer, `LevelConfig`'ten) + tüm rollerde `E` genel çark | §3.6.0, §11.9 | Faz 0 |
+| ~~`EmoteSystem.selectionCooldown` (2.5 sn cooldown)~~ | **Cooldown YOK** — emote bitmeden yenisi başlatılamaz | §3.6.0 | ✅ Adım 13b |
+| ~~`EmoteSystem.komiEmoteLimit` (Komi'ye kısıtlı liste)~~ | Kavram geçersiz — Kasiyer'de `R` sinyal çarkı, herkeste `E` genel çark | §3.6.0 | ✅ Adım 13b |
+| `EmoteWheelUI` tek katmanlı (rol kısıtı 13b'de kalktı; `R` sinyal çarkı 13a'da yazıldı) | Tüm rollerde iç içe `E` genel çark | §3.6.0 | `R` ✅ Adım 13a; **`E` genel çarkı açık** (PLAN 14) |
 | ~~`BurgerAssemblyStation`: sıra kuralı yok~~ | Zorunlu kategori sırası | §6.7.3 | ✅ Adım 6a (`30855e2`) |
 | ~~`BurgerRecipe.requiredIngredients`~~ (asset artık kullanılmıyor, Temizlik Borcu'nda) | Ekmek tek envanter öğesi, alt+üst iki adımda | §6.7.3 | ✅ Adım 6b (`7b17d4a`) |
 | ~~`ItemType` yalnızca `isBread` biliyor~~ | Kategori bilgisi | §6.7.3 | ✅ Adım 6a (`30855e2`) |
@@ -879,8 +905,6 @@ Dersler "Unity / Editor" tuzaklarında.)*
   ikincisinin tıklaması "dolu yuva" kuralıyla ilkinin öğesini **alır**; istemcinin "koymak
   istiyordum" niyeti sunucuya taşınmıyor. Faz 0'da kabul edildi (yuvaları farklı roller sırayla
   kullanıyor). Playtest'te görülürse niyet RPC'ye eklenir.
-- `EmoteWheelUI.HandleInteractStarted` round kontrolü yapmıyor (sunucu reddediyor); emote çarkı
-  yeniden yazılırken `PlayerInteractor`'daki gibi paylaşılan kontrole bağlanacak.
 - `CrosshairUI` görselleri yer tutucu (Knob sprite, beyaz/yeşil/kırmızı); "kullanılabilir" yeşili
   yeşil birleştirme tezgahı üzerinde düşük kontrastlı
 - **Bayat kod yorumları (30 Eyl kod taraması; davranışa etkisi yok, okuyanı yanıltır):**
@@ -890,9 +914,9 @@ Dersler "Unity / Editor" tuzaklarında.)*
   de tıklama) · `GameLoopManager` başı ("skor hedefi" — GDD'de yok, K1) · `LobbyUIController:28,243` ve
   `RoundState` (kaldırılmış `RoleManager.IsRoundActive`'i güncel sanıyor) · `BurgerLayerEntry:5`
   ("hamburger tek öğe olacak") · arşiv spec'e atıflar ("GDD 2.1/2.2", "Bileşen 1/2", "Hyper-Spatial"):
-  `EmoteSystem`, `MockVoiceProvider`, `NetworkTransportManager`, `RoleManager`, `VoIPController` Şef
+  `MockVoiceProvider`, `NetworkTransportManager`, `RoleManager`, `VoIPController` Şef
   dalı · CLAUDE.md'de olmayan notlara atıflar: `RoleManager`, `SequentialRoleAssignmentStrategy`
-  ("Test boşluğu"), `PlayerEmoteReactor` ("Player.prefab restructuring notu").
+  ("Test boşluğu").
 - Öğe görselleri yer tutucu: `TestItem_Visual` (küre); yiyecek materyalleri `Food/*_Placeholder`; ekmek
   kabı sarı yer tutucu kutu (gerçek model yok); tutma noktası konumları (`Player.prefab`) yer tutucu.
 - **Harita sonrası kalanlar (30 Eyl 2026):** ~~garnitür + kaplar~~ · ~~ikinci tezgah~~ · ~~doğma

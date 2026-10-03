@@ -2,14 +2,11 @@ using System;
 using Unity.Netcode;
 using UnityEngine;
 
-// Kasiyer VE Komi'nin emote carkindan sectigi tepki (GDD 2.2 — Kasiyer'in Komi'yi
-// yonlendirmesi; Komi'nin erisimi kisitli/placeholder — bkz. komiEmoteLimit). Eskiden
-// sadece Komi'ye hedefli bir ClientRpc'ydi (ReceivedEmoteIcon adinda ayri bir UI ile);
-// yeniden tasarlandi: artik HERKESE broadcast ediliyor ve secimi yapan oyuncunun kendi
-// karakteri uzerinde (PlayerEmoteReactor) herkesin gorebilecegi kisa bir gorsel tepki
-// tetikliyor. NetworkVariable degil bilerek ClientRpc kullaniliyor — ayni emote art arda
-// iki kez secilirse bir NetworkVariable'da deger degismedigi icin OnValueChanged hic
-// tetiklenmezdi (sessizce yutulurdu); RPC her cagriyi kosulsuz iletir.
+// Jestlerin sunucu otoritesi (GDD 3.6.0): Kasiyer'in sinyal çarkı (R) ve genel emote'lar (E) aynı altyapıyı
+// kullanır. İstemci yalnızca niyet gönderir; sunucu doğrular ve HERKESE yayar (kasıtlı — jestleri herkes görür).
+// NetworkVariable değil bilerek RPC: aynı jest art arda seçilirse bir NetworkVariable'da değer değişmediği için
+// OnValueChanged tetiklenmezdi. Cooldown YOKTUR; tek kural "oynayan bitmeden yenisi başlatılamaz" ve bir
+// etkileşim oynayanı iptal eder. Süre veriden gelir (SignalValue / EmoteDefinition).
 [RequireComponent(typeof(NetworkObject))]
 public class EmoteSystem : NetworkBehaviour
 {
@@ -17,31 +14,11 @@ public class EmoteSystem : NetworkBehaviour
 
     [SerializeField] private EmoteDefinition[] availableEmotes;
 
-    // Komi da carka erisebilir ama Kasiyer'den daha kisitli bir secimle: sadece
-    // availableEmotes dizisinin ILK N elemani. Placeholder/basit tutuluyor (kullanici
-    // istegi) — gercek kisitli-liste icerigi (hangi emote'lar) ileride ayrica
-    // tasarlanacak, simdilik sadece SAYI kisitlanmis durumda.
-    [SerializeField] private int komiEmoteLimit = 1;
-
-    // Ayni veya farkli emote farketmeksizin, son basarili secimden itibaren bu sure
-    // gecmeden yeni bir secim reddedilir (spam/iletisim kirliligini onlemek icin,
-    // kullanici istegi). GLOBAL bir cooldown — kimin sectigi onemli degil, herkes
-    // icin ayni sayaci paylasir (komiEmoteLimit gibi basit tutuluyor, kisi-basi
-    // ayrica takip edilmiyor).
-    [SerializeField] private float selectionCooldown = 2.5f;
-
-    // Server-authoritative zaman damgasi (NetworkManager.ServerTime.Time, sunucuda
-    // yazilir) — client'lar IsOnCooldown uzerinden canli okuyup carki acmadan/secim
-    // yapmadan once kendi taraflarinda da kontrol edebilir (komiEmoteLimit'teki gibi
-    // hem client hem server tarafinda).
-    private readonly NetworkVariable<double> _lastSelectionServerTime =
-        new(-1000d, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
-    // (kasiyerClientId, emoteIndex) — PlayerEmoteReactor kendi OwnerClientId'siyle
-    // karsilastirip sadece dogru objede tepki oynatir. Isim tarihsel: artik Komi da
-    // tetikleyebiliyor, ama alan/parametre adi degistirilmedi (RPC/UI'da hala
-    // "hangi client tetikledi" anlaminda kullaniliyor).
+    // (gönderen client, emote dizini) — PlayerEmoteReactor kendi OwnerClientId'siyle karşılaştırıp tepkiyi oynatır.
     public event Action<ulong, int> OnEmoteTriggered;
+
+    // (client) — o oyuncunun oynayan jesti bir etkileşimle kesildi; görseller hemen kalkar.
+    public event Action<ulong> OnPlaybackCancelled;
 
     // ---- Sinyal (R çarkı, GDD 3.6.0) ----
     [Header("Sinyal (GDD 3.6.0)")]
@@ -148,12 +125,6 @@ public class EmoteSystem : NetworkBehaviour
     }
 
     public EmoteDefinition[] AvailableEmotes => availableEmotes;
-    public int KomiEmoteLimit => komiEmoteLimit;
-    public float SelectionCooldown => selectionCooldown;
-
-    public bool IsOnCooldown =>
-        NetworkManager != null &&
-        NetworkManager.ServerTime.Time - _lastSelectionServerTime.Value < selectionCooldown;
 
     private void Awake()
     {
@@ -166,54 +137,61 @@ public class EmoteSystem : NetworkBehaviour
         Instance = this;
     }
 
-    private void OnDestroy()
+    public override void OnDestroy()
     {
         if (Instance == this)
             Instance = null;
+
+        base.OnDestroy();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void SelectEmoteServerRpc(int emoteIndex, ServerRpcParams rpcParams = default)
+    // Genel emote (E). Rol kısıtı yoktur (GDD 3.6.0: tüm roller); sinyalle AYNI kurallar: round oynanabilir olmalı,
+    // oynayan jest bitmiş olmalı.
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void SelectEmoteServerRpc(int emoteIndex, RpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
 
-        if (availableEmotes == null || emoteIndex < 0 || emoteIndex >= availableEmotes.Length)
+        if (availableEmotes == null || emoteIndex < 0 || emoteIndex >= availableEmotes.Length || availableEmotes[emoteIndex] == null)
             return;
 
-        if (RoleManager.Instance == null)
+        if (!GameLoopManager.CanPlayersAct || ServerIsBusy(senderId))
             return;
 
-        var role = RoleManager.Instance.GetRole(senderId);
-        if (role != PlayerRole.Kasiyer && role != PlayerRole.Komi)
-            return;
-
-        // Komi sadece kisitli (ilk N) emote'a erisebilir; Kasiyer tam listeyi kullanir.
-        if (role == PlayerRole.Komi && emoteIndex >= komiEmoteLimit)
-            return;
-
-        if (GameLoopManager.Instance == null || !GameLoopManager.Instance.IsRoundActive)
-            return;
-
-        // "Oyun durduruldu" (bkz. PlayerController/PlayerInteractor/EmoteWheelUI ayni
-        // kontrol) server-authoritative olarak burada da doğrulanıyor — client tarafi
-        // (EmoteWheelUI) carki acmayi zaten engelliyor, bu sadece bypass'a karsi savunma.
-        if (GameLoopManager.Instance.IsGamePaused)
-            return;
-
-        // Ayni/farkli emote farketmeksizin, cooldown suresi dolmadan yeni secim
-        // server-authoritative olarak reddedilir — client tarafi (EmoteWheelUI) zaten
-        // ayni kontrolu yapip carki acmiyor/secim yollamiyor, bu bypass'a karsi savunma.
-        if (IsOnCooldown)
-            return;
-
-        _lastSelectionServerTime.Value = NetworkManager.ServerTime.Time;
-
+        _serverBusyUntil[senderId] = Time.unscaledTime + availableEmotes[emoteIndex].Duration;
         EmoteTriggeredClientRpc(senderId, emoteIndex);
     }
 
     [ClientRpc]
-    private void EmoteTriggeredClientRpc(ulong kasiyerClientId, int emoteIndex)
+    private void EmoteTriggeredClientRpc(ulong senderId, int emoteIndex)
     {
-        OnEmoteTriggered?.Invoke(kasiyerClientId, emoteIndex);
+        if (availableEmotes == null || emoteIndex < 0 || emoteIndex >= availableEmotes.Length || availableEmotes[emoteIndex] == null)
+            return;
+
+        if (senderId == NetworkManager.LocalClientId)
+            _localBusyUntil = Time.unscaledTime + availableEmotes[emoteIndex].Duration;
+
+        OnEmoteTriggered?.Invoke(senderId, emoteIndex);
+    }
+
+    // GDD 3.6.0: jest oynarken oyuncu bir nesneyle etkileşirse jest anında iptal olur. Sunucu, etkileşimi KABUL
+    // ettiği anda çağırır (PlayerInteractor); oynayan bir şey yoksa hiçbir şey yayınlanmaz.
+    public void ServerCancelPlayback(ulong clientId)
+    {
+        if (!IsServer || !ServerIsBusy(clientId))
+            return;
+
+        _serverBusyUntil.Remove(clientId);
+        PlaybackCancelledClientRpc(clientId);
+    }
+
+    // Herkese gider — iptal de jestin kendisi gibi herkese yansır.
+    [ClientRpc]
+    private void PlaybackCancelledClientRpc(ulong clientId)
+    {
+        if (clientId == NetworkManager.LocalClientId)
+            _localBusyUntil = 0f;
+
+        OnPlaybackCancelled?.Invoke(clientId);
     }
 }

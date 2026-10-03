@@ -15,16 +15,29 @@ public class PlayerSignalDisplay : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (EmoteSystem.Instance != null)
-            EmoteSystem.Instance.OnSignalStarted += HandleSignalStarted;
+        if (EmoteSystem.Instance == null)
+            return;
+
+        EmoteSystem.Instance.OnSignalStarted += HandleSignalStarted;
+        EmoteSystem.Instance.OnPlaybackCancelled += HandlePlaybackCancelled;
     }
 
     public override void OnNetworkDespawn()
     {
         if (EmoteSystem.Instance != null)
+        {
             EmoteSystem.Instance.OnSignalStarted -= HandleSignalStarted;
+            EmoteSystem.Instance.OnPlaybackCancelled -= HandlePlaybackCancelled;
+        }
 
         Clear();
+    }
+
+    // Etkileşim sinyali kesti (GDD 3.6.0): işaret süresini beklemeden kalkar.
+    private void HandlePlaybackCancelled(ulong clientId)
+    {
+        if (OwnerClientId == clientId)
+            Clear();
     }
 
     private void HandleSignalStarted(ulong senderId, SignalValue signal)

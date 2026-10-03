@@ -2,7 +2,8 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-// Kasiyer'in emote carkinda sectigi tepkiyi HERKESIN gorebilecegi sekilde oynatir.
+// Bir oyuncunun emote carkinda (E) sectigi tepkiyi HERKESIN gorebilecegi sekilde oynatir. Sure
+// EmoteDefinition'dan gelir; etkilesim tepkiyi keser (EmoteSystem.OnPlaybackCancelled).
 // Player.prefab'in her client'taki HER kopyasi EmoteSystem.OnEmoteTriggered'i dinler
 // (broadcast, hedefsiz ClientRpc), ama sadece OwnerClientId == kasiyerClientId olan
 // (yani gercekten Kasiyer'in objesi olan) kopyada tepki oynatilir — boylece ayrica bir
@@ -10,12 +11,11 @@ using UnityEngine;
 // Gorsel efekt (renk parlamasi + egilme/ziplama) SADECE Visual child'in local
 // transform/material'inde oynatilir — kokte (owner-authoritative NetworkTransform'un
 // yonettigi transform'da) DEGIL, aksi halde bu gercek hareket sanilip PlayerController'in
-// yaw/hareketiyle catisirdi (bkz. Player.prefab restructuring notu, CLAUDE.md).
+// yaw/hareketiyle catisirdi.
 public class PlayerEmoteReactor : NetworkBehaviour
 {
     [SerializeField] private Transform visualRoot;
     [SerializeField] private Renderer visualRenderer;
-    [SerializeField] private float flashDuration = 0.6f;
     [SerializeField] private float bounceHeight = 0.2f;
     [SerializeField] private float tiltAngle = 12f;
 
@@ -43,20 +43,38 @@ public class PlayerEmoteReactor : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (EmoteSystem.Instance != null)
-            EmoteSystem.Instance.OnEmoteTriggered += HandleEmoteTriggered;
+        if (EmoteSystem.Instance == null)
+            return;
+
+        EmoteSystem.Instance.OnEmoteTriggered += HandleEmoteTriggered;
+        EmoteSystem.Instance.OnPlaybackCancelled += HandlePlaybackCancelled;
     }
 
     public override void OnNetworkDespawn()
     {
         if (EmoteSystem.Instance != null)
-            EmoteSystem.Instance.OnEmoteTriggered -= HandleEmoteTriggered;
-
-        if (_reactionRoutine != null)
         {
-            StopCoroutine(_reactionRoutine);
-            _reactionRoutine = null;
+            EmoteSystem.Instance.OnEmoteTriggered -= HandleEmoteTriggered;
+            EmoteSystem.Instance.OnPlaybackCancelled -= HandlePlaybackCancelled;
         }
+
+        StopReaction();
+    }
+
+    private void HandlePlaybackCancelled(ulong clientId)
+    {
+        if (OwnerClientId == clientId)
+            StopReaction();
+    }
+
+    private void StopReaction()
+    {
+        if (_reactionRoutine == null)
+            return;
+
+        StopCoroutine(_reactionRoutine);
+        RestoreVisual();
+        _reactionRoutine = null;
     }
 
     private void HandleEmoteTriggered(ulong kasiyerClientId, int emoteIndex)
@@ -68,19 +86,19 @@ public class PlayerEmoteReactor : NetworkBehaviour
         if (availableEmotes == null || emoteIndex < 0 || emoteIndex >= availableEmotes.Length || availableEmotes[emoteIndex] == null)
             return;
 
-        if (_reactionRoutine != null)
-            StopCoroutine(_reactionRoutine);
-        _reactionRoutine = StartCoroutine(PlayReaction(availableEmotes[emoteIndex].ReactionColor));
+        StopReaction();
+        var emote = availableEmotes[emoteIndex];
+        _reactionRoutine = StartCoroutine(PlayReaction(emote.ReactionColor, emote.Duration));
     }
 
-    private IEnumerator PlayReaction(Color color)
+    private IEnumerator PlayReaction(Color color, float duration)
     {
         float elapsed = 0f;
 
-        while (elapsed < flashDuration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / flashDuration);
+            float t = Mathf.Clamp01(elapsed / duration);
             float wave = Mathf.Sin(t * Mathf.PI);
 
             if (visualRenderer != null)
@@ -99,6 +117,12 @@ public class PlayerEmoteReactor : NetworkBehaviour
             yield return null;
         }
 
+        RestoreVisual();
+        _reactionRoutine = null;
+    }
+
+    private void RestoreVisual()
+    {
         if (visualRenderer != null)
         {
             visualRenderer.GetPropertyBlock(_propertyBlock);
@@ -111,7 +135,5 @@ public class PlayerEmoteReactor : NetworkBehaviour
             visualRoot.localPosition = _visualRestLocalPosition;
             visualRoot.localRotation = _visualRestLocalRotation;
         }
-
-        _reactionRoutine = null;
     }
 }
