@@ -718,7 +718,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     (zemin y=0,30), `NetworkTransform` sunucu otoriteli. `State` (Arriving / WaitingToOrder / Ordered / Leaving),
     `PatienceRemaining`, `PatienceTotal` replike; yalnızca sunucu yazar. Sipariş (`ResolvedLevel.Order`) sunucuda
     müşterinin üstünde. Sipariş alma = mevcut etkileşim (gate: rol `orderTakerRoles` + durum WaitingToOrder).
-    Sabır, müşteri sipariş yerine **vardığında** başlar; duraklatmada sayaç ve yürüyüş durur.
+    Duraklatmada sayaç ve yürüyüş durur.
   - `CustomerDirector` (sahne: `MusteriYonetimi`; ağ durumu yok, yalnızca sunucuda çalışır):
     `LevelDirector.ServerLevelResolved` ile başlar. Müşteri sayısı, aralık (× `intervalCurve`), sabır, yedek havuz
     `ResolvedLevel`'den. **Eşzamanlı sınır `maxConcurrentCustomers` (3) — tek yer.** İlk müşteri hazırlık fazı
@@ -726,10 +726,13 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     hatasında yer olur olmaz gelir. Yer, müşteri ayrılmaya **başladığı** anda açılır. Teslim adımı
     `ServerCustomerServed(customer)` çağırır. `AllCustomersFinished` / `ServerAllCustomersFinished` bölüm sonu
     altyapısıdır (kazan/kaybet kararı yok).
-  - Haritada ayrı sipariş/teslim penceresi yok, tek `PF_DeliveryCounter` (açıklık x 0…3,75, z −7,6…−6,7, üst y 1,4):
-    doğu ucu sipariş (`SiparisYeri_1-3`, x 2,3/2,9/3,5), batısı teslim (`TeslimYeri_1-3`, x 0,3/0,9/1,5), hepsi
-    z=−7,95; `Giris` (12, −9,5). **Sipariş bekleyenler de yan yana** (kuyruk olursa arkadakinin sabrı işlerken
-    siparişi alınamaz) — GDD'de yazmıyor, Ersel'e soruldu.
+  - **Sipariş Penceresi = Kasa'nın doğu duvarındaki küçük pencere** (`Pf_StationWindow (2)`, x=10,5; açıklık
+    z −6,5…−4,25, y 1,4…2,35). Müşteriler dışarıda **arka arkaya sıra** olur (`SiparisYeri_1-3`, x 11,1/11,8/12,5,
+    z=−5,4, batıya bakar; ilk eleman pencerenin önü). Yalnızca baştakinin siparişi alınır ve **sabır yalnızca
+    başa geçip pencereye varınca işler** (Ersel, 3 Eki). **Teslim Penceresi = büyük tezgah** (`PF_DeliveryCounter`,
+    açıklık x 0…3,75, y 1,40…2,90): `TeslimYeri_1-3` x 0,6/1,9/3,2, z=−7,95, yan yana. `Giris` (13,5, −9,5).
+  - Müşteri üstü göstergeler pencere açıklıklarına sığacak yükseklikte: çark başın yanında (y≈2,05), pop-up başın
+    hemen üstünde (y 2,32–2,68). Daha yukarısı tezgahın üst pervazının arkasında kalıyor (ölçüldü, oyunda görüldü).
   - `GameLoopManager.ErrorCount` (replike) + `ServerAddError(reason)`: bölümün **tek** hata sayacı; round başında
     sıfırlanır. 3 Hata kararı ve duvar göstergesi ayrı adımda.
   - `CustomerTimerDisplay` (17a'da `CustomerPatienceDisplay`): sabır çarkı, sipariş alınınca yerini sipariş süresi
@@ -746,8 +749,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - `Customer`: `OrderTimeRemaining/Total` (sipariş alınınca başlar, sunucu işletir), `OrderVariantIndex`,
     `OrderMissingItemIds` (pop-up içeriği). **Varyant ağda dizinle anılır:** `LevelConfig.CollectVariants()` sırası
     (`LevelDirector.GetVariantIndex` / `TryGetVariant`). Süre dolunca 1 Hata, müşteri ayrılır, yedek **gelmez**.
-  - `CustomerOrderDisplay`: pop-up müşterinin üstünde (y 2,67–3,07; tezgah açıklığı y 1,40–2,90, Kasiyer'in
-    gözünden ~3,1'e kadar görünür), yalnızca `Ordered` durumunda. Görsel `BurgerVariant.Image` — kitapçık da aynı
+  - `CustomerOrderDisplay`: pop-up müşterinin üstünde, yalnızca `Ordered` durumunda. Görsel `BurgerVariant.Image` — kitapçık da aynı
     alanı kullanacak. Eksik malzeme = ikon + üstünde X. Pop-up herkese çizilir (GDD: pratikte yalnızca Kasiyer görür).
   - Varyant görselleri `IconGenerator` ile üretildi (`Assets/Data/Icons/Varyant_*.png`). **İnce malzemeler ekmeğin
     altında neredeyse görünmüyor; iki taslak varyant birbirine çok benziyor** — varyantları ayırt edilebilir kılmak

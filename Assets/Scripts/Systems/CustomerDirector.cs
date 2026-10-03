@@ -21,7 +21,7 @@ public class CustomerDirector : MonoBehaviour
     [Header("Noktalar (sahne)")]
     [Tooltip("Müşterinin doğduğu ve ayrılırken yürüdüğü nokta.")]
     [SerializeField] private Transform entrancePoint;
-    [Tooltip("Sipariş Penceresi'ndeki bekleme yerleri (yan yana). En az eşzamanlı sınır kadar olmalı.")]
+    [Tooltip("Sipariş Penceresi'ndeki SIRA: ilk eleman pencerenin önü (siparişi alınan yer), sonrakiler arka arkaya. En az eşzamanlı sınır kadar olmalı.")]
     [SerializeField] private Transform[] orderSpots;
     [Tooltip("Teslim Penceresi'ndeki yerler (yan yana; kuyruk değil — GDD 5.3). En az eşzamanlı sınır kadar olmalı.")]
     [SerializeField] private Transform[] deliverySpots;
@@ -31,7 +31,9 @@ public class CustomerDirector : MonoBehaviour
     public bool AllCustomersFinished { get; private set; }
 
     private readonly List<Customer> _active = new();
-    private Customer[] _orderOccupants;
+    // Sipariş sırası (Ersel, 3 Eki 2026): müşteriler küçük pencerede ARKA ARKAYA dizilir; yalnızca baştakinin
+    // siparişi alınır. Sipariş alınınca ya da sabır dolunca sıra bir öne kayar.
+    private readonly List<Customer> _queue = new();
     private Customer[] _deliveryOccupants;
     private ResolvedLevel _level;
     private LevelDirector _levelDirector;
@@ -46,7 +48,6 @@ public class CustomerDirector : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        _orderOccupants = new Customer[orderSpots.Length];
         _deliveryOccupants = new Customer[deliverySpots.Length];
     }
 
@@ -106,21 +107,21 @@ public class CustomerDirector : MonoBehaviour
 
         _arrivalTimer -= Time.deltaTime;
 
-        if (!HasRoom(out int spot))
+        if (!HasRoom())
             return;
 
         // Yedek müşteri (GDD 3.4.4): sabır hatasından sonra, yer olur olmaz gelir; aralık beklemez.
         if (_backupsPending > 0)
         {
             _backupsPending--;
-            Spawn(_level.BackupOrders[_backupsUsed++], true, spot);
+            Spawn(_level.BackupOrders[_backupsUsed++], true);
             return;
         }
 
         if (_nextOrderIndex >= _level.Orders.Count || _arrivalTimer > 0f)
             return;
 
-        Spawn(_level.Orders[_nextOrderIndex++], false, spot);
+        Spawn(_level.Orders[_nextOrderIndex++], false);
 
         // Sonraki müşteri, bu geldikten "aralık" kadar sonra (temel aralık × kısalma eğrisi). Sınır doluysa yer
         // açılana kadar bekler (GDD 3.4.2).
@@ -137,13 +138,22 @@ public class CustomerDirector : MonoBehaviour
         return Mathf.Max(0f, config.IntervalCurve.Evaluate(orderIndex / (float)(_level.Orders.Count - 1)));
     }
 
-    private bool HasRoom(out int orderSpot)
+    private bool HasRoom() => _active.Count < maxConcurrentCustomers && _queue.Count < orderSpots.Length;
+
+    // Sıradaki herkesi kendi yerine yürütür; başa geçen müşteri pencerenin önüne varınca sabrı başlar.
+    private void RefreshQueue()
     {
-        orderSpot = Array.IndexOf(_orderOccupants, null);
-        return _active.Count < maxConcurrentCustomers && orderSpot >= 0;
+        for (int i = 0; i < _queue.Count; i++)
+        {
+            _queue[i].ServerMoveTo(orderSpots[i].position, orderSpots[i].rotation, arrived =>
+            {
+                if (_queue.Count > 0 && _queue[0] == arrived)
+                    arrived.ServerStartWaiting();
+            });
+        }
     }
 
-    private void Spawn(ResolvedLevel.Order order, bool isBackup, int spot)
+    private void Spawn(ResolvedLevel.Order order, bool isBackup)
     {
         var customer = Instantiate(customerPrefab, entrancePoint.position, entrancePoint.rotation);
         customer.NetworkObject.Spawn();
@@ -154,14 +164,15 @@ public class CustomerDirector : MonoBehaviour
         customer.ServerOrderTimeExpired += HandleOrderTimeExpired;
 
         _active.Add(customer);
-        _orderOccupants[spot] = customer;
-        customer.ServerMoveTo(orderSpots[spot].position, orderSpots[spot].rotation, arrived => arrived.ServerStartWaiting());
+        _queue.Add(customer);
+        RefreshQueue();
         Debug.Log($"[Müşteri] {customer.Label} geldi (sabır {order.Patience:0.#} sn). Restoranda {_active.Count}/{maxConcurrentCustomers}.");
     }
 
     private void HandleOrderTaken(Customer customer, ulong clientId)
     {
-        Release(_orderOccupants, customer);
+        _queue.Remove(customer);
+        RefreshQueue();
         int spot = Array.IndexOf(_deliveryOccupants, null);
         if (spot < 0)
         {
@@ -207,7 +218,8 @@ public class CustomerDirector : MonoBehaviour
     // GDD 3.4.4: sabır dolarsa 1 Hata, müşteri ayrılır, yedek havuzdan (varsa) yenisi gelir.
     private void HandlePatienceExpired(Customer customer)
     {
-        Release(_orderOccupants, customer);
+        _queue.Remove(customer);
+        RefreshQueue();
         GameLoopManager.Instance.ServerAddError($"{customer.Label} sabrı doldu (siparişi alınmadı)");
 
         if (_backupsUsed + _backupsPending < _level.BackupOrders.Count)
@@ -278,7 +290,7 @@ public class CustomerDirector : MonoBehaviour
         }
 
         _active.Clear();
-        Array.Clear(_orderOccupants, 0, _orderOccupants.Length);
+        _queue.Clear();
         Array.Clear(_deliveryOccupants, 0, _deliveryOccupants.Length);
     }
 }

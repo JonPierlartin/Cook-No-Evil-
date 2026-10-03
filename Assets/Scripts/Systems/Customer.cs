@@ -4,7 +4,7 @@ using UnityEngine;
 
 public enum CustomerState : byte
 {
-    // Sipariş penceresine yürüyor (henüz tıklanamaz, sabır işlemiyor).
+    // Sipariş penceresine yürüyor ya da sırada arkada bekliyor (tıklanamaz, sabır işlemiyor).
     Arriving,
     // Sipariş penceresinde; sabır sayacı işliyor (GDD 3.4.4).
     WaitingToOrder,
@@ -111,8 +111,13 @@ public class Customer : NetworkBehaviour, IInteractionGate
         _moving = true;
     }
 
-    // Sipariş penceresine vardı: sabır sayacı başlar (GDD 3.4.4 "geldiği andan").
-    public void ServerStartWaiting() => State.Value = CustomerState.WaitingToOrder;
+    // Sipariş penceresinin önüne (sıranın başına) vardı: sabır sayacı başlar ve siparişi alınabilir (GDD 3.4.4).
+    // Sırada arkada bekleyen müşterinin sabrı işlemez — Kasiyer onun siparişini zaten alamaz.
+    public void ServerStartWaiting()
+    {
+        if (State.Value == CustomerState.Arriving)
+            State.Value = CustomerState.WaitingToOrder;
+    }
 
     public void ServerStartLeaving() => State.Value = CustomerState.Leaving;
 
