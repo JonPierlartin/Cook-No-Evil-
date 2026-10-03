@@ -14,3 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SignalValue
   displayName: "Yukar\u0131"
   icon: {fileID: 0}
+  visualPrefab: {fileID: 2716870692692255731, guid: 1a6d8878c5957cf4aa817e3fcbc96064, type: 3}
+  clip: {fileID: 0}
+  durationSeconds: 1.3

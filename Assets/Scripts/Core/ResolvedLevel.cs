@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using System.Text;
 
 // LevelConfig'in bir bölüm için çözülmüş, somut hâli (LevelResolver üretir). Düz çalışma zamanı nesnesi:
-// müşteri, pano, çark gibi tüketiciler sonraki adımlarda bunu okur. Replike edilmez (bu adımda).
+// tüketiciler bunu sunucuda okur. İstemcilerin ihtiyaç duyduğu kısım (açık kanallar, değerler, eşleşmeler)
+// LevelDirector.SignalRows ile replike edilir; gerisi yalnızca sunucudadır.
 public class ResolvedLevel
 {
     public class Order
@@ -23,7 +24,11 @@ public class ResolvedLevel
     public class ChannelMapping
     {
         public SignalChannel Channel;
+        // LevelConfig.Channels içindeki dizin (replikasyon ve sunucu doğrulaması bu dizinle konuşur).
+        public int ConfigIndex;
         public readonly List<SignalValue> Values = new();
+        // Values[i]'nin LevelConfig'teki 'values' listesindeki dizini (boş elemanlar atlandığı için ayrıca tutulur).
+        public readonly List<int> ValueIndices = new();
         // Eşleşme: Items[i] <-> Values[i]. Değer sayısından fazla öğe varsa fazlası eşleşmez (uyarı).
         public readonly List<ItemType> Items = new();
     }

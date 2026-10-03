@@ -14,3 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SignalValue
   displayName: "A\u015Fa\u011F\u0131"
   icon: {fileID: 0}
+  visualPrefab: {fileID: 3762388686179869957, guid: 6eba0d4f1229c764c8a27b111562d96b, type: 3}
+  clip: {fileID: 0}
+  durationSeconds: 1.3

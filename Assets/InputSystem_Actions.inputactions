@@ -125,6 +125,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "SignalWheel",
+                    "type": "Button",
+                    "id": "a1a2a3a4-5555-4b55-8555-555555555555",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -477,6 +487,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "HotbarSlot4",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b1b2b3b4-5555-4c55-8555-555555555555",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "SignalWheel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

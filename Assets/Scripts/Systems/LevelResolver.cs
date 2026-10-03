@@ -37,16 +37,20 @@ public static class LevelResolver
         result.OpenVariants.AddRange(config.OpenVariants.Resolve(rng));
         result.OpenProductCategories = config.OpenProductCategories;
 
-        foreach (var channelConfig in config.Channels)
+        for (int channelIndex = 0; channelIndex < config.Channels.Count; channelIndex++)
         {
+            var channelConfig = config.Channels[channelIndex];
             if (channelConfig == null || !channelConfig.enabled || channelConfig.channel == null)
                 continue;
 
-            var mapping = new ResolvedLevel.ChannelMapping { Channel = channelConfig.channel };
-            foreach (var value in channelConfig.values)
+            var mapping = new ResolvedLevel.ChannelMapping { Channel = channelConfig.channel, ConfigIndex = channelIndex };
+            for (int valueIndex = 0; valueIndex < channelConfig.values.Count; valueIndex++)
             {
-                if (value != null)
-                    mapping.Values.Add(value);
+                if (channelConfig.values[valueIndex] == null)
+                    continue;
+
+                mapping.Values.Add(channelConfig.values[valueIndex]);
+                mapping.ValueIndices.Add(valueIndex);
             }
 
             mapping.Items.AddRange(channelConfig.items.Resolve(rng));

@@ -14,3 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SignalValue
   displayName: Sol
   icon: {fileID: 0}
+  visualPrefab: {fileID: 6324182074147258323, guid: 1b47e05603f74424697bf97be57e9ef2, type: 3}
+  clip: {fileID: 0}
+  durationSeconds: 1.3

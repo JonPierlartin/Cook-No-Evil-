@@ -190,6 +190,10 @@ public class PlayerInteractor : NetworkBehaviour
     // govdesinde belirlenir.
     private void HandleAttackStarted(InputAction.CallbackContext context)
     {
+        // Sinyal carki acikken sol tik carkta secim yapar (SignalWheelUI); dunya etkilesimi tetiklenmez.
+        if (SignalWheelUI.IsWheelOpen)
+            return;
+
         // Round aktif degilken (lobi) etkilesim yok — asil yetki asagidaki
         // RequestInteractServerRpc icindeki sunucu-taraf kontrolundedir (K6 geregi), bu
         // sadece gereksiz bir RPC gonderimini onleyen ON-kontroldur.

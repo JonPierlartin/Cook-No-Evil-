@@ -57,6 +57,13 @@ public class GameLoopManager : NetworkBehaviour
     // computed property'i (artik bir NetworkVariable DEGIL, .Value EKLENMEMELI) okuyor.
     public bool IsGamePaused => IsRoundActive && _isPaused.Value;
 
+    // "Oyuncular şu an bir şey yapabilir mi": round aktif VE oyun duraklatılmamış. Etkileşim, sinyal ve emote
+    // çarkları, hem istemcide (gösterim) hem sunucuda (karar) AYNI koşulu buradan okur — ayrı ayrı yazılmaz.
+    public bool IsPlayable => IsRoundActive && !_isPaused.Value;
+
+    // Instance yokken de güvenli (lobi, sahne kapanışı).
+    public static bool CanPlayersAct => Instance != null && Instance.IsPlayable;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

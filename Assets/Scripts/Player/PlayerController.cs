@@ -140,7 +140,7 @@ public class PlayerController : NetworkBehaviour
         // okuyor (bkz. o sinif) — burada da okunmaya devam edilirse ikisi CAKISIR (cark
         // acikken kamera da donerdi). Cark acikken ApplyLook BILEREK atlanir; ApplyMove
         // (hareket) bundan etkilenmez, sadece bakis/donme durur.
-        if (!EmoteWheelUI.IsWheelOpen)
+        if (!EmoteWheelUI.IsWheelOpen && !SignalWheelUI.IsWheelOpen)
             ApplyLook();
 
         ApplyMove();
