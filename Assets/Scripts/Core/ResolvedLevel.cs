@@ -8,6 +8,9 @@ public class ResolvedLevel
     public class Order
     {
         public BurgerVariant Variant;
+        // Bu müşterinin sabır süresi (sn). Her müşteri için AYRI çekilir (Ersel, 3 Eki 2026) — aralık verildiyse
+        // 1. müşteri 22, 2. müşteri 28 olabilir; bölüm başında tek değer çekilip herkese verilmez.
+        public float Patience;
         public readonly List<ItemType> Missing = new();
         public ItemType Drink;
         public ItemType IceCream;
@@ -32,7 +35,6 @@ public class ResolvedLevel
     public int Seed;
     public int CustomerCount;
     public float CustomerInterval;
-    public float Patience;
     public int BackupPoolSize;
     public float TimeMultiplier;
     public readonly List<Order> Orders = new();
@@ -52,7 +54,7 @@ public class ResolvedLevel
     {
         var sb = new StringBuilder();
         sb.AppendLine($"[Seviye] '{levelName}' çözüldü (tohum {Seed})");
-        sb.AppendLine($"  Müşteri: {CustomerCount} · aralık {CustomerInterval:0.#} sn · sabır {Patience:0.#} sn · yedek havuz {BackupPoolSize} · süre çarpanı {TimeMultiplier:0.##}");
+        sb.AppendLine($"  Müşteri sayısı: {CustomerCount} · müşteriler arası bekleme: {CustomerInterval:0.#} sn · yedek müşteri: {BackupPoolSize} · sipariş süresi çarpanı: {TimeMultiplier:0.##}");
         for (int i = 0; i < Orders.Count; i++)
             sb.AppendLine($"  Sipariş {i + 1}: {DescribeOrder(Orders[i])}");
         for (int i = 0; i < BackupOrders.Count; i++)
@@ -78,7 +80,7 @@ public class ResolvedLevel
         string burger = order.Variant != null
             ? $"{Name(order.Variant)}{(order.Missing.Count > 0 ? " — eksik: " + Names(order.Missing) : " — tam")}"
             : "hamburger yok";
-        return $"{burger} · içecek {Name(order.Drink)} · dondurma {Name(order.IceCream)} · yan {Name(order.Side)}";
+        return $"sabır {order.Patience:0.#} sn · {burger} · içecek {Name(order.Drink)} · dondurma {Name(order.IceCream)} · yan {Name(order.Side)}";
     }
 
     private static string Name(UnityEngine.Object obj) => obj != null ? obj.name : "yok";

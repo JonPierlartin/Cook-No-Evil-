@@ -12,17 +12,27 @@ public static class LevelResolver
 
         result.CustomerCount = System.Math.Max(0, config.CustomerCount.ResolveInt(rng));
         result.CustomerInterval = config.CustomerInterval.ResolveFloat(rng);
-        result.Patience = config.Patience.ResolveFloat(rng);
         result.BackupPoolSize = System.Math.Max(0, config.BackupPoolSize.ResolveInt(rng));
         result.TimeMultiplier = config.TimeMultiplier.ResolveFloat(rng);
 
         // Sipariş slotları: i. müşteri i. slotu, fazlası ve yedek havuz varsayılan slotu kullanır (30 Eyl kararı).
+        // Sabır HER MÜŞTERİ için ayrı çekilir (3 Eki kararı) — aralık verildiyse müşteriden müşteriye değişir.
         for (int i = 0; i < result.CustomerCount; i++)
-            result.Orders.Add(ResolveOrder(i < config.OrderSlots.Count ? config.OrderSlots[i] : config.DefaultOrderSlot, rng, result.Warnings, $"sipariş {i + 1}"));
+        {
+            var order = ResolveOrder(i < config.OrderSlots.Count ? config.OrderSlots[i] : config.DefaultOrderSlot, rng, result.Warnings, $"sipariş {i + 1}");
+            order.Patience = config.Patience.ResolveFloat(rng);
+            result.Orders.Add(order);
+        }
+
         if (config.OrderSlots.Count > result.CustomerCount)
             result.Warnings.Add($"{config.OrderSlots.Count} slot tanımlı ama müşteri sayısı {result.CustomerCount}; fazla slotlar kullanılmadı.");
+
         for (int i = 0; i < result.BackupPoolSize; i++)
-            result.BackupOrders.Add(ResolveOrder(config.DefaultOrderSlot, rng, result.Warnings, $"yedek {i + 1}"));
+        {
+            var order = ResolveOrder(config.DefaultOrderSlot, rng, result.Warnings, $"yedek {i + 1}");
+            order.Patience = config.Patience.ResolveFloat(rng);
+            result.BackupOrders.Add(order);
+        }
 
         result.OpenVariants.AddRange(config.OpenVariants.Resolve(rng));
         result.OpenProductCategories = config.OpenProductCategories;

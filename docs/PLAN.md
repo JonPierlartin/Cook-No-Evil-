@@ -351,6 +351,7 @@ hata sayacı + kazanma/kaybetme. Bunlardan biri düşerse video konsepti kanıtl
 | 30 Eyl 2026 | Fazla müşteriler ve yedek havuz **varsayılan sipariş slotunu** kullanır | Ersel'in kararı (16b). GDD §7.3.1 slot ile müşteri sayısı farkını tanımlamıyordu. **GDD'ye işlenmedi** (16b GDD düzenlemeyi yasakladı) — Ersel işleyecek. |
 | 30 Eyl 2026 | Varyantta malzeme başına "çıkarılabilir" işareti; "komple randomize" yalnızca işaretlileri alır | Ersel'in kararı (16b). Adım "tüm malzemeler" diyordu, GDD §7.3.2 "çıkarılabilir"; tümü alınırsa etsiz (yapılamaz) sipariş çıkabilirdi. **GDD'ye işlenmedi** — Ersel işleyecek. |
 | 30 Eyl 2026 | Kaplar sınırsız; malzeme/stok editörden ayarlanınca değişecek | Ersel'in kararı. LevelConfig'te stok alanları tanımlı ve boş. |
+| 3 Eki 2026 | Sabır süresi **her müşteri için ayrı** çekilir (bölüm başında tek değer değil) | Ersel'in kararı. GDD §7.3.3 "aralık verildiğinde değer bölüm başında çekilir" diyor — sabır için geçersiz; **GDD'ye işlenmedi**, Ersel işleyecek. Müşteriler arası bekleme için aynı soru açık. |
 | 18 Eyl 2026 | Commit mesajı biçimi `<Kapsam>: <iş>`, kapsam = iş birimi (dosya adı değil) | Ersel'in kararı. Bir adım birden fazla dosyaya dokunuyor; dosya adına göre etiketlenirse aynı işin commit'leri geçmişte birbirinden kopuyor. Biçim `CLAUDE.md` → Sürüm Kontrolü ve Build bölümünde. |
 
 ---

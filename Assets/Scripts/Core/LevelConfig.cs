@@ -59,7 +59,7 @@ public class LevelConfig : ScriptableObject
     [SerializeField] private NumericValue customerInterval = NumericValue.Range(10f, 15f);
     [Tooltip("Aralık kısalma eğrisi: x = müşteri sırası (0..1), y = temel aralık çarpanı.")]
     [SerializeField] private AnimationCurve intervalCurve = AnimationCurve.Constant(0f, 1f, 1f);
-    [Tooltip("Sabır süresi (sn), sipariş alınana kadar (GDD 3.4.4).")]
+    [Tooltip("Sabır süresi (sn), sipariş alınana kadar (GDD 3.4.4). Aralık verilirse HER MÜŞTERİ için ayrı çekilir.")]
     [SerializeField] private NumericValue patience = NumericValue.Range(20f, 30f);
     [Tooltip("Yedek müşteri havuzu — yalnızca sabır hatasında gelir (GDD 3.4.4).")]
     [SerializeField] private NumericValue backupPoolSize = NumericValue.Fixed(2);

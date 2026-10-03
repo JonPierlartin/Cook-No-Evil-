@@ -355,6 +355,8 @@ alanlar bundan türetilir. Ayrı ayrı yazılırsa tek-kaynak ilkesi çöker ve 
 - `LevelResolver.Resolve(config, seed)` — saf fonksiyon, `System.Random`, Edit modunda da çalışır.
   `LevelDirector` (GameSystems; **aktif LevelConfig'in tek seçim yeri**) round `RoundActive`'e geçince
   **yalnızca sunucuda, bir kez** çözer, `Current`'ta (`ResolvedLevel`) tutar ve konsola yazar. Replikasyon yok.
+- **Sabır her müşteri için ayrı çekilir** (`ResolvedLevel.Order.Patience`; 3 Eki kararı) — bölüm başında tek değer
+  çekilip herkese verilmez. Müşteri sayısı, yedek havuz, süre çarpanı bölüm başına tektir.
 - Örnek: `Assets/Data/Levels/Seviye1_Taslak.asset` (içerik TASLAK). Property drawer yok (Inspector ham).
 
 ### K9 — ESC menüsü oyunu durdurmaz
