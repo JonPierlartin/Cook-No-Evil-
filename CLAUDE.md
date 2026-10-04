@@ -895,6 +895,21 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     ketçap); birleştirilmiş klip/controller silindi.
   - `PlayerEmoteReactor`'ın renk parlaması yer tutucu kapsüle yazıyor (artık görünmez). Üçüncü şahıs tutma noktası
     (z 0,55) Hamburger'in yarıçapının (0,6) içinde kalıyor — ayarlanacak.
+- **Arayüz görünümü — kitapçık ve pano (4 Eki 2026):**
+  - Sprite'lar KODLA üretilir: `Assets/Editor/UiSpriteGenerator.cs` (menü: *Cook No Evil → Arayüz Sprite'larını Üret*)
+    → `Assets/UI/Generated/` (yuvarlak panel, çerçeve, gölge, kâğıt, kara tahta, ahşap, halka, bant, kesik çizgi;
+    9-dilim kenarlıklı). Artist sanatı gelince aynı adlı dosyalar değiştirilir, hiyerarşi değişmez.
+  - Yazı tipi: `Assets/Fonts/Bangers-Regular.ttf` (Google Fonts, OFL; lisans yanında). **Türkçe harfler dosyanın
+    cmap tablosundan doğrulandı** — `Font.HasCharacter` dinamik fontta yedek fonta düşen harfi de "var" sayar,
+    güvenilmez (Lilita One ve Titan One'da İ/Ş/Ğ eksikti, metadata "latin-ext" dediği hâlde). Yalnızca kitapçık ve
+    panoda kullanılıyor; lobi, hotbar, sonuç ekranı, menü hâlâ varsayılan yazı tipinde.
+  - Kitapçık: deri cilt + iki kâğıt sayfa + spiral; içindekilerde kategori kartları ve "nasıl kullanılır" notu;
+    açılımda solda bantlı fotoğraf kartı, sağda rozetli malzeme satırları. `RecipeBookUI` kodu değişmedi.
+  - Pano: ahşap çerçeveli kara tahta; açıyla yerleşen bölümde kesik çizgili merkez çemberi (`AciSusu` —
+    `SignalMappingBoard.radialDecorationName`; yalnızca açılı bölümlerde açılır, kod/yön yazmaz), liste bölümünde
+    rozet + ad + kesik çizgi.
+  - **Arayüz önizlemesi Play'siz alınabilir:** geçici bir dünya uzayı Canvas + ortografik kamera + RenderTexture
+    (`Canvas.ForceUpdateCanvases` + `LayoutRebuilder` sonrası `cam.Render`); sahne kirlenmez.
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

@@ -26,6 +26,9 @@ public class SignalMappingBoard : MonoBehaviour
     [SerializeField, Range(0f, 0.5f)] private float radialRadius = 0.32f;
     [Tooltip("Açıyla yerleşimde bir girişin yarı boyutu (bölümün boyutuna oranla).")]
     [SerializeField] private Vector2 radialEntryHalfSize = new(0.2f, 0.17f);
+    [Tooltip("Bölüm şablonunun içindeki süs nesnesinin adı: yalnızca açıyla yerleşen bölümlerde açılır (ör. merkez " +
+        "çemberi). Kod/yön YAZMAZ; yalnızca 'bir merkezin çevresi' düzenini görünür kılar.")]
+    [SerializeField] private string radialDecorationName = "AciSusu";
 
     private struct Mapping
     {
@@ -117,6 +120,10 @@ public class SignalMappingBoard : MonoBehaviour
         bool radial = true;
         foreach (var mapping in mappings)
             radial &= mapping.Value.UseWheelAngle;
+
+        var decoration = section.Find(radialDecorationName);
+        if (decoration != null)
+            decoration.gameObject.SetActive(radial);
 
         for (int i = 0; i < mappings.Count; i++)
         {
