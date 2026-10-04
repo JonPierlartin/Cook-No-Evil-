@@ -176,9 +176,19 @@ public class RoleManager : NetworkBehaviour
     // (genel "Sunucu Baglantisi Koptu" ekraniyla karistirmadan). Round SIRASINDA gelen
     // baglantilar icin ayri bir kural gecerli: sadece dondurulmus (round aktifken kopmus)
     // bir SteamId ile eslesirse kabul edilir — yabanci biri round ortasinda giremez.
+    private const string WrongPasswordReasonKey = "error.wrong_password";
+
     private void HandleConnectionApproval(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
     {
         response.CreatePlayerObject = false;
+
+        // Şifreli lobi: şifreyi sunucu doğrular (bkz. LobbyAccess). Yanlış/eksik şifre açık bir sebeple reddedilir.
+        if (!LobbyAccess.IsPasswordAccepted(request.Payload))
+        {
+            response.Approved = false;
+            response.Reason = WrongPasswordReasonKey;
+            return;
+        }
 
         ulong steamId = DecodeSteamId(request.Payload);
         _pendingSteamIdByClientId[request.ClientNetworkId] = steamId;

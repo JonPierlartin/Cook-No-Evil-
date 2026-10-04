@@ -4,10 +4,13 @@ using Steamworks.Data;
 using Unity.Netcode;
 using UnityEngine;
 
-// Lobi kurma, Steam'in kendi davet sistemi (overlay) uzerinden katilma ve host
-// disconnect yonetimi. GDD: manuel lobi kodu girme ekrani YOK — davet Steam
-// overlay'i ile gonderilir, kabul edilince SteamFriends.OnGameLobbyJoinRequested
-// otomatik tetiklenir ve oyuncu dogrudan lobiye/host'a baglanir.
+// Lobi kurma, listeleme, katilma ve host disconnect yonetimi. Katilmanin iki yolu var:
+//  - Steam'in kendi davet sistemi (overlay / arkadas listesi): kabul edilince
+//    SteamFriends.OnGameLobbyJoinRequested otomatik tetiklenir.
+//  - Lobi listesi (4 Eki 2026, Ersel): lobiler Steam'de HERKESE ACIK kurulur ve oyun icinden listelenir.
+//    AppID 480 (Spacewar) baska oyunlarla ortak oldugu icin liste GameKey verisiyle suzulur.
+// Sifreli lobi: Steam lobi verisinde yalnizca "sifreli" isareti durur; sifre baglanti onayi verisiyle
+// gider ve SUNUCUDA dogrulanir (LobbyAccess, RoleManager). Steam lobisine girmek oturuma girmek degildir.
 public class SteamLobbyManager : MonoBehaviour
 {
     public static SteamLobbyManager Instance { get; private set; }
@@ -16,6 +19,29 @@ public class SteamLobbyManager : MonoBehaviour
     public event Action OnLobbyJoined;
     public event Action<string> OnLobbyError;
     public event Action OnHostDisconnected;
+    // Katilinmak istenen lobi sifreli ve sifre verilmedi (davetle gelindi): arayuz sifre sorar, sonra
+    // JoinLobby(id, sifre) ile yeniden dener.
+    public event Action<LobbyInfo> OnPasswordRequired;
+
+    // Lobi listesindeki bir satirin verisi.
+    public struct LobbyInfo
+    {
+        public ulong Id;
+        public string Name;
+        public int Members;
+        public int MaxMembers;
+        public bool Locked;
+    }
+
+    // Steam lobi verisi anahtarlari.
+    private const string GameKey = "cne_game";
+    private const string GameValue = "cook-no-evil";
+    private const string NameKey = "cne_name";
+    private const string LockedKey = "cne_locked";
+    private const int MaxLobbyNameLength = 32;
+
+    // Steam hazir degilse null (ornegin Local Debug'da).
+    public string LocalPlayerName => SteamClient.IsValid ? SteamClient.Name : null;
 
     [SerializeField] private NetworkTransportManager transportManager;
     [SerializeField] private int maxLobbyMembers = 3;
@@ -146,7 +172,7 @@ public class SteamLobbyManager : MonoBehaviour
         networkManager.OnTransportFailure -= HandleTransportFailure;
     }
 
-    public async void HostLobby()
+    public async void HostLobby(string lobbyName, string password)
     {
         // Onceki oturumun kapanmasi hala devam ediyorsa (bkz. LeaveLobby) yeni bir host
         // denemesi NetworkManager'in yarim kalmis eski durumuna carpip sonsuza kadar
@@ -183,17 +209,23 @@ public class SteamLobbyManager : MonoBehaviour
         _currentLobby = result.Value;
         IsHost = true;
 
-        // CreateLobbyAsync varsayilan olarak GORUNMEZ bir lobi olusturur; arkadaslar
-        // gorebilsin/davet edilebilsin diye acikca FriendsOnly yapiyoruz.
-        _currentLobby.Value.SetFriendsOnly();
-        Debug.Log($"[SteamLobbyManager] Lobi tipi FriendsOnly yapildi (lobbyId={_currentLobby.Value.Id}).");
+        // CreateLobbyAsync varsayilan olarak GORUNMEZ bir lobi olusturur; lobi listesinde gorunsun ve
+        // davet edilebilsin diye acikca Public yapiyoruz. Sifre varsa giris sunucuda dogrulanir.
+        bool locked = !string.IsNullOrEmpty(password);
+        LobbyAccess.HostPassword = locked ? password : null;
+        _currentLobby.Value.SetPublic();
+        _currentLobby.Value.SetJoinable(true);
+        _currentLobby.Value.SetData(GameKey, GameValue);
+        _currentLobby.Value.SetData(NameKey, SanitizeLobbyName(lobbyName));
+        _currentLobby.Value.SetData(LockedKey, locked ? "1" : "0");
+        Debug.Log($"[SteamLobbyManager] Lobi tipi Public yapildi (lobbyId={_currentLobby.Value.Id}, sifreli={locked}).");
         AdvertiseLobbyPresence(_currentLobby.Value.Id);
 
         // Round sirasinda kopup ayni SteamId ile geri baglanan oyuncuyu taniyabilmek
         // icin (bkz. RoleManager.HandleConnectionApproval/HandleClientConnected) kendi
         // SteamId'mizi baglanti onayi payload'ina koyuyoruz — Host da NGO'da "client 0"
         // oldugu icin bu adim ondan da gecerli.
-        WriteSteamIdToConnectionData();
+        WriteConnectionData(password);
         NetworkManager.Singleton.StartHost();
         Debug.Log($"[SteamLobbyManager] Lobi olusturuldu: {_currentLobby.Value.Id}");
         OnLobbyCreated?.Invoke();
@@ -203,9 +235,53 @@ public class SteamLobbyManager : MonoBehaviour
     // kullandigi ConnectionApprovalRequest.Payload'i doldurur — NGO'nun StartHost/
     // StartClient'tan ONCE ayarlanmasi gereken zaten var olan mekanizmasi (yeni paket
     // gerekmiyor).
-    private static void WriteSteamIdToConnectionData()
+    private static void WriteConnectionData(string password)
     {
-        NetworkManager.Singleton.NetworkConfig.ConnectionData = BitConverter.GetBytes((ulong)SteamClient.SteamId);
+        NetworkManager.Singleton.NetworkConfig.ConnectionData = LobbyAccess.BuildPayload((ulong)SteamClient.SteamId, password);
+    }
+
+    private static string SanitizeLobbyName(string lobbyName)
+    {
+        string trimmed = string.IsNullOrWhiteSpace(lobbyName) ? SteamClient.Name : lobbyName.Trim();
+        return trimmed.Length > MaxLobbyNameLength ? trimmed.Substring(0, MaxLobbyNameLength) : trimmed;
+    }
+
+    private static LobbyInfo ToInfo(Lobby lobby)
+    {
+        string lobbyName = lobby.GetData(NameKey);
+        return new LobbyInfo
+        {
+            Id = lobby.Id,
+            Name = string.IsNullOrEmpty(lobbyName) ? lobby.Id.ToString() : lobbyName,
+            Members = lobby.MemberCount,
+            MaxMembers = lobby.MaxMembers,
+            Locked = lobby.GetData(LockedKey) == "1"
+        };
+    }
+
+    // Bu oyunun, yer acik olan herkese acik lobileri (dunya geneli). Steam hazir degilse bos liste.
+    public async System.Threading.Tasks.Task<System.Collections.Generic.List<LobbyInfo>> RequestLobbyListAsync()
+    {
+        var list = new System.Collections.Generic.List<LobbyInfo>();
+        if (!SteamClient.IsValid)
+        {
+            OnLobbyError?.Invoke("error.steam_not_ready");
+            return list;
+        }
+
+        var lobbies = await SteamMatchmaking.LobbyList
+            .FilterDistanceWorldwide()
+            .WithKeyValue(GameKey, GameValue)
+            .WithMaxResults(50)
+            .RequestAsync();
+
+        if (lobbies == null)
+            return list;
+
+        foreach (var lobby in lobbies)
+            list.Add(ToInfo(lobby));
+
+        return list;
     }
 
     // Steam Friends listesinde "Oyuna Davet Et" / "Katil" seceneklerinin gorunmesi VE
@@ -237,7 +313,7 @@ public class SteamLobbyManager : MonoBehaviour
     // callback'i otomatik tetikler).
     private void HandleGameLobbyJoinRequested(Lobby lobby, SteamId friendId)
     {
-        JoinLobby(lobby.Id);
+        JoinLobby(lobby.Id, null);
     }
 
     // Arkadasin Steam Friends listesinden "Katil" dedigi, Rich Presence "connect"
@@ -249,12 +325,13 @@ public class SteamLobbyManager : MonoBehaviour
 
         var idPart = connectString.Substring(ConnectPrefix.Length).Trim();
         if (ulong.TryParse(idPart, out var lobbyId))
-            JoinLobby(lobbyId);
+            JoinLobby(lobbyId, null);
         else
             Debug.LogWarning($"[SteamLobbyManager] Gecersiz connect string: {connectString}");
     }
 
-    private async void JoinLobby(SteamId lobbyId)
+    // password: listeden / sifre penceresinden gelir; davetle gelindiyse null (lobi sifreliyse sorulur).
+    public async void JoinLobby(ulong lobbyId, string password)
     {
         // Tek bir davet kabulu, hem OnGameLobbyJoinRequested hem OnGameRichPresenceJoinRequested'i
         // tetikleyebiliyor (Steam davetin arkasinda hem lobi hem rich-presence "connect" mekanizmasini
@@ -287,6 +364,16 @@ public class SteamLobbyManager : MonoBehaviour
             return;
         }
 
+        // Sifreli lobiye sifresiz gelindi (davet / arkadas listesi): Steam lobisinden cikilir, arayuz sifre sorar.
+        var joined = ToInfo(result.Value);
+        if (joined.Locked && string.IsNullOrEmpty(password) && result.Value.Owner.Id != SteamClient.SteamId)
+        {
+            result.Value.Leave();
+            _networkBusy = false;
+            OnPasswordRequired?.Invoke(joined);
+            return;
+        }
+
         _currentLobby = result.Value;
         IsHost = _currentLobby.Value.Owner.Id == SteamClient.SteamId;
 
@@ -302,7 +389,7 @@ public class SteamLobbyManager : MonoBehaviour
         transportManager.ConfigureTransport(TransportMode.Steam);
         transportManager.SetSteamHostTarget(_currentLobby.Value.Owner.Id);
 
-        WriteSteamIdToConnectionData();
+        WriteConnectionData(password);
         NetworkManager.Singleton.StartClient();
 
         Debug.Log($"[SteamLobbyManager] Lobiye katilindi, host: {_currentLobby.Value.Owner.Id}");
@@ -358,6 +445,7 @@ public class SteamLobbyManager : MonoBehaviour
         _currentLobby?.Leave();
         _currentLobby = null;
         IsHost = false;
+        LobbyAccess.HostPassword = null;
         SteamFriends.ClearRichPresence();
 
         var networkManager = NetworkManager.Singleton;

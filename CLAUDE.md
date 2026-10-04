@@ -955,6 +955,28 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     istemcide yerel, ağ yok. Sağır rol kendi adımını çok kısık ve boğuk duyar, 2 m'den uzaktakini duymaz.
   - **Müzik ve adım sesleri betikle sentezlendi** (yer tutucu; `Adim_1-3.wav`, `Muzik_Mutfak.wav`) — kulakla
     dinlenmeden üretildi; gerçek kayıt gelince aynı adla değiştirilir.
+- **Ana menü, lobi listesi, şifreli lobi (4 Eki 2026, Ersel):**
+  - **Lobiler artık Steam'de `Public`** (eskiden FriendsOnly) ve oyun içinden listelenir. AppID 480 başka oyunlarla
+    ortak olduğu için liste lobi verisiyle süzülür (`cne_game = cook-no-evil`); ad `cne_name`, kilit `cne_locked`.
+    `SteamLobbyManager.HostLobby(ad, şifre)`, `RequestLobbyListAsync()` (dünya geneli, en çok 50),
+    `JoinLobby(id, şifre)` (public), `LobbyInfo`, `OnPasswordRequired`. Davet / arkadaş listesi yolu duruyor.
+    *GDD §8.1 "manuel lobi ekranı yok, katılma yalnızca Steam davetiyle" diyor — GDD'ye işlenmedi.*
+  - **Şifre sunucuda doğrulanır:** `LobbyAccess` — bağlantı onayı verisi = 8 bayt kimlik + UTF-8 şifre;
+    `RoleManager.HandleConnectionApproval` yanlış/eksik şifreyi `error.wrong_password` ile reddeder. Şifre Steam lobi
+    verisine YAZILMAZ (yalnızca "şifreli" işareti). Steam lobisine girmek oturuma girmek değildir. Davetle şifreli
+    lobiye gelen oyuncu Steam lobisinden çıkarılır, arayüz şifre sorar, yeniden dener. `LobbyAccess.HostPassword`
+    lobiden çıkınca temizlenir (Local Debug oturumu şifresizdir).
+  - **Round sırasında lobi listede görünmeye devam eder**; katılma denemesi onayda "round sürüyor" ile reddedilir
+    (kopan oyuncu geri dönebilsin diye lobi kapatılmıyor).
+  - `LobbyBrowserUI` (LobbyCanvas): lobi oluştur (ad + şifreli kutucuğu), lobi listesi (`LobbyListRow` şablonu,
+    Yenile), şifre penceresi. Yalnızca arayüz; `LobbyUIController.BeginHost / BeginJoin` çağırır.
+    `LobbyUIController`: ilk ekran düğmeleri birlikte (`SetInitialButtonsVisible`: Lobi Oluştur, Lobilere Gözat,
+    Çıkış); `textOverrides` = Localization tablosunda henüz olmayan anahtarların düz metni.
+  - **Görünüm:** kareli masa örtüsü zemin (`UI_Gingham`, döşeli), logo, kâğıt kart + bant, Bangers; pencereler
+    ayarlar menüsüyle aynı kart düzeninde. `LocalDebugLobby` DEĞİŞMEDİ: Host düğmesini kopyaladığı için Local
+    Host / Local Join yeni stili kendiliğinden alır ve yalnızca editör / development build'de vardır.
+  - Bangers'ta küçük "i" noktasız büyük I olarak çizilir ("LOBI") — yazı tipinin özelliği; düğme metinleri
+    Localization tablosundan geldiği için tabloda "İ" yazılırsa düzelir (Localization işi sonda).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

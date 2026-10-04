@@ -2,8 +2,8 @@ using UnityEngine;
 using UnityEngine.Localization.Settings;
 using UnityEngine.UI;
 
-// UGUI (Canvas/Button/Text) tabanli lobi arayuzu. Manuel lobi kodu girme ekrani YOK:
-// katilma tamamen Steam'in kendi davet sistemi (overlay) uzerinden, otomatik olarak olur.
+// UGUI (Canvas/Button/Text) tabanli ana menu + lobi arayuzu. Katilma iki yoldan: Steam daveti (overlay) ya da
+// oyun ici lobi listesi (LobbyBrowserUI; lobi olusturma ve sifre pencereleri de orada).
 // Butonlarin sabit metinleri sahnede LocalizeStringEvent component'leri uzerinden geliyor
 // (UIStrings tablosu); burada sadece DINAMIK (calisma zamaninda degisen) metinler
 // Unity Localization String Database uzerinden cozuluyor — bkz. Localize().
@@ -15,6 +15,12 @@ public class LobbyUIController : MonoBehaviour
 
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private Button hostButton;
+    [Tooltip("Açık lobileri listeleyen pencereyi açar (yalnızca ilk ekranda).")]
+    [SerializeField] private Button browseButton;
+    [Tooltip("Oyundan çıkar (yalnızca ilk ekranda).")]
+    [SerializeField] private Button quitButton;
+    [Tooltip("Lobi oluştur / lobi listesi / şifre pencereleri.")]
+    [SerializeField] private LobbyBrowserUI browser;
     [SerializeField] private Button inviteButton;
     [SerializeField] private Button startGameButton;
     [SerializeField] private Button leaveButton;
@@ -57,6 +63,18 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private string rosterLineFormat = "Oyuncu {0}: {1}{2}";
     [SerializeField] private string rosterSelfSuffix = "  (sen)";
     [SerializeField] private string rolesNotReadyText = "Başlamak için 3 oyuncu ve her rolden birer tane gerekli.";
+    [Tooltip("Localization tablosunda henüz olmayan anahtarların düz metni (anahtar → metin).")]
+    [SerializeField] private TextOverride[] textOverrides =
+    {
+        new() { key = "error.wrong_password", text = "Şifre yanlış." },
+    };
+
+    [System.Serializable]
+    private struct TextOverride
+    {
+        public string key;
+        public string text;
+    }
 
     public bool ShouldLockCursor { get; private set; }
 
@@ -65,6 +83,8 @@ public class LobbyUIController : MonoBehaviour
         Instance = this;
 
         hostButton.onClick.AddListener(HandleHostClicked);
+        browseButton.onClick.AddListener(() => browser.OpenList());
+        quitButton.onClick.AddListener(Application.Quit);
         inviteButton.onClick.AddListener(HandleInviteClicked);
         startGameButton.onClick.AddListener(HandleStartGameClicked);
         leaveButton.onClick.AddListener(HandleLeaveClicked);
@@ -212,11 +232,31 @@ public class LobbyUIController : MonoBehaviour
         }
     }
 
-    private void HandleHostClicked()
+    // "Lobi oluştur": önce ad / şifre penceresi açılır; lobi, pencere onaylanınca kurulur (BeginHost).
+    private void HandleHostClicked() => browser.OpenCreateDialog();
+
+    public void BeginHost(string lobbyName, string password)
     {
         statusText.text = Localize("lobby.creating");
         hostButton.interactable = false;
-        SteamLobbyManager.Instance.HostLobby();
+        SteamLobbyManager.Instance.HostLobby(lobbyName, password);
+    }
+
+    // Lobi listesinden (ya da şifre penceresinden) katılma.
+    public void BeginJoin(ulong lobbyId, string password)
+    {
+        statusText.text = Localize("lobby.connecting_generic");
+        SteamLobbyManager.Instance.JoinLobby(lobbyId, password);
+    }
+
+    // İlk ekranın düğmeleri (lobi oluştur / lobilere gözat / çıkış) birlikte görünür ve gizlenir.
+    private void SetInitialButtonsVisible(bool visible)
+    {
+        hostButton.gameObject.SetActive(visible);
+        browseButton.gameObject.SetActive(visible);
+        quitButton.gameObject.SetActive(visible);
+        if (!visible)
+            browser.CloseAll();
     }
 
     private void HandleInviteClicked()
@@ -306,7 +346,7 @@ public class LobbyUIController : MonoBehaviour
     private void HandleLobbyJoined()
     {
         statusText.text = Localize("lobby.connecting_host");
-        hostButton.gameObject.SetActive(false);
+        SetInitialButtonsVisible(false);
     }
 
     // NGO baglantisi gercekten tamamlanip server rol atadiktan SONRA tetiklenir. Host icin bu,
@@ -318,7 +358,7 @@ public class LobbyUIController : MonoBehaviour
     // ile birlikte (Bilesen 2) gelecek — su an icin sadece baglantinin basarili oldugunu gosteriyoruz.
     private void HandleLocalRoleAssigned(PlayerRole role)
     {
-        hostButton.gameObject.SetActive(false);
+        SetInitialButtonsVisible(false);
         leaveButton.gameObject.SetActive(true);
         RefreshStatusText();
 
@@ -350,7 +390,7 @@ public class LobbyUIController : MonoBehaviour
         var network = Unity.Netcode.NetworkManager.Singleton;
         if (current == RoundState.Lobby && previous != RoundState.Lobby && network != null && network.IsListening)
         {
-            hostButton.gameObject.SetActive(false);
+            SetInitialButtonsVisible(false);
             leaveButton.gameObject.SetActive(true);
             startGameButton.gameObject.SetActive(network.IsServer);
             inviteButton.gameObject.SetActive(SteamLobbyManager.Instance != null && SteamLobbyManager.Instance.IsHost);
@@ -511,7 +551,7 @@ public class LobbyUIController : MonoBehaviour
 
     private void ResetToInitialScreen()
     {
-        hostButton.gameObject.SetActive(true);
+        SetInitialButtonsVisible(true);
         hostButton.interactable = true;
         inviteButton.gameObject.SetActive(false);
         startGameButton.gameObject.SetActive(false);
@@ -537,6 +577,16 @@ public class LobbyUIController : MonoBehaviour
 
     private static string Localize(string key, params object[] arguments)
     {
+        // Tabloya henüz eklenmemiş anahtarlar (Localization işi en sonda): düz metin.
+        if (Instance != null)
+        {
+            foreach (var entry in Instance.textOverrides)
+            {
+                if (entry.key == key)
+                    return entry.text;
+            }
+        }
+
         return LocalizationSettings.StringDatabase.GetLocalizedString(TableName, key, null, FallbackBehavior.UseProjectSettings, arguments);
     }
 }

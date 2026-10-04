@@ -90,6 +90,18 @@ public static class UiSpriteGenerator
             return new Color(0.62f * tone, 0.40f * tone, 0.22f * tone, Coverage(d));
         });
         // Kesik çizgi (döşenir).
+        // Kareli masa örtüsü (ana menü zemini): döşenerek kullanılır.
+        Save("UI_Gingham", 64, 64, 0, (x, y) =>
+        {
+            bool column = x < 32;
+            bool row = y < 32;
+            float red = column && row ? 1f : (column || row ? 0.5f : 0f);
+            float weave = 0.97f + 0.03f * Mathf.PerlinNoise(x * 0.4f, y * 0.4f);
+            var cream = new Color(0.98f, 0.95f, 0.88f);
+            var cloth = Color.Lerp(cream, new Color(0.82f, 0.25f, 0.20f), red * 0.85f) * weave;
+            cloth.a = 1f;
+            return cloth;
+        }, TextureWrapMode.Repeat);
         Save("UI_Dash", 32, 8, 0, (x, y) => new Color(1, 1, 1, x < 18 && y >= 2 && y < 6 ? 1f : 0f), TextureWrapMode.Repeat);
         // Yapışkan bant: yarı saydam, uçları tırtıklı.
         Save("UI_Tape", 128, 40, 0, (x, y) =>
