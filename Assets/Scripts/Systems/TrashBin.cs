@@ -4,7 +4,10 @@ using UnityEngine;
 // GDD 5.3.2 Çöp: herhangi bir öğe (yanmış et, çiğ kalmış ürün, yanlış paket/hamburger...) çöpe atılabilir; öğe
 // eline alınır, çöp kutusuna sol tık ile atılır, İMHA EDİLİR ve geri alınamaz. Faz 0'da yangın yok: yanmış et
 // söndürme gerekmeden alınıp atılır (5.3.2 faz kısıtı). Hangi rolün kullanabileceği kutu başına ayarlanır
-// (GDD 6.3; her odada kendi rolünün kutusu). Öğenin durumuna bakılmaz — Şef'e durum sızdırmaz (4.1.2 ①).
+// (GDD 6.3; her odada kendi rolünün kutusu). Öğenin GİZLİ durumuna (pişmişlik vb.) bakılmaz — Şef'e durum
+// sızdırmaz (4.1.2 ①). Tek istisna yarım ekmektir (altı tezgaha konmuş, elde yalnızca üstü kalmış): ATILAMAZ.
+// Atılırsa tezgahtaki hamburger bir daha kapatılamaz; iki tezgahta birden olursa bölüm kilitlenir (4 Eki 2026).
+// Bu durum Şef'ten gizli değildir (altı kendisi koydu, elindeki görsel de yarımdır).
 // Geri bildirim: öğe elden ve hotbar'dan anında kalkar (replike envanter).
 [RequireComponent(typeof(NetworkObject))]
 [RequireComponent(typeof(HoldOrPressInteractable))]
@@ -55,9 +58,15 @@ public class TrashBin : NetworkBehaviour, IInteractionGate
         }
 
         // ActiveSlotIndex DEĞİL — context.SlotIndex (bkz. InteractionContext.cs).
-        if (!inventory.TryGetItem(context.SlotIndex, out _))
+        if (!inventory.TryGetItem(context.SlotIndex, out var item))
         {
             reason = "elde öğe yok";
+            return false;
+        }
+
+        if (item.TryGetComponent<BreadHalf>(out var bread) && bread.IsHalved.Value)
+        {
+            reason = "yarım ekmek atılamaz (altı tezgahta, hamburgeri kapatmak için gerekli)";
             return false;
         }
 

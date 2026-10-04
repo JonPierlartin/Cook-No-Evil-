@@ -17,6 +17,9 @@ public class EmoteHandPose
         "y = yükseklik (0 gövdenin altı, 1 tepesi), z = ön-arka (1 gövdenin ön yüzü). Karakterlerin boyu ve eni çok " +
         "farklı olduğu için yer metreyle değil oranla verilir; aynı emote her karakterde gövdenin aynı yerine gelir.")]
     [SerializeField] private Vector3 anchor = new(1f, 0.7f, 1f);
+    [Tooltip("İşaretliyse el gövde kutusuna değil karakterin KAŞ noktasına göre yerleşir (yüze dokunan hareketler: " +
+        "selam). Kaş noktası karakter prefab'ındadır; yukarıdaki oran kullanılmaz, yalnızca aşağıdaki pay eklenir.")]
+    [SerializeField] private bool anchorToBrow;
     [Tooltip("Bu noktadan dışarı pay (m): el gövdenin içine girmesin diye.")]
     [SerializeField] private Vector3 offset;
     [Tooltip("Parmakların gösterdiği yön.")]
@@ -39,6 +42,7 @@ public class EmoteHandPose
     public bool Enabled => enabled;
     public bool BothHands => bothHands;
     public Vector3 Anchor => anchor;
+    public bool AnchorToBrow => anchorToBrow;
     public Vector3 Offset => offset;
     public Vector3 FingerDirection => fingerDirection;
     public Vector3 ThumbDirection => thumbDirection;

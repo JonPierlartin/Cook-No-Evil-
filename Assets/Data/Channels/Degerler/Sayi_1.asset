@@ -14,6 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SignalValue
   displayName: 1
   icon: {fileID: 0}
+  useWheelAngle: 0
+  wheelAngle: 0
+  gestureDirection: {x: 0, y: 0, z: 0}
+  gestureCount: 1
   visualPrefab: {fileID: 4978614317397338691, guid: 881b233b761e5c74fbe332f80d11de81, type: 3}
   clip: {fileID: 0}
   durationSeconds: 1.3

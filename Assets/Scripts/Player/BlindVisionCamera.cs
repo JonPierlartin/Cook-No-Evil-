@@ -23,6 +23,10 @@ public class BlindVisionCamera : MonoBehaviour
     // URP: SetRenderer(-1) = asset'in varsayilan renderer'i.
     private const int DefaultRendererIndex = -1;
 
+    // Bu kamera şu an kör görüşle mi çiziyor. Kör görüşe uyması gereken arayüz (hotbar ikonları) kuralı buradan
+    // okur; "kör rol hangisi" ikinci bir yerde yazılmaz.
+    public bool IsBlind { get; private set; }
+
     private UniversalAdditionalCameraData _cameraData;
     private RoleManager _roleManager;
 
@@ -49,11 +53,13 @@ public class BlindVisionCamera : MonoBehaviour
             _roleManager.OnLocalRoleAssigned -= ApplyRole;
 
         _roleManager = null;
+        IsBlind = false;
         _cameraData.SetRenderer(DefaultRendererIndex);
     }
 
     private void ApplyRole(PlayerRole role)
     {
-        _cameraData.SetRenderer(role == blindRole ? blindVisionRendererIndex : DefaultRendererIndex);
+        IsBlind = role == blindRole;
+        _cameraData.SetRenderer(IsBlind ? blindVisionRendererIndex : DefaultRendererIndex);
     }
 }

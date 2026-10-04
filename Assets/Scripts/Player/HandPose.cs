@@ -2,15 +2,17 @@ using System;
 using UnityEngine;
 
 // Bir elin parmak pozu: parmak eklemleri veridir (prefab kurulurken doldurulur), kıvrılma miktarı çağırandan gelir.
-// Üç grup ayrı sürülür — işaret parmağı, diğer parmaklar, başparmak — böylece aynı el "işaret et" (işaret düz,
-// diğerleri kapalı), "tut" (hepsi yarı kapalı) ve "rahat" pozlarını alabilir. Yalnızca gösterir.
+// Her parmak ayrı sürülür — işaret, orta, serçe, başparmak (el modeli dört parmaklıdır) — böylece aynı el "işaret
+// et" (işaret düz, diğerleri kapalı), "tut", "rahat" ve SAYI (kaç parmak açık) pozlarını alabilir. Yalnızca gösterir.
 public class HandPose : MonoBehaviour
 {
     public enum Group
     {
         Index,
+        // Orta parmak (eski adı korunur: serileştirilmiş değer 1).
         Others,
-        Thumb
+        Thumb,
+        Pinky
     }
 
     [Serializable]
@@ -29,7 +31,7 @@ public class HandPose : MonoBehaviour
     [SerializeField] private Joint[] joints = Array.Empty<Joint>();
 
     // 0 = açık, 1 = tam kıvrık.
-    public void Apply(float indexCurl, float othersCurl, float thumbCurl)
+    public void Apply(float indexCurl, float middleCurl, float pinkyCurl, float thumbCurl)
     {
         foreach (var joint in joints)
         {
@@ -40,7 +42,8 @@ public class HandPose : MonoBehaviour
             {
                 Group.Index => indexCurl,
                 Group.Thumb => thumbCurl,
-                _ => othersCurl
+                Group.Pinky => pinkyCurl,
+                _ => middleCurl
             };
 
             joint.bone.localRotation = joint.restRotation * Quaternion.AngleAxis(joint.maxAngle * Mathf.Clamp01(curl), joint.localAxis);

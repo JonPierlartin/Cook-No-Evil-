@@ -2851,6 +2851,7 @@ MonoBehaviour:
   - {fileID: 114540825}
   - {fileID: 1183135778}
   activeScale: 1.12
+  blindIconMaterial: {fileID: 2100000, guid: a7b6e261c3ce8b145a531fb5abc174ee, type: 2}
 --- !u!1 &1395256262
 GameObject:
   m_ObjectHideFlags: 0

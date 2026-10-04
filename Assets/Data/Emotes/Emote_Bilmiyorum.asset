@@ -21,7 +21,8 @@ MonoBehaviour:
   handPose:
     enabled: 1
     bothHands: 1
-    anchor: {x: 1, y: 0.62, z: 0.4}
+    anchor: {x: 1, y: 0.46, z: 0.4}
+    anchorToBrow: 0
     offset: {x: 0.28, y: 0, z: 0}
     fingerDirection: {x: 0.8, y: 0, z: 0.6}
     thumbDirection: {x: 0.6, y: 0, z: -0.8}

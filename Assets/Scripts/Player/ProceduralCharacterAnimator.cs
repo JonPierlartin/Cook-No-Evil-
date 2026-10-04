@@ -8,6 +8,8 @@ using UnityEngine;
 //    hızla orantılıdır (ayak kaymasın). Gövde adımla birlikte iner-kalkar ve sallanır; eller zıt ayakla salınır.
 //  - Jest (yön sinyali, GDD 3.6): bir el göğüs/baş hizasına kalkıp İŞARET PARMAĞIYLA verilen yönü gösterir; el
 //    yerinden aşağı inmez (pencere pervazının altında kalıp görünmez olmasın). Süre dışarıdan gelir.
+//  - Sayı (sayı sinyali): eller jest merkezinde, avuç karşıya; sayı kadar parmak açılır (bir elde dört parmak
+//    var; fazlası sol ele taşar).
 //  - Emote (genel çark, GDD 3.6.0): el hareketi veridir (EmoteHandPose); el oraya gider, parmaklar pozu alır,
 //    salınır. Tek elli emote sağ elle oynar; sağ elde öğe varsa sol elle (aynalı).
 //  - Tutma: elde öğe varken sağ el öğenin altına girer (avuç yukarı, parmaklar yarı kapalı). Alırken el öğeyle
@@ -65,6 +67,11 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     [Tooltip("Elin jeste girip çıkma süresi (sn).")]
     [SerializeField, Min(0.01f)] private float gestureBlendTime = 0.18f;
 
+    [Header("Yüz")]
+    [Tooltip("Sağ kaşın dış ucu (karakterin yerel uzayı, gövde yüzeyinde). Yüze dokunan emote'lar (selam) buna göre " +
+        "yerleşir; sol el için X'te aynalanır. Karakterlerin yüzü gövdenin farklı yerinde olduğu için prefab başınadır.")]
+    [SerializeField] private Vector3 browPoint = new(0.15f, 1.35f, 0.3f);
+
     [Header("Tutma (elde öğe)")]
     [Tooltip("Avuç yüzeyinin, öğenin tabanının ne kadar altında durduğu (m).")]
     [SerializeField] private float holdPalmOffset = 0.02f;
@@ -96,7 +103,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
     private struct Curl
     {
-        public float Index, Others, Thumb;
+        // Others = orta parmak.
+        public float Index, Others, Pinky, Thumb;
     }
 
     private Rest _bodyRest, _leftFootRest, _rightFootRest, _leftHandRest, _rightHandRest;
@@ -112,6 +120,13 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
     private Bounds _bodyBounds;
     private bool _hasBodyBounds;
+    // Bir eldeki parmak sayısı (el modeli: işaret, orta, serçe, başparmak) — sayı jesti bu sırayla açar.
+    private const int FingersPerHand = 4;
+
+    private int _count;
+    private float _countElapsed;
+    private float _countDuration;
+
     private EmoteHandPose _emote;
     private float _emoteElapsed;
     private float _emoteDuration;
@@ -137,7 +152,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         _leftHandRest = Capture(leftHand);
         _rightHandRest = Capture(rightHand);
         _lastWorldPosition = transform.position;
-        _leftCurl = _rightCurl = new Curl { Index = restCurl, Others = restCurl, Thumb = restCurl };
+        _leftCurl = _rightCurl = new Curl { Index = restCurl, Others = restCurl, Pinky = restCurl, Thumb = restCurl };
     }
 
     private void OnEnable()
@@ -168,6 +183,19 @@ public class ProceduralCharacterAnimator : MonoBehaviour
             _gestureElapsed = Mathf.Max(_gestureElapsed, _gestureDuration - gestureBlendTime);
         if (_emote != null)
             _emoteElapsed = Mathf.Max(_emoteElapsed, _emoteDuration - gestureBlendTime);
+        if (_count > 0)
+            _countElapsed = Mathf.Max(_countElapsed, _countDuration - gestureBlendTime);
+    }
+
+    // Sayı sinyali: 'count' kadar parmak açılır.
+    public void PlayCount(int count, float duration)
+    {
+        if (count <= 0 || duration <= 0f)
+            return;
+
+        _count = Mathf.Min(count, FingersPerHand * 2);
+        _countElapsed = 0f;
+        _countDuration = duration;
     }
 
     // Genel emote'un el hareketi (veri). Poz kapalıysa bir şey oynamaz.
@@ -249,6 +277,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
         if (_emote != null)
             _emoteElapsed += dt;
+        if (_count > 0)
+            _countElapsed += dt;
 
         // Eller karşı ayakla birlikte salınır.
         ApplyHand(leftHand, leftHandPose, ref _leftCurl, _leftHandRest, _phase + Mathf.PI, direction, dt, false);
@@ -256,6 +286,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
         if (_emote != null && _emoteElapsed >= _emoteDuration)
             _emote = null;
+        if (_count > 0 && _countElapsed >= _countDuration)
+            _count = 0;
     }
 
     private void ApplyFoot(Transform foot, Rest rest, float phase, Vector3 direction)
@@ -290,7 +322,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     {
         var position = rest.Position + direction * (Mathf.Sin(phase) * handSwing * _weight);
         var rotation = rest.Rotation;
-        var targetCurl = new Curl { Index = restCurl, Others = restCurl, Thumb = restCurl };
+        var targetCurl = new Curl { Index = restCurl, Others = restCurl, Pinky = restCurl, Thumb = restCurl };
         float side = hand == leftHand ? -1f : 1f;
 
         if (holdsItems)
@@ -298,6 +330,9 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
         if (_emote != null && UsesEmote(side))
             ApplyEmote(side, ref position, ref rotation, ref targetCurl);
+
+        if (_count > 0 && RaisedFingers(side) > 0)
+            ApplyCount(side, ref position, ref rotation, ref targetCurl);
 
         if (hand == _gestureHand)
             ApplyGesture(side, dt, ref position, ref rotation, ref targetCurl);
@@ -308,9 +343,10 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         float step = fingerSpeed * dt;
         curl.Index = Mathf.MoveTowards(curl.Index, targetCurl.Index, step);
         curl.Others = Mathf.MoveTowards(curl.Others, targetCurl.Others, step);
+        curl.Pinky = Mathf.MoveTowards(curl.Pinky, targetCurl.Pinky, step);
         curl.Thumb = Mathf.MoveTowards(curl.Thumb, targetCurl.Thumb, step);
         if (pose != null)
-            pose.Apply(curl.Index, curl.Others, curl.Thumb);
+            pose.Apply(curl.Index, curl.Others, curl.Pinky, curl.Thumb);
     }
 
     private void ApplyHold(float side, float dt, ref Vector3 position, ref Quaternion rotation, ref Curl targetCurl)
@@ -349,7 +385,38 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         position = Vector3.Lerp(position, holdPosition, blend);
         rotation = Quaternion.Slerp(rotation, _holdLocalRotation, blend);
         // Açık avuç: öğe elin üstünde durur (tepsi taşır gibi), parmaklar kavramaz.
-        targetCurl = new Curl { Index = holdCurl, Others = holdCurl, Thumb = holdThumbCurl };
+        targetCurl = new Curl { Index = holdCurl, Others = holdCurl, Pinky = holdCurl, Thumb = holdThumbCurl };
+    }
+
+    // Bu elin açacağı parmak sayısı: önce sağ el dolar, artan sol ele geçer.
+    private int RaisedFingers(float side)
+    {
+        return side > 0f ? Mathf.Min(_count, FingersPerHand) : Mathf.Max(0, _count - FingersPerHand);
+    }
+
+    private void ApplyCount(float side, ref Vector3 position, ref Quaternion rotation, ref Curl targetCurl)
+    {
+        float blendIn = Mathf.Clamp01(_countElapsed / gestureBlendTime);
+        float blendOut = Mathf.Clamp01((_countDuration - _countElapsed) / gestureBlendTime);
+        float blend = Mathf.SmoothStep(0f, 1f, Mathf.Min(blendIn, blendOut));
+
+        // El jest merkezinde (pencereden görünen yükseklik), parmaklar yukarı, avuç karşıya; hafifçe öne vurgular.
+        float pump = Mathf.Sin(_countElapsed * gesturePumpRate * Mathf.PI * 2f) * gesturePump * 0.5f;
+        var countPosition = gestureCenter + Vector3.right * (side * gestureSideOffset) + Vector3.forward * pump;
+        var countRotation = Quaternion.LookRotation(Vector3.up, Vector3.left * side);
+
+        position = Vector3.Lerp(position, countPosition, blend);
+        rotation = Quaternion.Slerp(rotation, countRotation, blend);
+
+        // Sıra: işaret, orta, serçe, başparmak.
+        int raised = RaisedFingers(side);
+        targetCurl = new Curl
+        {
+            Index = raised >= 1 ? 0f : 1f,
+            Others = raised >= 2 ? 0f : 1f,
+            Pinky = raised >= 3 ? 0f : 1f,
+            Thumb = raised >= 4 ? 0f : 0.9f
+        };
     }
 
     // Sağ el öğe tutuyorsa emote'a katılmaz (öğe havada kalmasın); tek elli emote o zaman sol ele geçer.
@@ -370,7 +437,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
         position = Vector3.Lerp(position, emotePosition, blend);
         rotation = Quaternion.Slerp(rotation, emoteRotation, blend);
-        targetCurl = new Curl { Index = _emote.IndexCurl, Others = _emote.OthersCurl, Thumb = _emote.ThumbCurl };
+        targetCurl = new Curl { Index = _emote.IndexCurl, Others = _emote.OthersCurl, Pinky = _emote.OthersCurl, Thumb = _emote.ThumbCurl };
     }
 
     // Emote pozunda elin karakter yerel uzayındaki yeri ve dönüşü (side: sağ el +1, sol el -1; wave: salınım -1..1).
@@ -379,11 +446,20 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     {
         // Değerler sağ el içindir; sol elde X'te aynalanır (dönme ekseni aynalanınca y ve z işaret değiştirir).
         var mirror = new Vector3(side, 1f, 1f);
-        var bounds = GetBodyBounds();
-        var anchor = new Vector3(
-            bounds.center.x + pose.Anchor.x * bounds.extents.x,
-            bounds.min.y + pose.Anchor.y * bounds.size.y,
-            bounds.center.z + pose.Anchor.z * bounds.extents.z);
+        Vector3 anchor;
+        if (pose.AnchorToBrow)
+        {
+            anchor = browPoint;
+        }
+        else
+        {
+            var bounds = GetBodyBounds();
+            anchor = new Vector3(
+                bounds.center.x + pose.Anchor.x * bounds.extents.x,
+                bounds.min.y + pose.Anchor.y * bounds.size.y,
+                bounds.center.z + pose.Anchor.z * bounds.extents.z);
+        }
+
         anchor.x *= side;
         position = anchor + Vector3.Scale(pose.Offset + pose.Swing * wave, mirror);
 
@@ -438,7 +514,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         position = Vector3.Lerp(position, pointPosition, blend);
         rotation = Quaternion.Slerp(rotation, pointRotation, blend);
         // İşaret: işaret parmağı düz, diğerleri ve başparmak kapalı.
-        targetCurl = new Curl { Index = 0f, Others = 1f, Thumb = 0.9f };
+        targetCurl = new Curl { Index = 0f, Others = 1f, Pinky = 1f, Thumb = 0.9f };
 
         if (_gestureElapsed >= _gestureDuration)
             _gestureHand = null;

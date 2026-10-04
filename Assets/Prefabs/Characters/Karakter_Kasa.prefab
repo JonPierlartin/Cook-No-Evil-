@@ -6030,17 +6030,17 @@ MonoBehaviour:
     maxAngle: 85
     restRotation: {x: 0.00737025, y: 0.002284203, z: 0.002008468, w: 0.99996823}
   - bone: {fileID: 5097079573369822178}
-    group: 1
+    group: 3
     localAxis: {x: 0.9959783, y: -0.00000036230614, z: 0.089594305}
     maxAngle: 80
     restRotation: {x: -0.013880444, y: 0.0032922016, z: -0.07775864, w: 0.99687016}
   - bone: {fileID: 858505282574145557}
-    group: 1
+    group: 3
     localAxis: {x: 0.9922006, y: 0.00000015437757, z: 0.12465118}
     maxAngle: 85
     restRotation: {x: 0.022389803, y: 0.017625427, z: 0.002412737, w: 0.99959105}
   - bone: {fileID: 1788683341121305978}
-    group: 1
+    group: 3
     localAxis: {x: 0.9944157, y: -0.00000017738776, z: 0.10553419}
     maxAngle: 85
     restRotation: {x: 0.022002757, y: -0.009620081, z: 0.0025494304, w: 0.9997084}
@@ -6164,6 +6164,7 @@ MonoBehaviour:
   gesturePump: 0.07
   gesturePumpRate: 2
   gestureBlendTime: 0.18
+  browPoint: {x: 0.28, y: 1.41, z: 0.42}
   holdPalmOffset: 0.060267746
   holdPalmForward: 0.08875053
   holdBlendTime: 0.14
@@ -10616,17 +10617,17 @@ MonoBehaviour:
     maxAngle: 85
     restRotation: {x: 0.00737025, y: 0.002284203, z: 0.002008468, w: 0.99996823}
   - bone: {fileID: 782337368949113203}
-    group: 1
+    group: 3
     localAxis: {x: 0.9959783, y: -0.00000036230614, z: 0.089594305}
     maxAngle: 80
     restRotation: {x: -0.013880444, y: 0.0032922016, z: -0.07775864, w: 0.99687016}
   - bone: {fileID: 6401173182564497704}
-    group: 1
+    group: 3
     localAxis: {x: 0.9922006, y: 0.00000015437757, z: 0.12465118}
     maxAngle: 85
     restRotation: {x: 0.022389803, y: 0.017625427, z: 0.002412737, w: 0.99959105}
   - bone: {fileID: 5972445422718749242}
-    group: 1
+    group: 3
     localAxis: {x: 0.9944157, y: -0.00000017738776, z: 0.10553419}
     maxAngle: 85
     restRotation: {x: 0.022002757, y: -0.009620081, z: 0.0025494304, w: 0.9997084}

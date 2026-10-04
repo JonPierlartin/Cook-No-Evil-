@@ -923,6 +923,18 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     rozet + ad + kesik çizgi.
   - **Arayüz önizlemesi Play'siz alınabilir:** geçici bir dünya uzayı Canvas + ortografik kamera + RenderTexture
     (`Canvas.ForceUpdateCanvases` + `LayoutRebuilder` sonrası `cam.Render`); sahne kirlenmez.
+- **Sayı jesti (4 Eki 2026):** `SignalValue.gestureCount` > 0 ise `PlayerSignalDisplay` →
+  `ProceduralCharacterAnimator.PlayCount`: eller jest merkezinde (pencereden görünen yükseklik), avuç karşıya, sayı
+  kadar parmak açık. **El modeli dört parmaklı** (işaret, orta, serçe, başparmak — `HandPose.Group`'a `Pinky`
+  eklendi, `Others` = orta); 1–4 sağ elde, 5 = sağ elde dört + sol elde bir. `Sayi_1..5` dolu; yer tutucu çubuk
+  prefab'ları asset'te duruyor (animatör yoksa yedek). "Sipariş Bitti" hâlâ yer tutucu.
+- **Yarım ekmek çöpe atılamaz (4 Eki, Ersel):** `TrashBin` gate'i `BreadHalf.IsHalved` olan ekmeği reddeder
+  (crosshair engelli). Atılınca tezgahtaki alt ekmek sahipsiz kalıyor, hamburger kapatılamıyordu; iki tezgahta
+  birden olunca bölüm kilitleniyordu. *GDD §5.3.2 "herhangi bir öğe atılabilir" diyor — GDD'ye işlenmedi.*
+- **Şef'in hotbar'ı kontur (4 Eki, Ersel):** kör görüşte ikonlar `BlindVisionIconOutline` materyaliyle
+  (`Shaders/BlindVision/BlindVisionIconOutline.shader`) çizilir: ikonun rengi okunmaz, yalnızca alfa siluetinin
+  kenarı beyaz çizgi. `HotbarUI.blindIconMaterial`; "kör mü" kuralı `BlindVisionCamera.IsBlind`'den okunur (ikinci
+  bir rol alanı yok). Siluet dünyadaki kontur kadar bilgi verir (ekmek ≠ köfte; peynir ≈ kese kağıdı).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.
@@ -957,7 +969,10 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   z ön-arka; + metre cinsinden `offset` payı) — sabit bir noktaya (jest merkezi) göre metreyle yazılınca üç karakterin
   ölçüleri çok farklı olduğu için el birinde başın üstünde, ötekinde gövdenin yarım metre önünde havada kalıyordu
   (4 Eki; gövde: Ketçap 0,78×1,49, Hamburger 1,2×1,1, Kasa 1,12×1,1 m). `ProceduralCharacterAnimator.SampleEmote`
-  pozun tek kuralıdır; **yeni poz üç karakterde birden önizlenir** (düzenleyicide `SampleEmote` ile). Eski `EmoteA/B/C` asset'leri yalnızca `SampleScene_EskiHarita`'da kullanılıyor.
+  pozun tek kuralıdır; **yeni poz üç karakterde birden önizlenir** (düzenleyicide `SampleEmote` ile). Yüze dokunan
+  hareketler (selam) kutuya değil **kaş noktasına** göre yerleşir: `EmoteHandPose.anchorToBrow` +
+  `ProceduralCharacterAnimator.browPoint` (prefab başına; yüzler gövdenin farklı yerinde — Ketçap'ta gözler,
+  Hamburger'de göz bandı, Kasa'da ekran; önden ortografik önizlemeden ölçüldü). Eski `EmoteA/B/C` asset'leri yalnızca `SampleScene_EskiHarita`'da kullanılıyor.
 - `VoIPController` (`IVoiceProvider` soyutlaması). Round sırasında Kasiyer'in paketi sunucuda relay
   edilmez; **Komi hiçbir oyuncunun sesini duymaz** — gelen paket hiç çözülmez (`1d4d1b2`, K3).
 - `DeafHearing` (oyuncu kamerası, AudioListener): "sağır mı" kuralının **tek yeri** (sağır rol + round

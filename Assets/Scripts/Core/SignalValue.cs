@@ -20,6 +20,8 @@ public class SignalValue : ScriptableObject
     [Tooltip("Karakterin eliyle işaret edeceği yön (karakterin yerel uzayı: yukarı (0,1,0), kendi sağı (1,0,0)). " +
         "Sıfırdan farklıysa sinyal karakterin jestiyle oynar; sıfırsa aşağıdaki yer tutucu işaret gösterilir.")]
     [SerializeField] private Vector3 gestureDirection;
+    [Tooltip("Karakterin parmaklarıyla göstereceği sayı (0 = yok). Sıfırdan büyükse sinyal o kadar parmak açılarak oynar.")]
+    [SerializeField, Min(0)] private int gestureCount;
     [Tooltip("Yer tutucu işaret: sinyal oynarken Kasiyer'in üzerinde gösterilir. Collider taşımamalı. Animasyon gelince boşaltılır.")]
     [SerializeField] private GameObject visualPrefab;
     [Tooltip("Final animasyon klibi. Atanırsa süre klipten okunur.")]
@@ -33,6 +35,7 @@ public class SignalValue : ScriptableObject
     public float WheelAngle => wheelAngle;
     public GameObject VisualPrefab => visualPrefab;
     public Vector3 GestureDirection => gestureDirection;
+    public int GestureCount => gestureCount;
     public AnimationClip Clip => clip;
 
     // Sinyalin oynama süresi: klip varsa klibin uzunluğu, yoksa verideki süre.

@@ -21,8 +21,12 @@ public class HotbarUI : MonoBehaviour
     [SerializeField] private Image[] slotFrames;
     [Tooltip("Secili slotun olcegi (digerleri 1).")]
     [SerializeField, Min(1f)] private float activeScale = 1.12f;
+    [Tooltip("Kör görüşte (Şef) ikonların çizildiği materyal: yalnızca siluet konturu. Şef dünyada nesneyi kontur " +
+        "olarak görür; hotbar renkli ikon gösterirse elindekinin ne olduğunu oradan okur (GDD 4.1.1).")]
+    [SerializeField] private Material blindIconMaterial;
 
     private PlayerInventory _inventory;
+    private BlindVisionCamera _blindVision;
     private InputAction[] _hotbarActions;
 
     private void Start()
@@ -78,6 +82,7 @@ public class HotbarUI : MonoBehaviour
                 continue;
 
             _inventory = controller.GetComponent<PlayerInventory>();
+            _blindVision = controller.GetComponentInChildren<BlindVisionCamera>(true);
             return;
         }
     }
@@ -85,6 +90,8 @@ public class HotbarUI : MonoBehaviour
     private void RefreshVisuals()
     {
         int activeIndex = _inventory.ActiveSlotIndex.Value;
+        // null = varsayılan arayüz materyali (renkli ikon).
+        var iconMaterial = _blindVision != null && _blindVision.IsBlind ? blindIconMaterial : null;
 
         for (int i = 0; i < slotIcons.Length && i < _inventory.Slots.Count; i++)
         {
@@ -93,6 +100,7 @@ public class HotbarUI : MonoBehaviour
             if (slotIcons[i] != null)
             {
                 slotIcons[i].enabled = itemType != null;
+                slotIcons[i].material = iconMaterial;
                 if (itemType != null)
                     slotIcons[i].sprite = itemType.Icon;
             }

@@ -54,11 +54,20 @@ public class PlayerSignalDisplay : NetworkBehaviour
 
         Clear();
 
-        // Jest verisi olan sinyal (yön) karakterin eliyle oynar; olmayan yer tutucu işaretle gösterilir.
-        if (signal.GestureDirection != Vector3.zero && character != null && character.Animator != null)
+        // Jest verisi olan sinyal (yön, sayı) karakterin eliyle oynar; olmayan yer tutucu işaretle gösterilir.
+        if (character != null && character.Animator != null)
         {
-            character.Animator.PlayGesture(signal.GestureDirection, signal.Duration);
-            return;
+            if (signal.GestureDirection != Vector3.zero)
+            {
+                character.Animator.PlayGesture(signal.GestureDirection, signal.Duration);
+                return;
+            }
+
+            if (signal.GestureCount > 0)
+            {
+                character.Animator.PlayCount(signal.GestureCount, signal.Duration);
+                return;
+            }
         }
 
         if (signal.VisualPrefab == null || anchor == null)
