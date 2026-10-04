@@ -935,6 +935,26 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   (`Shaders/BlindVision/BlindVisionIconOutline.shader`) çizilir: ikonun rengi okunmaz, yalnızca alfa siluetinin
   kenarı beyaz çizgi. `HotbarUI.blindIconMaterial`; "kör mü" kuralı `BlindVisionCamera.IsBlind`'den okunur (ikinci
   bir rol alanı yok). Siluet dünyadaki kontur kadar bilgi verir (ekmek ≠ köfte; peynir ≈ kese kağıdı).
+- **Ayarlar, müzik, adım sesi (4 Eki 2026):**
+  - `GameSettings` (statik, PlayerPrefs): oyuncunun YEREL ayarlarının tek kaynağı — `MasterVolume`
+    (→ `AudioListener.volume`), `MusicVolume`, `VoiceVolume`, `MicGain` (0–2), `MouseSensitivity` (çarpan) + `Changed`.
+    Ağdan gitmez. Sağırlık bunlara dayanmaz (K3). **Ayrı "efekt sesi" ayarı yok** — AudioMixer kurulmadı; gerekirse
+    mixer + grup eklenir. MPPM sanal oyuncuları aynı PlayerPrefs'i paylaşır.
+  - `SettingsMenuUI` (GameplayCanvas/`PauseMenu/Panel/Kart`): ESC menüsü artık ayarlar menüsü (kâğıt kart, Bangers);
+    kaydırıcıları `GameSettings`'e bağlar, açılıp kapanma `PauseMenuUI`'da kaldı (K9: yerel, oyunu durdurmaz).
+    Tam ekran `Screen.fullScreenMode`. **Lobide/ilk ekranda menü yok** (GameplayCanvas kapalı).
+  - **Sesli sohbet seviyeleri:** gelen ses `VoiceStreamPlayer.Gain` ile örneklerde çarpılır (filtre enjeksiyonu
+    olduğu için `AudioSource.volume` işlemez). Mikrofon seviyesi gönderende ölçeklenemez (Steam sıkıştırılmış verir):
+    paketle tek bayt (yüzde) gider, **alıcıda** uygulanır — `Gain = konuşanın mikrofon seviyesi × dinleyenin sesli
+    sohbet ayarı`. Local Debug'da (`MockVoiceProvider`) ses iletilmediği için bu iki ayar yalnızca Steam'de denenir.
+  - `MusicPlayer` (sahne: `Muzik`; 2B, döngü, `Assets/Audio/Muzik_Mutfak.wav`): seviye `baseVolume × MusicVolume`.
+    Kaynakta **Bypass Listener Effects açık** — Komi'nin boğukluk filtresi müziğe uygulanmaz (müzik oyun dünyasının
+    sesi değil). İlk ekranda da çalar (sahnenin `Main Camera` dinleyicisi).
+  - `FootstepAudio` (Player kökü) + `AyakSesi` (3B, Linear, 1–8 m, `RoleAwareAudioRange`): adım,
+    `ProceduralCharacterAnimator.StepCount`'tan (ayak yere basınca artar; `stepSoundMinWeight` altında saymaz) — her
+    istemcide yerel, ağ yok. Sağır rol kendi adımını çok kısık ve boğuk duyar, 2 m'den uzaktakini duymaz.
+  - **Müzik ve adım sesleri betikle sentezlendi** (yer tutucu; `Adim_1-3.wav`, `Muzik_Mutfak.wav`) — kulakla
+    dinlenmeden üretildi; gerçek kayıt gelince aynı adla değiştirilir.
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
   panoda görünürler ama oyunda alınamazlar (kap/buzdolabı ve öğe prefab'ı içerik işi). `Seviye1_Taslak` Yön
   eşleşmesi: Yukarı=Köfte, Sol=Tavuk, Sağ=Balık, Aşağı=Veji.

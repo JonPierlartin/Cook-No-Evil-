@@ -18,6 +18,10 @@ public class VoIPController : NetworkBehaviour
     private readonly Dictionary<ulong, VoiceStreamPlayer> _speakerPlayers = new();
     private PlayerRole _localRole = PlayerRole.None;
 
+    // Mikrofon seviyesi pakette tek bayt olarak gider (yüzde: 100 = olduğu gibi). Steam sesi sıkıştırılmış verir,
+    // gönderen tarafta ölçeklenemez; seviye alıcıda, çözülmüş örneklere uygulanır (VoiceStreamPlayer.Gain).
+    private const float MicGainScale = 100f;
+
     private static bool IsRoundActive => GameLoopManager.Instance != null && GameLoopManager.Instance.IsRoundActive;
 
     public override void OnNetworkSpawn()
@@ -74,7 +78,7 @@ public class VoIPController : NetworkBehaviour
         _voiceProvider.Tick();
 
         if (_voiceProvider.ShouldTransmitLocalVoice && _voiceProvider.TryReadLocalVoicePacket(out var packet))
-            SendVoiceServerRpc(packet);
+            SendVoiceServerRpc(packet, (byte)Mathf.RoundToInt(GameSettings.MicGain * MicGainScale));
     }
 
     private void HandleLocalRoleAssigned(PlayerRole role)
@@ -112,18 +116,18 @@ public class VoIPController : NetworkBehaviour
     // her client kendi sesini gonderebilmeli, sadece "owner" degil — bu yuzden
     // RequireOwnership = false gerekiyor (varsayilaninda "Only the owner can invoke..." hatasi verir).
     [ServerRpc(RequireOwnership = false)]
-    private void SendVoiceServerRpc(byte[] compressedData, ServerRpcParams rpcParams = default)
+    private void SendVoiceServerRpc(byte[] compressedData, byte micGainPercent, ServerRpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
 
         if (IsRoundActive && RoleManager.Instance != null && RoleManager.Instance.GetRole(senderId) == PlayerRole.Kasiyer)
             return;
 
-        ReceiveVoiceClientRpc(senderId, compressedData);
+        ReceiveVoiceClientRpc(senderId, compressedData, micGainPercent);
     }
 
     [ClientRpc]
-    private void ReceiveVoiceClientRpc(ulong senderId, byte[] compressedData)
+    private void ReceiveVoiceClientRpc(ulong senderId, byte[] compressedData, byte micGainPercent)
     {
         if (senderId == NetworkManager.Singleton.LocalClientId)
             return;
@@ -133,6 +137,8 @@ public class VoIPController : NetworkBehaviour
             return;
 
         var player = GetOrCreateSpeakerPlayer(senderId);
+        // Konuşanın mikrofon seviyesi × bu oyuncunun "sesli sohbet" ayarı (yerel).
+        player.Gain = micGainPercent / MicGainScale * GameSettings.VoiceVolume;
         _voiceProvider.DecompressAndEnqueue(player.Source, compressedData);
     }
 

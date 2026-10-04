@@ -12,6 +12,10 @@ public class VoiceStreamPlayer : MonoBehaviour
 
     public AudioSource Source { get; set; }
 
+    // Örneklere uygulanan çarpan (konuşanın mikrofon seviyesi × dinleyenin sesli sohbet seviyesi). Ses filtreyle
+    // enjekte edildiği için AudioSource.volume buna uygulanmaz; seviye burada çarpılır. Ses iş parçacığından okunur.
+    public volatile float Gain = 1f;
+
     private readonly object _lock = new();
     private float[] _ringBuffer;
     private int _writeIndex;
@@ -55,6 +59,7 @@ public class VoiceStreamPlayer : MonoBehaviour
 
     private void OnAudioFilterRead(float[] data, int channels)
     {
+        float gain = Gain;
         lock (_lock)
         {
             for (int i = 0; i < data.Length; i += channels)
@@ -62,7 +67,7 @@ public class VoiceStreamPlayer : MonoBehaviour
                 float sample = 0f;
                 if (_available > 0)
                 {
-                    sample = _ringBuffer[_readIndex];
+                    sample = Mathf.Clamp(_ringBuffer[_readIndex] * gain, -1f, 1f);
                     _readIndex = (_readIndex + 1) % _ringBuffer.Length;
                     _available--;
                 }

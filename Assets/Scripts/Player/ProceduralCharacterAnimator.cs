@@ -48,6 +48,9 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     [Tooltip("Hız değişimine uyum hızı (büyük = daha çabuk).")]
     [SerializeField, Min(0.1f)] private float responsiveness = 10f;
 
+    [Tooltip("Adım bu yürüyüş ağırlığının altındaysa (durmaya yakın) adım sayılmaz — ses çıkmaz.")]
+    [SerializeField, Range(0f, 1f)] private float stepSoundMinWeight = 0.25f;
+
     [Header("Dururken")]
     [Tooltip("Nefes: gövdenin dururken inip kalkması (m) ve hızı (devir/sn).")]
     [SerializeField, Min(0f)] private float idleBob = 0.012f;
@@ -111,6 +114,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     private Vector3 _lastWorldPosition;
     private Vector3 _localVelocity;
     private float _phase;
+    private bool _leftFootAirborne;
     private float _weight;
 
     private Transform _gestureHand;
@@ -143,6 +147,9 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     // Sahibinin birinci şahıs görüşünde görünür kalması gereken parçalar (eller) için.
     public Transform LeftHand => leftHand;
     public Transform RightHand => rightHand;
+
+    // Yere basan her adımda bir artar (adım sesi bunu izler). Yalnızca gerçekten yürürken sayar.
+    public int StepCount { get; private set; }
 
     private void Awake()
     {
@@ -266,6 +273,15 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         _phase += speed / (2f * strideLength) * dt * Mathf.PI;
         if (_phase > Mathf.PI * 2f)
             _phase -= Mathf.PI * 2f;
+
+        // Ayaklar zıt fazdadır: sol ayağın havada/yerde durumu her değiştiğinde bir ayak yere basmıştır.
+        bool leftAirborne = Mathf.Cos(_phase) > 0f;
+        if (leftAirborne != _leftFootAirborne)
+        {
+            _leftFootAirborne = leftAirborne;
+            if (_weight > stepSoundMinWeight)
+                StepCount++;
+        }
 
         ApplyFoot(leftFoot, _leftFootRest, _phase, direction);
         ApplyFoot(rightFoot, _rightFootRest, _phase + Mathf.PI, direction);

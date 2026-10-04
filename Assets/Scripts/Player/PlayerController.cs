@@ -160,7 +160,7 @@ public class PlayerController : NetworkBehaviour
 
     private void ApplyLook()
     {
-        Vector2 lookDelta = _lookAction.ReadValue<Vector2>() * mouseSensitivity;
+        Vector2 lookDelta = _lookAction.ReadValue<Vector2>() * (mouseSensitivity * GameSettings.MouseSensitivity);
         transform.Rotate(Vector3.up, lookDelta.x);
 
         _pitch = Mathf.Clamp(_pitch - lookDelta.y, minPitch, maxPitch);
