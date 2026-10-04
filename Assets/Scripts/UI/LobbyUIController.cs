@@ -508,6 +508,14 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
+        // Katılma reddedildiyse (yanlış şifre, lobi dolu, round sürüyor) oturum yoktur: ilk ekranın düğmeleri geri
+        // gelir — yoksa oyuncu düğmesiz bir ekranda kalır (düğmeler "bağlanıyor" aşamasında gizlenmişti).
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        bool inSession = SteamLobbyManager.Instance.IsInLobby
+            || (network != null && network.IsListening && !network.ShutdownInProgress);
+        if (!inSession)
+            ResetToInitialScreen();
+
         statusText.text = Localize("lobby.error_prefix", Localize(errorKey));
         hostButton.interactable = true;
     }

@@ -975,6 +975,12 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Görünüm:** kareli masa örtüsü zemin (`UI_Gingham`, döşeli), logo, kâğıt kart + bant, Bangers; pencereler
     ayarlar menüsüyle aynı kart düzeninde. `LocalDebugLobby` DEĞİŞMEDİ: Host düğmesini kopyaladığı için Local
     Host / Local Join yeni stili kendiliğinden alır ve yalnızca editör / development build'de vardır.
+  - **Bangers'ta `FontStyle.Bold` kullanılmaz:** yazı tipinin kalın kesimi yok, Unity yapay kalınlaştırıyor ve
+    harfler birbirine yapışıp okunmaz oluyor (4 Eki: rol düğmeleri). Yazı tipi değiştirilen eski Text'lerde stil
+    Normal'e alınır.
+  - **Kasiyer'in gözleri prefab'da eklendi** (`Karakter_Kasa/Govde/Gozler`; `Materials/Goz_Beyaz`, `Goz_Siyah`):
+    FBX'te ekran tek, dokusuz, koyu bir dörtgen geliyor — gözler artist'in Blender'daki dokusundaydı, dışa
+    aktarılmamış. Artist dokulu FBX verirse `Gozler` silinir.
   - Bangers'ta küçük "i" noktasız büyük I olarak çizilir ("LOBI") — yazı tipinin özelliği; düğme metinleri
     Localization tablosundan geldiği için tabloda "İ" yazılırsa düzelir (Localization işi sonda).
 - **Protein türleri `Tavuk`(8) `Balik`(9) `Veji`(10) (3 Eki):** tür + görsel + ikon var, **`itemPrefab` yok** —
