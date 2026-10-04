@@ -891,6 +891,10 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     girer (avuç yukarı, parmaklar yarı kapalı), duvar geri çekmesinde de öğeyi izler. Alma: öğe ve el birlikte
     önden gelir (`GetHoldDisplacement`); bırakma: öğe gidince el öne uzanıp yerine döner. Öncelik: jest > tutma >
     yürüme salınımı.
+  - **Eller beyaz eldiven:** `Materials/Eldiven_Beyaz` + `Eldiven_Bilek` (karakter prefab'larında el renderer'ının
+    materyal override'ı; FBX'e dokunulmadı).
+  - **Oyun durunca karakter de donar:** `ProceduralCharacterAnimator`, `GameLoopManager.CanPlayersAct` yanlışken
+    (bölüm sonu ekranı, kopma duraklatması) hiçbir şey oynatmaz — nefes dahil.
   - Artist'in ketçap yürüme klibi (`CookNoEvil_WalkingAnimation.fbx`) kullanılmıyor (yalnızca ileri ve yalnızca
     ketçap); birleştirilmiş klip/controller silindi.
   - `PlayerEmoteReactor`'ın renk parlaması yer tutucu kapsüle yazıyor (artık görünmez). Üçüncü şahıs tutma noktası
@@ -905,6 +909,9 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     panoda kullanılıyor; lobi, hotbar, sonuç ekranı, menü hâlâ varsayılan yazı tipinde.
   - Kitapçık: deri cilt + iki kâğıt sayfa + spiral; içindekilerde kategori kartları ve "nasıl kullanılır" notu;
     açılımda solda bantlı fotoğraf kartı, sağda rozetli malzeme satırları. `RecipeBookUI` kodu değişmedi.
+  - **Kitapta varyant adı yazar (Ersel, 4 Eki):** `BurgerVariant.displayName` fotoğrafın altında
+    (`RecipeBookUI.variantCaption`). Yalnızca kitapta; pop-up ve paket fotoğrafında ad yok. *GDD §3.6 "varyant adı
+    oyuncuya gösterilmez" diyor — GDD'ye işlenmedi.*
   - Pano: ahşap çerçeveli kara tahta; açıyla yerleşen bölümde kesik çizgili merkez çemberi (`AciSusu` —
     `SignalMappingBoard.radialDecorationName`; yalnızca açılı bölümlerde açılır, kod/yön yazmaz), liste bölümünde
     rozet + ad + kesik çizgi.

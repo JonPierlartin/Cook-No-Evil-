@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Varyant_Klasik_Taslak
   m_EditorClassIdentifier: Assembly-CSharp::BurgerRecipe
   designLabel: "Klasik (TASLAK \u2014 Ersel seviye yazarken de\u011Fi\u015Ftirir)"
+  displayName: "KLAS\u0130K BURGER"
   image: {fileID: 21300000, guid: 68281a5ee66c7594887ee69772c49521, type: 3}
   ingredients:
   - item: {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}

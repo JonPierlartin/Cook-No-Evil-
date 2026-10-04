@@ -17145,6 +17145,7 @@ MonoBehaviour:
   categoryTemplate: {fileID: 1442040863}
   variantPage: {fileID: 305557263}
   variantImage: {fileID: 1716688486}
+  variantCaption: {fileID: 1709357558}
   ingredientContainer: {fileID: 1145982978}
   ingredientTemplate: {fileID: 1821052834}
   pageLabel: {fileID: 745180649}
@@ -22569,7 +22570,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
   m_Material: {fileID: 0}
-  m_Color: {r: 0.5, g: 0.38, b: 0.28, a: 1}
+  m_Color: {r: 0.27, g: 0.16, b: 0.1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -22578,7 +22579,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: f58f18e9f694b3045bac1a4e35ecff7e, type: 3}
-    m_FontSize: 29
+    m_FontSize: 32
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -22589,7 +22590,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "S\u0130PAR\u0130\u015E"
+  m_Text: 
 --- !u!222 &1709357559
 CanvasRenderer:
   m_ObjectHideFlags: 0

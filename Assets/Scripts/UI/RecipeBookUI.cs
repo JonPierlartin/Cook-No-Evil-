@@ -33,6 +33,8 @@ public class RecipeBookUI : MonoBehaviour
     [Header("Varyant açılımı (sol: resim, sağ: malzemeler)")]
     [SerializeField] private GameObject variantPage;
     [SerializeField] private UnityEngine.UI.Image variantImage;
+    [Tooltip("Fotoğrafın altındaki yazı: varyantın oyuncuya görünen adı (BurgerVariant.DisplayName).")]
+    [SerializeField] private UnityEngine.UI.Text variantCaption;
     [SerializeField] private RectTransform ingredientContainer;
     [Tooltip("Malzeme girişi şablonu; her malzeme için kopyalanır.")]
     [SerializeField] private RecipeBookEntry ingredientTemplate;
@@ -175,6 +177,8 @@ public class RecipeBookUI : MonoBehaviour
         // Sol: varyantın resmi (pop-up ile aynı asset). Sağ: içerdiği malzemeler, verideki sırayla.
         variantImage.sprite = variant.Image;
         variantImage.enabled = variant.Image != null;
+        if (variantCaption != null)
+            variantCaption.text = variant.DisplayName;
         foreach (var ingredient in variant.Ingredients)
         {
             if (ingredient.item == null)

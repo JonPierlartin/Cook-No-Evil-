@@ -21,11 +21,15 @@ public class BurgerVariant : ScriptableObject
 
     [Tooltip("Yalnızca seviye tasarımı etiketi; oyuncuya gösterilmez.")]
     [SerializeField] private string designLabel;
+    [Tooltip("Oyuncuya görünen ad: tarif kitapçığında fotoğrafın altında yazar (Ersel, 4 Eki 2026). Boşsa yazılmaz. " +
+        "Müşteri pop-up'ında ve paket fotoğrafında AD YOKTUR — orada yalnızca resim vardır.")]
+    [SerializeField] private string displayName;
     [Tooltip("Pop-up ve kitapçık resmi (GDD 3.6.2). Şimdilik boş olabilir.")]
     [SerializeField] private Sprite image;
     [SerializeField] private List<Ingredient> ingredients = new();
 
     public string DesignLabel => designLabel;
+    public string DisplayName => displayName;
     public Sprite Image => image;
     public IReadOnlyList<Ingredient> Ingredients => ingredients;
 

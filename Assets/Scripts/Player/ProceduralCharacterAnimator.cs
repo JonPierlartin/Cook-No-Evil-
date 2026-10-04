@@ -184,6 +184,14 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         if (dt <= 0f)
             return;
 
+        // Oyun durduğunda (bölüm sonu ekranı, kopma duraklatması) karakter de donar: nefes ve salınım dahil hiçbir
+        // şey oynamaz. Konum izlemesi sürer ki devam edince sahte bir hız sıçraması olmasın.
+        if (!GameLoopManager.CanPlayersAct)
+        {
+            _lastWorldPosition = transform.position;
+            return;
+        }
+
         // Gerçek hız, karakterin yerel uzayında ve yatayda: ileri (+Z), geri (-Z), yan (±X).
         var worldDelta = transform.position - _lastWorldPosition;
         _lastWorldPosition = transform.position;

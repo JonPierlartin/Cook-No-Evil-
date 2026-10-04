@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Varyant_Tursulu_Taslak
   m_EditorClassIdentifier: Assembly-CSharp::BurgerVariant
   designLabel: "Tur\u015Fulu (TASLAK \u2014 Ersel seviye yazarken de\u011Fi\u015Ftirir)"
+  displayName: "TUR\u015EULU BURGER"
   image: {fileID: 21300000, guid: 9bc5dbed5ff38bc4080143b72c3c1516, type: 3}
   ingredients:
   - item: {fileID: 11400000, guid: 6111adf5bb455f5458201c8fdccc542c, type: 2}
