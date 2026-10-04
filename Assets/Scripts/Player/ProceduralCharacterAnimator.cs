@@ -8,9 +8,11 @@ using UnityEngine;
 //    hızla orantılıdır (ayak kaymasın). Gövde adımla birlikte iner-kalkar ve sallanır; eller zıt ayakla salınır.
 //  - Jest (yön sinyali, GDD 3.6): bir el göğüs/baş hizasına kalkıp İŞARET PARMAĞIYLA verilen yönü gösterir; el
 //    yerinden aşağı inmez (pencere pervazının altında kalıp görünmez olmasın). Süre dışarıdan gelir.
+//  - Emote (genel çark, GDD 3.6.0): el hareketi veridir (EmoteHandPose); el oraya gider, parmaklar pozu alır,
+//    salınır. Tek elli emote sağ elle oynar; sağ elde öğe varsa sol elle (aynalı).
 //  - Tutma: elde öğe varken sağ el öğenin altına girer (avuç yukarı, parmaklar yarı kapalı). Alırken el öğeyle
 //    birlikte önden gelir; bırakırken el öne uzanıp yerine döner.
-// Öncelik: jest > tutma > yürüme salınımı. Tamamen yerel sunum: ağ verisi yoktur; uzak oyuncularda hız,
+// Öncelik: jest > emote > tutma > yürüme salınımı. Tamamen yerel sunum: ağ verisi yoktur; uzak oyuncularda hız,
 // NetworkTransform'un taşıdığı konumdan ölçülür.
 public class ProceduralCharacterAnimator : MonoBehaviour
 {
@@ -108,6 +110,10 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     private float _gestureElapsed;
     private float _gestureDuration;
 
+    private EmoteHandPose _emote;
+    private float _emoteElapsed;
+    private float _emoteDuration;
+
     private Transform _holdTarget;
     private float _holdWeight;
     private float _pickElapsed;
@@ -158,6 +164,19 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         // Kalan süreyi çıkış geçişine indir: el bir anda ışınlanmaz, hızla yerine döner.
         if (_gestureHand != null)
             _gestureElapsed = Mathf.Max(_gestureElapsed, _gestureDuration - gestureBlendTime);
+        if (_emote != null)
+            _emoteElapsed = Mathf.Max(_emoteElapsed, _emoteDuration - gestureBlendTime);
+    }
+
+    // Genel emote'un el hareketi (veri). Poz kapalıysa bir şey oynamaz.
+    public void PlayEmote(EmoteHandPose pose, float duration)
+    {
+        if (pose == null || !pose.Enabled || duration <= 0f)
+            return;
+
+        _emote = pose;
+        _emoteElapsed = 0f;
+        _emoteDuration = duration;
     }
 
     // Elde tutulan öğenin görseli (yoksa null). Her karede çağrılabilir; değişince alma / bırakma hareketi başlar.
@@ -226,9 +245,15 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         if (_placeElapsed < float.MaxValue)
             _placeElapsed += dt;
 
+        if (_emote != null)
+            _emoteElapsed += dt;
+
         // Eller karşı ayakla birlikte salınır.
         ApplyHand(leftHand, leftHandPose, ref _leftCurl, _leftHandRest, _phase + Mathf.PI, direction, dt, false);
         ApplyHand(rightHand, rightHandPose, ref _rightCurl, _rightHandRest, _phase, direction, dt, true);
+
+        if (_emote != null && _emoteElapsed >= _emoteDuration)
+            _emote = null;
     }
 
     private void ApplyFoot(Transform foot, Rest rest, float phase, Vector3 direction)
@@ -268,6 +293,9 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
         if (holdsItems)
             ApplyHold(side, dt, ref position, ref rotation, ref targetCurl);
+
+        if (_emote != null && UsesEmote(side))
+            ApplyEmote(side, ref position, ref rotation, ref targetCurl);
 
         if (hand == _gestureHand)
             ApplyGesture(side, dt, ref position, ref rotation, ref targetCurl);
@@ -320,6 +348,32 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         rotation = Quaternion.Slerp(rotation, _holdLocalRotation, blend);
         // Açık avuç: öğe elin üstünde durur (tepsi taşır gibi), parmaklar kavramaz.
         targetCurl = new Curl { Index = holdCurl, Others = holdCurl, Thumb = holdThumbCurl };
+    }
+
+    // Sağ el öğe tutuyorsa emote'a katılmaz (öğe havada kalmasın); tek elli emote o zaman sol ele geçer.
+    private bool UsesEmote(float side)
+    {
+        bool rightBusy = _holdTarget != null || _holdWeight > 0f;
+        return side > 0f ? !rightBusy : _emote.BothHands || rightBusy;
+    }
+
+    private void ApplyEmote(float side, ref Vector3 position, ref Quaternion rotation, ref Curl targetCurl)
+    {
+        float blendIn = Mathf.Clamp01(_emoteElapsed / gestureBlendTime);
+        float blendOut = Mathf.Clamp01((_emoteDuration - _emoteElapsed) / gestureBlendTime);
+        float blend = Mathf.SmoothStep(0f, 1f, Mathf.Min(blendIn, blendOut));
+
+        // Değerler sağ el içindir; sol elde X'te aynalanır (dönme ekseni aynalanınca y ve z işaret değiştirir).
+        var mirror = new Vector3(side, 1f, 1f);
+        float wave = Mathf.Sin(_emoteElapsed * _emote.Rate * Mathf.PI * 2f);
+        var emotePosition = gestureCenter + Vector3.Scale(_emote.Offset + _emote.Swing * wave, mirror);
+        var wagAxis = Vector3.Scale(_emote.WagAxis, new Vector3(1f, side, side));
+        var emoteRotation = Quaternion.AngleAxis(_emote.WagAngle * wave, wagAxis)
+            * Quaternion.LookRotation(Vector3.Scale(_emote.FingerDirection, mirror), Vector3.Scale(_emote.ThumbDirection, mirror));
+
+        position = Vector3.Lerp(position, emotePosition, blend);
+        rotation = Quaternion.Slerp(rotation, emoteRotation, blend);
+        targetCurl = new Curl { Index = _emote.IndexCurl, Others = _emote.OthersCurl, Thumb = _emote.ThumbCurl };
     }
 
     private void ApplyGesture(float side, float dt, ref Vector3 position, ref Quaternion rotation, ref Curl targetCurl)

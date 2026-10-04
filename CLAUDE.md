@@ -942,9 +942,18 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   jest bitene kadar gri. Seçenek sayısı veriden. `WheelView` yalnızca çizer ve yönü seçeneğe çevirir; kimin
   açacağına/ne gönderileceğine `SignalWheelUI` (R: üst kat dilim, alt kat baloncuk) ve `EmoteWheelUI` (E: herkes,
   tek kat baloncuk, `EmoteSystem.AvailableEmotes`; artık **tıklayınca** gönderir, tuşu bırakınca değil) karar verir.
-  `SignalChannel.icon` (boşsa dilimde ad yazar). Sprite `UI_PaperCircle` (`UiSpriteGenerator`). Emote içerikleri ve
-  ikonları (`Assets/Data/Emotes/`, 3 renkli kare) hâlâ yer tutucu; E çarkı tek katlı (GDD "iç içe" diyor — emote
-  kategorileri tanımlanınca aynı görünümle kat eklenir). `PlayerEmoteReactor` tepkisi yer tutucu.
+  `SignalChannel.icon` (boşsa dilimde ad yazar). Sprite `UI_PaperCircle` (`UiSpriteGenerator`). Baloncuk halkası
+  seçenek sayısına göre büyür (`bubbleSpacing`). E çarkı tek katlı (GDD "iç içe" diyor — emote kategorileri
+  tanımlanınca aynı görünümle kat eklenir).
+- **Genel emote'lar (4 Eki 2026, Ersel'in listesi):** `Assets/Data/Emotes/Emote_*.asset` ×10 (Orta Parmak, Gözüm
+  Üstünde, Kapak, Nah, El Ovuşturma, Bilmiyorum, Asker Selamı, Ara Beni, Üzülme, Parmak Sallama); sıra
+  `EmoteSystem.availableEmotes`. **İkon yok** — baloncukta ad yazar. Emote'un el hareketi VERİDİR:
+  `EmoteDefinition.handPose` (`EmoteHandPose`: jest merkezine göre konum, parmak/başparmak yönü, parmak kıvrımları,
+  salınım; sağ el için yazılır, sol elde X'te aynalanır) → `ProceduralCharacterAnimator.PlayEmote`. Tek elli emote
+  sağ elle, sağ elde öğe varsa sol elle oynar. **Hareketi olanlar:** Asker Selamı, Parmak Sallama, Bilmiyorum (iki
+  el). Diğer yedisinde `handPose` kapalı → `PlayerEmoteReactor`'ın yer tutucu zıplaması oynar. Yeni hareket = veri
+  doldurmak; iki elin farklı poz aldığı ya da adım adım ilerleyen hareketler (el ovuşturma, kapak) bu veriyle tarif
+  edilemez, genişletme ister. Eski `EmoteA/B/C` asset'leri yalnızca `SampleScene_EskiHarita`'da kullanılıyor.
 - `VoIPController` (`IVoiceProvider` soyutlaması). Round sırasında Kasiyer'in paketi sunucuda relay
   edilmez; **Komi hiçbir oyuncunun sesini duymaz** — gelen paket hiç çözülmez (`1d4d1b2`, K3).
 - `DeafHearing` (oyuncu kamerası, AudioListener): "sağır mı" kuralının **tek yeri** (sağır rol + round

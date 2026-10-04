@@ -14,6 +14,8 @@ using UnityEngine;
 // yaw/hareketiyle catisirdi.
 public class PlayerEmoteReactor : NetworkBehaviour
 {
+    [Tooltip("El hareketi olan emote'lar karakterin animasyon bileşeninde oynar.")]
+    [SerializeField] private PlayerCharacterVisual character;
     [SerializeField] private Transform visualRoot;
     [SerializeField] private Renderer visualRenderer;
     [SerializeField] private float bounceHeight = 0.2f;
@@ -69,6 +71,9 @@ public class PlayerEmoteReactor : NetworkBehaviour
 
     private void StopReaction()
     {
+        if (character != null && character.Animator != null)
+            character.Animator.CancelGesture();
+
         if (_reactionRoutine == null)
             return;
 
@@ -88,6 +93,13 @@ public class PlayerEmoteReactor : NetworkBehaviour
 
         StopReaction();
         var emote = availableEmotes[emoteIndex];
+        // El hareketi tanımlı emote karakterin elleriyle oynar; tanımlı değilse yer tutucu tepki (zıplama).
+        if (emote.HandPose.Enabled && character != null && character.Animator != null)
+        {
+            character.Animator.PlayEmote(emote.HandPose, emote.Duration);
+            return;
+        }
+
         _reactionRoutine = StartCoroutine(PlayReaction(emote.ReactionColor, emote.Duration));
     }
 

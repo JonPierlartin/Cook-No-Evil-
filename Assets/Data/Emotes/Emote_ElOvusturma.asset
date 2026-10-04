@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08fcb0caeab47a144b365a1c70263df3, type: 3}
+  m_Name: Emote_ElOvusturma
+  m_EditorClassIdentifier: Assembly-CSharp::EmoteDefinition
+  localizationKey: 
+  icon: {fileID: 0}
+  reactionColor: {r: 1, g: 1, b: 1, a: 1}
+  displayName: "El Ovu\u015Fturma"
+  description: 
+  durationSeconds: 1.3
+  handPose:
+    enabled: 0
+    bothHands: 0
+    offset: {x: 0, y: 0, z: 0}
+    fingerDirection: {x: 0, y: 1, z: 0}
+    thumbDirection: {x: -1, y: 0, z: 0}
+    indexCurl: 0
+    othersCurl: 0
+    thumbCurl: 0
+    swing: {x: 0, y: 0, z: 0}
+    wagAxis: {x: 0, y: 0, z: 1}
+    wagAngle: 0
+    rate: 2

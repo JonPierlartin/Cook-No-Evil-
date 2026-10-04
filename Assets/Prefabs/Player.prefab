@@ -455,6 +455,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerEmoteReactor
   ShowTopMostFoldoutHeaderGroup: 1
+  character: {fileID: 37509965985435541}
   visualRoot: {fileID: 809440094147439709}
   visualRenderer: {fileID: 8939325543183038944}
   bounceHeight: 0.2

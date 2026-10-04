@@ -42,7 +42,10 @@ public class WheelView : MonoBehaviour
     [SerializeField] private float wedgeContentRadius = 130f;
 
     [Header("Baloncuklar")]
+    [Tooltip("Baloncuk halkasının en küçük yarıçapı (px). Seçenek çoksa halka, baloncuklar çakışmayacak kadar büyür.")]
     [SerializeField] private float bubbleRadius = 200f;
+    [Tooltip("Komşu baloncukların merkezleri arası mesafe, baloncuk genişliğinin katı olarak.")]
+    [SerializeField, Min(1f)] private float bubbleSpacing = 1.12f;
     [SerializeField] private float bubbleHighlightScale = 1.22f;
 
     [Header("Renkler")]
@@ -73,6 +76,8 @@ public class WheelView : MonoBehaviour
         root.SetActive(true);
 
         float sector = options.Count > 0 ? 360f / options.Count : 360f;
+        float bubbleWidth = ((RectTransform)slotTemplate.transform).rect.width;
+        float ringRadius = Mathf.Max(bubbleRadius, options.Count * bubbleWidth * bubbleSpacing / (2f * Mathf.PI));
         for (int i = 0; i < options.Count; i++)
         {
             float angle = options[i].Angle;
@@ -94,7 +99,7 @@ public class WheelView : MonoBehaviour
             var slot = Instantiate(slotTemplate, slotTemplate.transform.parent);
             slot.gameObject.SetActive(true);
             slot.Show(options[i].Icon, options[i].Label, style == Style.Bubbles);
-            ((RectTransform)slot.transform).anchoredPosition = direction * (style == Style.Bubbles ? bubbleRadius : wedgeContentRadius);
+            ((RectTransform)slot.transform).anchoredPosition = direction * (style == Style.Bubbles ? ringRadius : wedgeContentRadius);
             _slots.Add(slot);
         }
 
