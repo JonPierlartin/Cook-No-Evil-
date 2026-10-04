@@ -110,6 +110,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     private float _gestureElapsed;
     private float _gestureDuration;
 
+    private Bounds _bodyBounds;
+    private bool _hasBodyBounds;
     private EmoteHandPose _emote;
     private float _emoteElapsed;
     private float _emoteDuration;
@@ -363,17 +365,58 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         float blendOut = Mathf.Clamp01((_emoteDuration - _emoteElapsed) / gestureBlendTime);
         float blend = Mathf.SmoothStep(0f, 1f, Mathf.Min(blendIn, blendOut));
 
-        // Değerler sağ el içindir; sol elde X'te aynalanır (dönme ekseni aynalanınca y ve z işaret değiştirir).
-        var mirror = new Vector3(side, 1f, 1f);
         float wave = Mathf.Sin(_emoteElapsed * _emote.Rate * Mathf.PI * 2f);
-        var emotePosition = gestureCenter + Vector3.Scale(_emote.Offset + _emote.Swing * wave, mirror);
-        var wagAxis = Vector3.Scale(_emote.WagAxis, new Vector3(1f, side, side));
-        var emoteRotation = Quaternion.AngleAxis(_emote.WagAngle * wave, wagAxis)
-            * Quaternion.LookRotation(Vector3.Scale(_emote.FingerDirection, mirror), Vector3.Scale(_emote.ThumbDirection, mirror));
+        SampleEmote(_emote, side, wave, out var emotePosition, out var emoteRotation);
 
         position = Vector3.Lerp(position, emotePosition, blend);
         rotation = Quaternion.Slerp(rotation, emoteRotation, blend);
         targetCurl = new Curl { Index = _emote.IndexCurl, Others = _emote.OthersCurl, Thumb = _emote.ThumbCurl };
+    }
+
+    // Emote pozunda elin karakter yerel uzayındaki yeri ve dönüşü (side: sağ el +1, sol el -1; wave: salınım -1..1).
+    // Tek kural burada: oyun da düzenleyici önizlemesi de bunu çağırır.
+    public void SampleEmote(EmoteHandPose pose, float side, float wave, out Vector3 position, out Quaternion rotation)
+    {
+        // Değerler sağ el içindir; sol elde X'te aynalanır (dönme ekseni aynalanınca y ve z işaret değiştirir).
+        var mirror = new Vector3(side, 1f, 1f);
+        var bounds = GetBodyBounds();
+        var anchor = new Vector3(
+            bounds.center.x + pose.Anchor.x * bounds.extents.x,
+            bounds.min.y + pose.Anchor.y * bounds.size.y,
+            bounds.center.z + pose.Anchor.z * bounds.extents.z);
+        anchor.x *= side;
+        position = anchor + Vector3.Scale(pose.Offset + pose.Swing * wave, mirror);
+
+        var wagAxis = Vector3.Scale(pose.WagAxis, new Vector3(1f, side, side));
+        rotation = Quaternion.AngleAxis(pose.WagAngle * wave, wagAxis)
+            * Quaternion.LookRotation(Vector3.Scale(pose.FingerDirection, mirror), Vector3.Scale(pose.ThumbDirection, mirror));
+    }
+
+    // Gövdenin karakter yerel uzayındaki sınır kutusu (dinlenme pozunda, bir kez ölçülür). Dünya AABB'si değil:
+    // renderer'ların yerel sınırları karakter köküne taşınır.
+    private Bounds GetBodyBounds()
+    {
+        if (_hasBodyBounds)
+            return _bodyBounds;
+
+        var min = Vector3.positiveInfinity;
+        var max = Vector3.negativeInfinity;
+        foreach (var bodyRenderer in body.GetComponentsInChildren<Renderer>(true))
+        {
+            var local = bodyRenderer.localBounds;
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = local.center + Vector3.Scale(local.extents,
+                    new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                var point = transform.InverseTransformPoint(bodyRenderer.transform.TransformPoint(corner));
+                min = Vector3.Min(min, point);
+                max = Vector3.Max(max, point);
+            }
+        }
+
+        _bodyBounds = new Bounds((min + max) * 0.5f, max - min);
+        _hasBodyBounds = true;
+        return _bodyBounds;
     }
 
     private void ApplyGesture(float side, float dt, ref Vector3 position, ref Quaternion rotation, ref Curl targetCurl)

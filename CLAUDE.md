@@ -948,12 +948,16 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 - **Genel emote'lar (4 Eki 2026, Ersel'in listesi):** `Assets/Data/Emotes/Emote_*.asset` ×10 (Orta Parmak, Gözüm
   Üstünde, Kapak, Nah, El Ovuşturma, Bilmiyorum, Asker Selamı, Ara Beni, Üzülme, Parmak Sallama); sıra
   `EmoteSystem.availableEmotes`. **İkon yok** — baloncukta ad yazar. Emote'un el hareketi VERİDİR:
-  `EmoteDefinition.handPose` (`EmoteHandPose`: jest merkezine göre konum, parmak/başparmak yönü, parmak kıvrımları,
+  `EmoteDefinition.handPose` (`EmoteHandPose`: gövdeye göre yer, parmak/başparmak yönü, parmak kıvrımları,
   salınım; sağ el için yazılır, sol elde X'te aynalanır) → `ProceduralCharacterAnimator.PlayEmote`. Tek elli emote
   sağ elle, sağ elde öğe varsa sol elle oynar. **Hareketi olanlar:** Asker Selamı, Parmak Sallama, Bilmiyorum (iki
   el). Diğer yedisinde `handPose` kapalı → `PlayerEmoteReactor`'ın yer tutucu zıplaması oynar. Yeni hareket = veri
   doldurmak; iki elin farklı poz aldığı ya da adım adım ilerleyen hareketler (el ovuşturma, kapak) bu veriyle tarif
-  edilemez, genişletme ister. Eski `EmoteA/B/C` asset'leri yalnızca `SampleScene_EskiHarita`'da kullanılıyor.
+  edilemez, genişletme ister. **Elin yeri gövdenin sınır kutusuna ORANLA verilir** (`anchor`: x yan, y yükseklik,
+  z ön-arka; + metre cinsinden `offset` payı) — sabit bir noktaya (jest merkezi) göre metreyle yazılınca üç karakterin
+  ölçüleri çok farklı olduğu için el birinde başın üstünde, ötekinde gövdenin yarım metre önünde havada kalıyordu
+  (4 Eki; gövde: Ketçap 0,78×1,49, Hamburger 1,2×1,1, Kasa 1,12×1,1 m). `ProceduralCharacterAnimator.SampleEmote`
+  pozun tek kuralıdır; **yeni poz üç karakterde birden önizlenir** (düzenleyicide `SampleEmote` ile). Eski `EmoteA/B/C` asset'leri yalnızca `SampleScene_EskiHarita`'da kullanılıyor.
 - `VoIPController` (`IVoiceProvider` soyutlaması). Round sırasında Kasiyer'in paketi sunucuda relay
   edilmez; **Komi hiçbir oyuncunun sesini duymaz** — gelen paket hiç çözülmez (`1d4d1b2`, K3).
 - `DeafHearing` (oyuncu kamerası, AudioListener): "sağır mı" kuralının **tek yeri** (sağır rol + round
