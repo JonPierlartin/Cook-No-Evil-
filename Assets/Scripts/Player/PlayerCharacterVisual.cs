@@ -2,9 +2,11 @@ using Unity.Netcode;
 using UnityEngine;
 
 // Oyuncunun rolüne göre karakter modeli (GDD 9: Şef kör hamburger, Komi sağır ketçap, Kasiyer dilsiz yazar kasa).
-// Tamamen yerel sunum: rol replike rol listesinden okunur (RoleManager), model her istemcide o role göre kurulur;
-// ağdan ek bir şey gitmez. Rol → model eşleşmesi veridir (Inspector); modeli olmayan rol yer tutucu gövdeyle kalır.
-// Animasyon modelin kendi bileşenindedir (ProceduralCharacterAnimator: hareketi karakterin gerçek hızından üretir).
+// Rol, karakter NESNESİNİN kendi replike alanıdır (CharacterRole; sunucu doğururken yazar) — sahibin kimliğinden
+// TÜRETİLMEZ. Neden: round sırasında kopan oyuncunun nesnesi geçici olarak host'a devredilir (NGO); rol sahibe
+// bakılarak okunursa o süre boyunca ve geri dönüşte karakter host'un rolünün modeline (hamburger) dönüşüyordu
+// (4 Eki 2026: Kasiyer lobiye dönüp yeniden katılınca hamburger oldu). Rol → model eşleşmesi veridir (Inspector);
+// model her istemcide yerel kurulur. Animasyon modelin kendi bileşenindedir (ProceduralCharacterAnimator).
 //  - Sahibi kendi gövdesini ve ayaklarını görmez (birinci şahıs: kamera modelin içinde), gölgesi kalır. ELLERİ
 //    görünür kalır: kendi yön jestini görebilsin diye.
 public class PlayerCharacterVisual : NetworkBehaviour
@@ -25,35 +27,44 @@ public class PlayerCharacterVisual : NetworkBehaviour
     [Tooltip("Ayak hizası, visualRoot'un yerel uzayında (oyuncu kökü kapsülün merkezindedir).")]
     [SerializeField] private Vector3 feetLocalPosition = new(0f, -1f, 0f);
 
+    // Bu karakterin rolü. Yalnızca sunucu yazar (PlayerSpawner, doğururken); sahiplik değişse de değişmez.
+    public readonly NetworkVariable<PlayerRole> CharacterRole =
+        new(PlayerRole.None, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private GameObject _model;
-    private PlayerRole _shownRole = PlayerRole.None;
+    private bool _isLocalOwner;
 
     // Kurulu modelin animasyon bileşeni (jest oynatmak için); model yoksa null.
     public ProceduralCharacterAnimator Animator { get; private set; }
 
     public override void OnNetworkSpawn()
     {
-        if (RoleManager.Instance != null)
-            RoleManager.Instance.OnRolesChanged += Refresh;
-
-        Refresh();
+        CharacterRole.OnValueChanged += HandleRoleChanged;
+        _isLocalOwner = IsOwner;
+        Rebuild();
     }
 
     public override void OnNetworkDespawn()
     {
-        if (RoleManager.Instance != null)
-            RoleManager.Instance.OnRolesChanged -= Refresh;
+        CharacterRole.OnValueChanged -= HandleRoleChanged;
     }
 
-    // Sahiplik değişince (rejoin'de nesne geri devredilir) hem rol hem "kendi modelimi gizle" kuralı yenilenir.
-    public override void OnGainedOwnership() => Rebuild();
-    public override void OnLostOwnership() => Rebuild();
-
-    private void Refresh()
+    // Sunucu: karakter doğduktan hemen sonra.
+    public void ServerSetRole(PlayerRole role)
     {
-        var role = RoleManager.Instance != null ? RoleManager.Instance.GetRole(OwnerClientId) : PlayerRole.None;
-        if (role != _shownRole)
-            Rebuild();
+        if (IsServer)
+            CharacterRole.Value = role;
+    }
+
+    private void HandleRoleChanged(PlayerRole previous, PlayerRole current) => Rebuild();
+
+    // Sahiplik değişince (rejoin'de nesne geri devredilir) model aynı kalır; yalnızca "kendi gövdemi gizle" kuralı
+    // yeni sahibe göre yeniden uygulanır. Kopan oyuncunun nesnesi host'a devredilir ve host'ta IsOwner yanlışlıkla
+    // true olur — o durumda nesne host'un "kendi" karakteri sayılmaz (HeldItemVisual ile aynı kural).
+    protected override void OnOwnershipChanged(ulong previous, ulong current)
+    {
+        _isLocalOwner = current != NetworkManager.ServerClientId && IsOwner;
+        Rebuild();
     }
 
     private void Rebuild()
@@ -63,12 +74,11 @@ public class PlayerCharacterVisual : NetworkBehaviour
 
         _model = null;
         Animator = null;
-        _shownRole = RoleManager.Instance != null ? RoleManager.Instance.GetRole(OwnerClientId) : PlayerRole.None;
 
         GameObject prefab = null;
         foreach (var entry in models)
         {
-            if (entry.role == _shownRole)
+            if (entry.role == CharacterRole.Value)
                 prefab = entry.prefab;
         }
 
@@ -83,7 +93,7 @@ public class PlayerCharacterVisual : NetworkBehaviour
         _model.transform.localRotation = Quaternion.identity;
         Animator = _model.GetComponent<ProceduralCharacterAnimator>();
 
-        if (!IsOwner)
+        if (!_isLocalOwner)
             return;
 
         // Birinci şahıs: sahibi kendi gövdesini/ayaklarını görmez (yalnızca gölge); elleri görünür kalır.

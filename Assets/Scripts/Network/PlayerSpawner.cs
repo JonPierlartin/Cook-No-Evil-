@@ -158,6 +158,11 @@ public class PlayerSpawner : NetworkBehaviour
         instance.SpawnAsPlayerObject(clientId);
         _spawnedPlayerObjects[role] = instance;
 
+        // Karakterin rolu nesnenin kendi replike alanina yazilir (model buna gore kurulur); sahiplik sonradan
+        // degisse de (kopma -> host'a devir -> geri donus) rol ayni kalir.
+        if (instance.TryGetComponent(out PlayerCharacterVisual characterVisual))
+            characterVisual.ServerSetRole(role);
+
         // TESHIS: gercek cok-makineli testte "round basladiginda ekranda hicbir sey
         // degismiyor" raporu icin — Player.log'da bu satirin varligi spawn'in
         // gercekten gerceklestigini dogrular (bkz. PlayerController'daki kamera log'u).

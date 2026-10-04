@@ -601,7 +601,7 @@ Bunlar tekrar karşılaşılmaması gereken, bedeli ödenmiş derslerdir.
   taşıyordu). Noktayı kapsülün içine almak **üçüncü şahısta çözüm değildir**: yer tutucu gövde görseli de 0,5
   yarıçaplı kapsül, öğe gövdenin içinde kalır ve kimse kimsenin elindekini göremez (aynı gün bu yüzden
   bozuldu). **Kural:** birinci şahıs noktası kapsülün içinde (yatayda ≤0,4; kamera `near` 0,05); üçüncü
-  şahıs noktası gövdenin önünde (0,40/0,15/0,55) ve `HeldItemVisual.LateUpdate` gövde ekseninden öğe
+  şahıs noktası gövdenin önünde (0,40/−0,20/0,55 — 4 Eki'de 0,15'ten indirildi) ve `HeldItemVisual.LateUpdate` gövde ekseninden öğe
   yarıçapında **SphereCast** atıp öğeyi engele değmeyecek kadar geri çeker (ince ışın çapraz açıda 1,9 cm
   taşıyordu). Final karakter sanatında da kollar collider dışına çıkacağı için bu desen kalır.
 - **Oyuncu kökü kapsülün merkezindedir** (`CharacterController` center 0, height 2). Karakter zemin
@@ -864,6 +864,12 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - Kese kağıdı modelleri: `NewAssets/PaperBags/SM_PaperBag_{Fold,Open,Closed}` → `KeseKagidi_Visual`'da 0,7 ölçekli,
     geniş yüzü −Z'ye (fotoğraf yüzü) bakacak şekilde 90° çevrili; materyal yer tutucu (FBX'te materyal yok).
 - **Karakter modelleri ve prosedürel animasyon (4 Eki 2026):**
+  - **Karakterin rolü nesnenin kendi replike alanıdır** (`PlayerCharacterVisual.CharacterRole`; `PlayerSpawner`
+    doğururken yazar) — `GetRole(OwnerClientId)` ile TÜRETİLMEZ. Kopan oyuncunun nesnesi NGO tarafından geçici olarak
+    host'a devredilir; rol sahibe bakılarak okununca karakter host'un modeline dönüşüyordu (4 Eki: Kasiyer lobiye
+    dönüp yeniden katılınca hamburger oldu). **Kural:** bir oyuncu nesnesinin kalıcı özelliği sahibin kimliğinden
+    okunmaz. Aynı sebeple "kendi gövdemi gizle" `OnOwnershipChanged`'de `current != ServerClientId && IsOwner` ile
+    hesaplanır (`HeldItemVisual` ile aynı desen).
   - `PlayerCharacterVisual` (Player kökü): rol → model eşleşmesi Inspector'da (Şef `Karakter_Hamburger`, Komi
     `Karakter_Ketcap`, Kasiyer `Karakter_Kasa`; `Assets/Prefabs/Characters/`). Model her istemcide replike rolden
     yerel kurulur, `Visual` altına ayak hizasında; yer tutucu kapsül kapanır. **Sahibi kendi gövdesini ve
