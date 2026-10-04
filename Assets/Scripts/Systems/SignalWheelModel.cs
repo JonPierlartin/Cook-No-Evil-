@@ -48,6 +48,7 @@ public static class SignalWheelModel
                     category = new Option
                     {
                         Label = channelConfig.channel.DisplayName,
+                        Icon = channelConfig.channel.Icon,
                         ChannelIndex = row.ChannelIndex,
                         Children = new List<Option>()
                     };

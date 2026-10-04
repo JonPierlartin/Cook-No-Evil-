@@ -9,9 +9,12 @@ public class SignalChannel : ScriptableObject
 {
     [Tooltip("Çarkta görünen kategori adı (yerelleştirme çark adımında).")]
     [SerializeField] private string displayName;
+    [Tooltip("Çarkta kategori diliminde görünen ikon. Boşsa kategori adı yazılır.")]
+    [SerializeField] private Sprite icon;
     [Tooltip("Bu kanalın tüm değerleri (katalog). Seviyede açık olanları LevelConfig seçer.")]
     [SerializeField] private List<SignalValue> values = new();
 
     public string DisplayName => displayName;
+    public Sprite Icon => icon;
     public IReadOnlyList<SignalValue> Values => values;
 }

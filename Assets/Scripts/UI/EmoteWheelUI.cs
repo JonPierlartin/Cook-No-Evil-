@@ -1,241 +1,133 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
-// E-basili-tutma radyal emote menusu. Rol kisiti yoktur (GDD 3.6.0). Bu, eski tek katmanli carktir; GDD'deki
-// genel emote carki ayri bir adimda yazilacak. Acma kosulu sinyal carki ve etkilesimle AYNIDIR
-// (GameLoopManager.CanPlayersAct) ve oynayan jest bitmeden acilmaz (EmoteSystem.IsLocalBusy; cooldown yok).
-// HoldOrPressInteractable'dan BAGIMSIZ (bu bir dunya-objesi etkilesimi degil, rol-bazli
-// bir UI menusu) — kendi ham Interact (E) basma/birakma girisini okur. Rust'in insa
-// carki gibi: imlec HER ZAMAN kilitli/gizli kalir, dilim secimi carktan beri biriken
-// ham mouse delta'sinin yonune gore yapilir (bkz. Update()). Secilen emote'un GORSEL
-// TEPKISI (renk parlamasi + egilme/ziplama) secimi yapan oyuncunun kendi karakterinde
-// (PlayerEmoteReactor, herkesin ekraninda) oynatiliyor — eskiden burada Komi'ye ozel
-// ayri bir "ReceivedEmoteIcon" UI'i vardi, o tasarim kaldirildi (bkz. EmoteSystem.cs
-// ust notu).
+// Genel emote çarkı (GDD 3.6.0): E basılıyken açık, TÜM rollerde. Oynanışa etki etmeyen sosyal emote'lar; tek katlı
+// (baloncuklar). Görünüm ve seçim biçimi sinyal çarkıyla ORTAKTIR (WheelView): imleç kilitli kalır, biriken fare
+// hareketinin yönü seçeneği vurgular, SOL TIK emote'u gönderir. Seçenekler veriden gelir (EmoteSystem.AvailableEmotes);
+// kodda emote listesi ya da sayısı yoktur.
+//
+// İstemci tahmin eder, sunucu karar verir: round oynanabilir mi (GameLoopManager.CanPlayersAct) ve oynayan jest bitti
+// mi (EmoteSystem.IsLocalBusy) burada yalnızca GÖSTERİM içindir; asıl karar SelectEmoteServerRpc'dedir. Cooldown
+// yoktur; oynayan jest bitene kadar çark "engelli" görünür ve tıklama bir şey göndermez.
 public class EmoteWheelUI : MonoBehaviour
 {
-    // PlayerController, cark acikken kamera yaw/pitch'inin mouse delta'sini OKUMAMASI
-    // icin bunu kontrol eder — mouse delta'nin tek tuketicisi ayni anda ya cark ya
-    // kamera olur, ikisi birden degil. Statik: bu bilesenden client basina tek bir
-    // ornek olur (GameplayCanvas uzerinde), instance referansina gerek yok.
+    // PlayerController (bakış) ve PlayerInteractor (sol tık) çark açıkken fare girdisini tüketmez.
     public static bool IsWheelOpen { get; private set; }
 
     [SerializeField] private InputActionAsset inputActions;
+    [Tooltip("Çarkı açan action'ın adı (Player haritasında; E).")]
+    [SerializeField] private string openActionName = "Interact";
+    [Tooltip("Ortak çark görünümü (sinyal çarkıyla paylaşılır).")]
+    [SerializeField] private WheelView view;
 
-    [Header("Cark")]
-    [SerializeField] private GameObject wheelRoot;
-    [SerializeField] private Image[] slotIcons;
-    [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color highlightedColor = Color.yellow;
-
-    // Merkez panel: imlecin isaret ettigi (en yakin acidaki) dilimin BUYUK ikonu +
-    // adi + kisa aciklamasi — imlec hareket ettikce (HighlightSlot her degisimde)
-    // canli guncellenir. Rust'in insa carkindaki merkez bilgi paneline benzer bir
-    // sunum — mimari/network tarafina (broadcast RPC, role-gating) DOKUNMUYOR, sadece
-    // sunum katmani.
-    [Header("Merkez Panel - Secili Emote Detayi")]
-    [SerializeField] private Image centerIcon;
-    [SerializeField] private Text centerDisplayName;
-    [SerializeField] private Text centerDescription;
-
-    private InputAction _interactAction;
-    private int _highlightedIndex = -1;
-    private int _activeSlotCount;
-    private bool _wheelOpen;
-    // Cark acikken imlec KILITLI/GIZLI kalir (bkz. HandleInteractStarted) — mutlak
-    // ekran pozisyonu artik anlamsiz (sabit kalir). Bunun yerine, cark acildigindan
-    // beri biriken ham mouse delta'sinin YONU, hangi dilimin vurgulanacagini belirler
-    // (Rust'in insa carki gibi).
-    private Vector2 _accumulatedOffset;
+    private InputAction _openAction;
+    private int _highlighted = -1;
+    private Vector2 _accumulated;
+    private bool _open;
 
     private void Start()
     {
-        if (wheelRoot != null)
-            wheelRoot.SetActive(false);
-
-        InitializeWheelIcons();
-
         var playerMap = inputActions.FindActionMap("Player");
         playerMap.Enable();
-        _interactAction = playerMap.FindAction("Interact");
-        _interactAction.started += HandleInteractStarted;
-        _interactAction.canceled += HandleInteractCanceled;
+        _openAction = playerMap.FindAction(openActionName);
+        if (_openAction == null)
+        {
+            Debug.LogError($"[EmoteWheelUI] '{openActionName}' action'ı bulunamadı; emote çarkı açılamaz.");
+            return;
+        }
+
+        _openAction.started += HandleOpenStarted;
+        _openAction.canceled += HandleOpenCanceled;
     }
 
     private void OnDestroy()
     {
-        if (_interactAction != null)
+        if (_openAction != null)
         {
-            _interactAction.started -= HandleInteractStarted;
-            _interactAction.canceled -= HandleInteractCanceled;
+            _openAction.started -= HandleOpenStarted;
+            _openAction.canceled -= HandleOpenCanceled;
         }
 
         IsWheelOpen = false;
     }
 
-    // BULUNAN HATA: carktaki dilim Image'larina hicbir yerde sprite atanmiyordu —
-    // sadece HighlightSlot/ResetHighlight .color'i degistiriyordu (secili/normal tonu).
-    // Bu yuzden Kasiyer kendi carkinda uc dilimi de sprite'siz (varsayilan beyaz
-    // dikdortgen) goruyordu. Duzeltildi.
-    private void InitializeWheelIcons()
+    // Sunucunun SelectEmoteServerRpc'de uyguladığı koşulun aynısı; rol kısıtı yoktur.
+    private static bool CanOpen()
     {
-        if (slotIcons == null || EmoteSystem.Instance == null || EmoteSystem.Instance.AvailableEmotes == null)
-            return;
-
-        var availableEmotes = EmoteSystem.Instance.AvailableEmotes;
-        for (int i = 0; i < slotIcons.Length && i < availableEmotes.Length; i++)
-        {
-            if (slotIcons[i] != null && availableEmotes[i] != null)
-                slotIcons[i].sprite = availableEmotes[i].Icon;
-        }
+        return GameLoopManager.CanPlayersAct && !RecipeBookUI.IsOpen && !PauseMenuUI.IsOpen && EmoteSystem.Instance != null;
     }
 
-    private void HandleInteractStarted(InputAction.CallbackContext context)
+    private void HandleOpenStarted(InputAction.CallbackContext context)
     {
-        // Sunucunun SelectEmoteServerRpc'de uyguladigi kosullarin aynisi (istemci tahmin eder, sunucu karar
-        // verir): round oynanabilir olmali ve oynayan jest bitmis olmali. Sinyal carki acikken acilmaz.
-        if (_wheelOpen || SignalWheelUI.IsWheelOpen || RecipeBookUI.IsOpen || PauseMenuUI.IsOpen || !GameLoopManager.CanPlayersAct
-            || EmoteSystem.Instance == null || EmoteSystem.Instance.IsLocalBusy)
+        if (_open || SignalWheelUI.IsWheelOpen || !CanOpen())
             return;
 
-        int emoteCount = EmoteSystem.Instance.AvailableEmotes != null ? EmoteSystem.Instance.AvailableEmotes.Length : 0;
-        _activeSlotCount = Mathf.Min(slotIcons.Length, emoteCount);
-        if (_activeSlotCount == 0)
+        var emotes = EmoteSystem.Instance.AvailableEmotes;
+        int count = emotes != null ? emotes.Length : 0;
+        if (count == 0)
             return;
 
-        for (int i = 0; i < slotIcons.Length; i++)
+        // Yukarıdan başlayıp eşit aralıkla dizilir; seçeneğin sırası = emote dizini.
+        var options = new List<WheelView.Option>(count);
+        for (int i = 0; i < count; i++)
         {
-            if (slotIcons[i] != null)
-                slotIcons[i].gameObject.SetActive(i < _activeSlotCount);
+            options.Add(new WheelView.Option
+            {
+                Label = emotes[i] != null ? emotes[i].DisplayName : string.Empty,
+                Icon = emotes[i] != null ? emotes[i].Icon : null,
+                Angle = 90f + i * 360f / count
+            });
         }
 
-        _wheelOpen = true;
+        _open = true;
         IsWheelOpen = true;
-        if (wheelRoot != null)
-            wheelRoot.SetActive(true);
-
-        ClearCenterPanel();
-        _accumulatedOffset = Vector2.zero;
-
-        // BULUNAN HATA: cark acilirken imlec BILEREK serbest/gorunur birakiliyordu —
-        // Rust'in insa carkinda imlec HER ZAMAN kilitli/gizli kalir (normal FPS gorusu),
-        // sadece ham mouse delta'si dilim secimi icin kullanilir. Cursor.lockState/visible
-        // artik burada HIC DEGISTIRILMIYOR — round aktifken zaten kilitli/gizli olan
-        // durum oldugu gibi korunuyor (bkz. Update() — artik mutlak pozisyon degil
-        // biriken delta okunuyor).
+        _highlighted = -1;
+        _accumulated = Vector2.zero;
+        view.Show(options, WheelView.Style.Bubbles);
     }
 
-    private void HandleInteractCanceled(InputAction.CallbackContext context)
+    private void HandleOpenCanceled(InputAction.CallbackContext context) => Close();
+
+    private void Close()
     {
-        if (!_wheelOpen)
+        if (!_open)
             return;
 
-        _wheelOpen = false;
+        _open = false;
         IsWheelOpen = false;
-        if (wheelRoot != null)
-            wheelRoot.SetActive(false);
-
-        if (_highlightedIndex >= 0)
-            EmoteSystem.Instance?.SelectEmoteServerRpc(_highlightedIndex);
-
-        ResetHighlight();
-        ClearCenterPanel();
-        _accumulatedOffset = Vector2.zero;
-
-        // Cursor.lockState/visible artik burada da DEGISTIRILMIYOR — cark hicbir zaman
-        // imlec kilit durumunu degistirmedigi icin geri alacak bir sey de yok (bkz.
-        // HandleInteractStarted).
+        view.Hide();
     }
 
     private void Update()
     {
-        if (!_wheelOpen || slotIcons == null || _activeSlotCount == 0)
+        if (!_open)
             return;
 
-        // Imlec kilitli/gizli oldugu icin mutlak pozisyon yerine, cark acildigindan beri
-        // biriken ham mouse delta'si "sanal imlec pozisyonu" gibi kullanilir — Mouse.current
-        // her zaman gercek donanim delta'sini raporlar, Cursor.lockState'ten bagimsizdir.
-        Vector2 delta = Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
-        _accumulatedOffset += delta;
-
-        if (_accumulatedOffset.sqrMagnitude < 4f)
-            return;
-
-        float angle = Mathf.Atan2(_accumulatedOffset.y, _accumulatedOffset.x) * Mathf.Rad2Deg;
-        if (angle < 0f)
-            angle += 360f;
-
-        // Dilim ikonlari carkta 90 derece (yukari) merkezli baslayip saat yonunun
-        // tersine yerlestiriliyor (slot i -> 90 + i*sliceSize derece). Bunu hesaba
-        // katmadan (0 derece = sag) index hesaplamak her zaman komsu dilimi
-        // isaretliyordu (bulunan gercek hata: mouse'un uzerinde durdugu degil,
-        // yanindaki dilim parliyordu). Aciyi ayni offsetle kaydirip normalize ediyoruz.
-        float sliceSize = 360f / _activeSlotCount;
-        float adjustedAngle = angle - 90f;
-        if (adjustedAngle < 0f)
-            adjustedAngle += 360f;
-
-        int index = Mathf.RoundToInt(adjustedAngle / sliceSize) % _activeSlotCount;
-        HighlightSlot(index);
-    }
-
-    private void HighlightSlot(int index)
-    {
-        if (index == _highlightedIndex)
-            return;
-
-        ResetHighlight();
-        _highlightedIndex = index;
-        if (slotIcons[index] != null)
-            slotIcons[index].color = highlightedColor;
-
-        RefreshCenterPanel(index);
-    }
-
-    private void ResetHighlight()
-    {
-        if (_highlightedIndex >= 0 && slotIcons[_highlightedIndex] != null)
-            slotIcons[_highlightedIndex].color = normalColor;
-
-        _highlightedIndex = -1;
-    }
-
-    // Imlecin isaret ettigi dilimin buyuk ikonu/adi/aciklamasi — HighlightSlot her
-    // gercek degisimde (ayni dilimde kalirken tekrar tekrar degil) cagirir.
-    private void RefreshCenterPanel(int index)
-    {
-        var availableEmotes = EmoteSystem.Instance != null ? EmoteSystem.Instance.AvailableEmotes : null;
-        if (availableEmotes == null || index < 0 || index >= availableEmotes.Length || availableEmotes[index] == null)
-            return;
-
-        var emote = availableEmotes[index];
-
-        if (centerIcon != null)
+        // Round bitti / oyun durdu / kitap ya da menü açıldı: açık çark kapanır.
+        if (!CanOpen())
         {
-            centerIcon.sprite = emote.Icon;
-            centerIcon.enabled = emote.Icon != null;
+            Close();
+            return;
         }
 
-        if (centerDisplayName != null)
-            centerDisplayName.text = emote.DisplayName;
+        var mouse = Mouse.current;
+        if (mouse == null)
+            return;
 
-        if (centerDescription != null)
-            centerDescription.text = emote.Description;
-    }
+        _accumulated += mouse.delta.ReadValue();
+        if (_accumulated.sqrMagnitude >= 4f)
+            _highlighted = view.Pick(_accumulated);
 
-    private void ClearCenterPanel()
-    {
-        if (centerIcon != null)
-        {
-            centerIcon.sprite = null;
-            centerIcon.enabled = false;
-        }
+        bool busy = EmoteSystem.Instance.IsLocalBusy;
+        view.Refresh(_highlighted, busy);
 
-        if (centerDisplayName != null)
-            centerDisplayName.text = string.Empty;
+        if (!mouse.leftButton.wasPressedThisFrame || _highlighted < 0 || busy)
+            return;
 
-        if (centerDescription != null)
-            centerDescription.text = string.Empty;
+        EmoteSystem.Instance.SelectEmoteServerRpc(_highlighted);
+        // Seçimden sonra vurgu sıfırlanır; çark tuş bırakılana kadar açık kalır.
+        _highlighted = -1;
+        _accumulated = Vector2.zero;
     }
 }

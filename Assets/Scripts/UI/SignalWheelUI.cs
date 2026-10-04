@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
-// Sinyal çarkı (GDD 3.6.0): R basılıyken açık, iç içe — önce kategori, sonra değer. Dilimler YALNIZCA replike
-// veriden (LevelDirector.SignalRows -> SignalWheelModel) kurulur; kodda kategori/değer listesi ve sayısı yoktur.
-// Seçim: imleç kilitli kalır, çark açıldığından beri biriken fare hareketinin yönü dilimi vurgular; SOL TIK seçer
+// Sinyal çarkı (GDD 3.6.0): R basılıyken açık, iç içe — önce kategori (dilimler), sonra değer (baloncuklar).
+// Seçenekler YALNIZCA replike veriden (LevelDirector.SignalRows -> SignalWheelModel) kurulur; kodda kategori/değer
+// listesi ve sayısı yoktur. Görünüm genel emote çarkıyla ORTAKTIR (WheelView).
+// Seçim: imleç kilitli kalır, çark açıldığından beri biriken fare hareketinin yönü seçeneği vurgular; SOL TIK seçer
 // (kategori -> içine gir, değer -> sinyali gönder), SAĞ TIK üst kata döner.
 //
 // İstemci tahmin eder, sunucu karar verir: kim açabilir (EmoteSystem.CanRoleSignal), round oynanabilir mi
-// (GameLoopManager.CanPlayersAct) ve oynayan sinyal bitti mi (EmoteSystem.IsLocalBusy) burada yalnızca GÖSTERİM
-// içindir; asıl karar RequestSignalServerRpc'dedir. Oynayan sinyal bitene kadar çark "engelli" görünür ve tıklama
+// (GameLoopManager.CanPlayersAct) ve oynayan jest bitti mi (EmoteSystem.IsLocalBusy) burada yalnızca GÖSTERİM
+// içindir; asıl karar RequestSignalServerRpc'dedir. Oynayan jest bitene kadar çark "engelli" görünür ve tıklama
 // bir şey göndermez.
 public class SignalWheelUI : MonoBehaviour
 {
@@ -20,33 +20,19 @@ public class SignalWheelUI : MonoBehaviour
     [SerializeField] private InputActionAsset inputActions;
     [Tooltip("Çarkı açan action'ın adı (Player haritasında; R).")]
     [SerializeField] private string openActionName = "SignalWheel";
+    [Tooltip("Ortak çark görünümü (emote çarkıyla paylaşılır).")]
+    [SerializeField] private WheelView view;
 
-    [Header("Çark")]
-    [SerializeField] private GameObject wheelRoot;
-    [Tooltip("Dilim şablonu: kökünde Image, çocuğunda Text. Her seçenek için kopyalanır.")]
-    [SerializeField] private GameObject sliceTemplate;
-    [SerializeField] private Text centerLabel;
-    [SerializeField] private float radius = 170f;
-    [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color highlightedColor = Color.yellow;
-    [Tooltip("Oynayan sinyal bitene kadar dilimlerin rengi (engelli).")]
-    [SerializeField] private Color blockedColor = new(0.45f, 0.45f, 0.45f, 1f);
-
-    private readonly List<Image> _slices = new();
     private readonly List<SignalRow> _rowBuffer = new();
     private InputAction _openAction;
     private List<SignalWheelModel.Option> _top;
     private List<SignalWheelModel.Option> _current;
-    private float[] _angles;
     private int _highlighted = -1;
     private Vector2 _accumulated;
     private bool _open;
 
     private void Start()
     {
-        wheelRoot.SetActive(false);
-        sliceTemplate.SetActive(false);
-
         var playerMap = inputActions.FindActionMap("Player");
         playerMap.Enable();
         _openAction = playerMap.FindAction(openActionName);
@@ -74,7 +60,7 @@ public class SignalWheelUI : MonoBehaviour
     // Çarkı açma koşulu — sunucunun RequestSignalServerRpc'de uyguladığı kuralların aynısı (rol + round).
     private static bool CanOpen()
     {
-        // Tarif kitapçığı açıkken çark açılmaz (GDD 3.6.2: oyuncu kitaba kilitlidir).
+        // Tarif kitapçığı ya da ESC menüsü açıkken çark açılmaz.
         return GameLoopManager.CanPlayersAct && !RecipeBookUI.IsOpen && !PauseMenuUI.IsOpen
             && EmoteSystem.Instance != null && RoleManager.Instance != null
             && EmoteSystem.Instance.CanRoleSignal(RoleManager.Instance.LocalRole);
@@ -96,7 +82,6 @@ public class SignalWheelUI : MonoBehaviour
 
         _open = true;
         IsWheelOpen = true;
-        wheelRoot.SetActive(true);
         ShowLevel(_top);
     }
 
@@ -109,7 +94,7 @@ public class SignalWheelUI : MonoBehaviour
 
         _open = false;
         IsWheelOpen = false;
-        wheelRoot.SetActive(false);
+        view.Hide();
     }
 
     private void ShowLevel(List<SignalWheelModel.Option> options)
@@ -118,28 +103,14 @@ public class SignalWheelUI : MonoBehaviour
         _highlighted = -1;
         _accumulated = Vector2.zero;
 
-        foreach (var slice in _slices)
-            Destroy(slice.gameObject);
-        _slices.Clear();
-
         // Açılar veriden (yön değerleri kendi yönünde durur) ya da eşit aralıkla — bkz. SignalWheelModel.
-        _angles = SignalWheelModel.ResolveAngles(options);
+        var angles = SignalWheelModel.ResolveAngles(options);
+        var viewOptions = new List<WheelView.Option>(options.Count);
         for (int i = 0; i < options.Count; i++)
-        {
-            var sliceObject = Instantiate(sliceTemplate, sliceTemplate.transform.parent);
-            sliceObject.SetActive(true);
+            viewOptions.Add(new WheelView.Option { Label = options[i].Label, Icon = options[i].Icon, Angle = angles[i] });
 
-            float angle = _angles[i] * Mathf.Deg2Rad;
-            ((RectTransform)sliceObject.transform).anchoredPosition = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-
-            var label = sliceObject.GetComponentInChildren<Text>(true);
-            if (label != null)
-                label.text = options[i].Label;
-
-            _slices.Add(sliceObject.GetComponent<Image>());
-        }
-
-        RefreshVisuals();
+        // Üst kat (kategoriler) dilim, alt kat (jestin kendisi) baloncuk görünür.
+        view.Show(viewOptions, options == _top ? WheelView.Style.Wedges : WheelView.Style.Bubbles);
     }
 
     private void Update()
@@ -160,22 +131,10 @@ public class SignalWheelUI : MonoBehaviour
 
         _accumulated += mouse.delta.ReadValue();
         if (_accumulated.sqrMagnitude >= 4f)
-        {
-            // Fare yönüne açıca en yakın dilim.
-            float angle = Mathf.Atan2(_accumulated.y, _accumulated.x) * Mathf.Rad2Deg;
-            float best = float.MaxValue;
-            for (int i = 0; i < _angles.Length; i++)
-            {
-                float distance = Mathf.Abs(Mathf.DeltaAngle(angle, _angles[i]));
-                if (distance < best)
-                {
-                    best = distance;
-                    _highlighted = i;
-                }
-            }
-        }
+            _highlighted = view.Pick(_accumulated);
 
-        RefreshVisuals();
+        bool busy = EmoteSystem.Instance.IsLocalBusy;
+        view.Refresh(_highlighted, busy);
 
         if (mouse.rightButton.wasPressedThisFrame && _current != _top)
         {
@@ -183,7 +142,7 @@ public class SignalWheelUI : MonoBehaviour
             return;
         }
 
-        if (!mouse.leftButton.wasPressedThisFrame || _highlighted < 0 || EmoteSystem.Instance.IsLocalBusy)
+        if (!mouse.leftButton.wasPressedThisFrame || _highlighted < 0 || busy)
             return;
 
         var option = _current[_highlighted];
@@ -195,15 +154,5 @@ public class SignalWheelUI : MonoBehaviour
 
         EmoteSystem.Instance.RequestSignalServerRpc(option.ChannelIndex, option.ValueIndex);
         ShowLevel(_top);
-    }
-
-    private void RefreshVisuals()
-    {
-        bool busy = EmoteSystem.Instance != null && EmoteSystem.Instance.IsLocalBusy;
-        for (int i = 0; i < _slices.Count; i++)
-            _slices[i].color = busy ? blockedColor : (i == _highlighted ? highlightedColor : normalColor);
-
-        if (centerLabel != null)
-            centerLabel.text = _highlighted >= 0 ? _current[_highlighted].Label : string.Empty;
     }
 }

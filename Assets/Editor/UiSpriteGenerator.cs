@@ -40,6 +40,20 @@ public static class UiSpriteGenerator
             float dash = Mathf.Repeat(angle, 15f) < 9f ? 1f : 0f;
             return new Color(1, 1, 1, Coverage(d) * Coverage(-d - 3.5f) * dash);
         });
+        // Buruşuk kâğıt daire (çark dilimleri ve baloncukları): kenarı hafif düzensiz, yüzeyi kırışık gölgeli.
+        Save("UI_PaperCircle", 256, 256, 0, (x, y) =>
+        {
+            float angle = Mathf.Atan2(y - 128, x - 128);
+            float wobble = (Mathf.PerlinNoise(Mathf.Cos(angle) * 2.2f + 5f, Mathf.Sin(angle) * 2.2f + 5f) - 0.5f) * 7f;
+            float d = Circle(x, y, 128, 128, 120 + wobble);
+            // Kırışıklar: iki ölçekte gürültünün "sırt"ları.
+            float ridge = Mathf.Abs(Mathf.PerlinNoise(x * 0.035f, y * 0.035f) - 0.5f) * 2f;
+            float fine = Mathf.Abs(Mathf.PerlinNoise(x * 0.09f + 30f, y * 0.09f + 11f) - 0.5f) * 2f;
+            float tone = 0.90f + ridge * 0.08f + fine * 0.04f;
+            float rim = Mathf.Clamp01(-d / 10f);
+            tone *= Mathf.Lerp(0.86f, 1f, rim);
+            return new Color(tone, tone, tone * 0.985f, Coverage(d));
+        });
         // Defter halkası: metalik halka, üstte parlama.
         Save("UI_Ring", 64, 64, 0, (x, y) =>
         {

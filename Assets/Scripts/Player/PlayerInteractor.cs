@@ -188,7 +188,7 @@ public class PlayerInteractor : NetworkBehaviour
     private void HandleAttackStarted(InputAction.CallbackContext context)
     {
         // Sinyal carki acikken sol tik carkta secim yapar (SignalWheelUI); dunya etkilesimi tetiklenmez.
-        if (SignalWheelUI.IsWheelOpen)
+        if (SignalWheelUI.IsWheelOpen || EmoteWheelUI.IsWheelOpen)
             return;
 
         // Tarif kitapcigi acikken sol tik sayfa cevirir (RecipeBookUI); dunya etkilesimi tetiklenmez.

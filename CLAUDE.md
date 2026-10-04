@@ -935,9 +935,16 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
 - **Çarkta sabit açı:** `SignalValue.useWheelAngle` + `wheelAngle` (0 = sağ, 90 = yukarı). Bir kattaki tüm
   seçenekler işaretliyse açılar veriden gelir (Yön değerleri kendi yönünde durur), değilse eşit aralık
   (`SignalWheelModel.ResolveAngles`).
-- `EmoteWheelUI` (E, eski tek katmanlı çark; rol kısıtı yok) + `PlayerEmoteReactor` — GDD'deki genel emote
-
-  çarkı henüz yazılmadı.
+- **Ortak çark görünümü (4 Eki 2026):** `WheelView` + `WheelSlot` — R ve E çarkı **aynı** bileşenle çizilir ve
+  aynı biçimde seçilir (imleç kilitli, biriken fare yönü vurgular, sol tık seçer). İki stil: **Dilimler**
+  (kategori katı; kâğıt daire `Image.Filled Radial360` parçalarına bölünür, vurgulanan dışa kayar) ve
+  **Baloncuklar** (son kat; yuvarlak kâğıtlar, ikon varsa ikon yoksa ad). Vurgulananın adı çarkın altında; oynayan
+  jest bitene kadar gri. Seçenek sayısı veriden. `WheelView` yalnızca çizer ve yönü seçeneğe çevirir; kimin
+  açacağına/ne gönderileceğine `SignalWheelUI` (R: üst kat dilim, alt kat baloncuk) ve `EmoteWheelUI` (E: herkes,
+  tek kat baloncuk, `EmoteSystem.AvailableEmotes`; artık **tıklayınca** gönderir, tuşu bırakınca değil) karar verir.
+  `SignalChannel.icon` (boşsa dilimde ad yazar). Sprite `UI_PaperCircle` (`UiSpriteGenerator`). Emote içerikleri ve
+  ikonları (`Assets/Data/Emotes/`, 3 renkli kare) hâlâ yer tutucu; E çarkı tek katlı (GDD "iç içe" diyor — emote
+  kategorileri tanımlanınca aynı görünümle kat eklenir). `PlayerEmoteReactor` tepkisi yer tutucu.
 - `VoIPController` (`IVoiceProvider` soyutlaması). Round sırasında Kasiyer'in paketi sunucuda relay
   edilmez; **Komi hiçbir oyuncunun sesini duymaz** — gelen paket hiç çözülmez (`1d4d1b2`, K3).
 - `DeafHearing` (oyuncu kamerası, AudioListener): "sağır mı" kuralının **tek yeri** (sağır rol + round
@@ -1061,7 +1068,7 @@ yeni özellik inşa edilmeden önce düzeltilmelidir. *(30 Eyl 2026'da gerçek k
 | ~~`PlayerRole.Yamak`~~ | `PlayerRole.Komi` (mekanik yeniden adlandırma) | §4.2 | ✅ Adım 3 (`f6026b2`) |
 | ~~`EmoteSystem.selectionCooldown` (2.5 sn cooldown)~~ | **Cooldown YOK** — emote bitmeden yenisi başlatılamaz | §3.6.0 | ✅ Adım 13b |
 | ~~`EmoteSystem.komiEmoteLimit` (Komi'ye kısıtlı liste)~~ | Kavram geçersiz — Kasiyer'de `R` sinyal çarkı, herkeste `E` genel çark | §3.6.0 | ✅ Adım 13b |
-| `EmoteWheelUI` tek katmanlı (rol kısıtı 13b'de kalktı; `R` sinyal çarkı 13a'da yazıldı) | Tüm rollerde iç içe `E` genel çark | §3.6.0 | `R` ✅ Adım 13a; **`E` genel çarkı açık** (PLAN 14) |
+| `EmoteWheelUI` tek katlı (4 Eki: R ile ortak görünüme taşındı — `WheelView`) | Tüm rollerde iç içe `E` genel çark | §3.6.0 | `R` ✅ Adım 13a; `E` görünüm ✅ 4 Eki; **emote içeriği/kategorileri açık** (PLAN 14) |
 | ~~`BurgerAssemblyStation`: sıra kuralı yok~~ | Zorunlu kategori sırası | §6.7.3 | ✅ Adım 6a (`30855e2`) |
 | ~~`BurgerRecipe.requiredIngredients`~~ (asset artık kullanılmıyor, Temizlik Borcu'nda) | Ekmek tek envanter öğesi, alt+üst iki adımda | §6.7.3 | ✅ Adım 6b (`7b17d4a`) |
 | ~~`ItemType` yalnızca `isBread` biliyor~~ | Kategori bilgisi | §6.7.3 | ✅ Adım 6a (`30855e2`) |
