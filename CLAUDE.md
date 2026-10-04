@@ -888,7 +888,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     yana/yukarı kayar; **aşağı yönde el inmez, yalnızca parmak aşağı döner** (4 Eki: el pervazın altında kalıyor,
     Komi göremiyordu).
   - **Elde öğe:** `HeldItemVisual` her karede `Animator.SetHoldTarget(öğe görseli)` çağırır; sağ el öğenin altına
-    girer (avuç yukarı, parmaklar yarı kapalı), duvar geri çekmesinde de öğeyi izler. Alma: öğe ve el birlikte
+    girer (**açık avuç**: avuç yukarı, parmaklar neredeyse düz — `holdCurl` 0,1; öğe bileğin değil avucun ortasına oturur: `holdPalmForward` 0,089, avuç yüzeyi `holdPalmOffset` 0,06, ikisi de elin pişirilmiş mesh'inden ölçüldü), duvar geri çekmesinde de öğeyi izler. Alma: öğe ve el birlikte
     önden gelir (`GetHoldDisplacement`); bırakma: öğe gidince el öne uzanıp yerine döner. Öncelik: jest > tutma >
     yürüme salınımı.
   - **Eller beyaz eldiven:** `Materials/Eldiven_Beyaz` + `Eldiven_Bilek` (karakter prefab'larında el renderer'ının

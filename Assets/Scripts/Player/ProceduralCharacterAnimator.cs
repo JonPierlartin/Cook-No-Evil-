@@ -64,8 +64,11 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     [SerializeField, Min(0.01f)] private float gestureBlendTime = 0.18f;
 
     [Header("Tutma (elde öğe)")]
-    [Tooltip("Elin, öğenin tabanının ne kadar altında durduğu (m).")]
-    [SerializeField] private float holdPalmOffset = 0.03f;
+    [Tooltip("Avuç yüzeyinin, öğenin tabanının ne kadar altında durduğu (m).")]
+    [SerializeField] private float holdPalmOffset = 0.02f;
+    [Tooltip("Avuç ortasının bilekten (el pivotundan) parmak yönünde uzaklığı (m). Öğe bileğin değil AVUCUN ortasına " +
+        "otursun diye el bu kadar geriye çekilir.")]
+    [SerializeField] private float holdPalmForward = 0.1f;
     [Tooltip("Elin tutma pozuna girme/çıkma süresi (sn).")]
     [SerializeField, Min(0.01f)] private float holdBlendTime = 0.14f;
     [Tooltip("Alırken öğe ve elin önden geldiği mesafe (m, ileri / aşağı) ve süresi (sn).")]
@@ -77,7 +80,9 @@ public class ProceduralCharacterAnimator : MonoBehaviour
 
     [Header("Parmaklar (0 = açık, 1 = kapalı)")]
     [SerializeField, Range(0f, 1f)] private float restCurl = 0.18f;
-    [SerializeField, Range(0f, 1f)] private float holdCurl = 0.45f;
+    [Tooltip("Öğe tutarken parmakların kıvrımı: düşük = açık, rahat avuç.")]
+    [SerializeField, Range(0f, 1f)] private float holdCurl = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float holdThumbCurl = 0.05f;
     [Tooltip("Parmak pozunun değişme hızı.")]
     [SerializeField, Min(0.1f)] private float fingerSpeed = 8f;
 
@@ -284,7 +289,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         if (holding)
         {
             // El öğenin tabanının hemen altında, avuç yukarı, parmaklar öğenin baktığı yöne.
-            var worldPosition = _holdTarget.position - _holdTarget.up * holdPalmOffset;
+            var worldPosition = _holdTarget.position - _holdTarget.up * holdPalmOffset - _holdTarget.forward * holdPalmForward;
             var worldRotation = Quaternion.LookRotation(_holdTarget.forward, _holdTarget.right * side);
             _holdLocalPosition = transform.InverseTransformPoint(worldPosition);
             _holdLocalRotation = Quaternion.Inverse(transform.rotation) * worldRotation;
@@ -313,7 +318,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         float blend = Mathf.SmoothStep(0f, 1f, _holdWeight);
         position = Vector3.Lerp(position, holdPosition, blend);
         rotation = Quaternion.Slerp(rotation, _holdLocalRotation, blend);
-        targetCurl = new Curl { Index = holdCurl, Others = holdCurl, Thumb = holdCurl * 0.6f };
+        // Açık avuç: öğe elin üstünde durur (tepsi taşır gibi), parmaklar kavramaz.
+        targetCurl = new Curl { Index = holdCurl, Others = holdCurl, Thumb = holdThumbCurl };
     }
 
     private void ApplyGesture(float side, float dt, ref Vector3 position, ref Quaternion rotation, ref Curl targetCurl)

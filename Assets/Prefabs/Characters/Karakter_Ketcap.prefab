@@ -9654,14 +9654,16 @@ MonoBehaviour:
   gesturePump: 0.07
   gesturePumpRate: 2
   gestureBlendTime: 0.18
-  holdPalmOffset: 0.03
+  holdPalmOffset: 0.060267746
+  holdPalmForward: 0.08875053
   holdBlendTime: 0.14
   pickReach: {x: 0.35, y: 0.12}
   pickTime: 0.28
   placeReach: 0.3
   placeTime: 0.14
   restCurl: 0.18
-  holdCurl: 0.45
+  holdCurl: 0.1
+  holdThumbCurl: 0.05
   fingerSpeed: 8
 --- !u!1 &7342058150336604743
 GameObject:
