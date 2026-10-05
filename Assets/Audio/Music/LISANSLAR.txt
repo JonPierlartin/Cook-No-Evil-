@@ -1,0 +1,10 @@
+Muzik_ChubbyCat.wav
+  "Chubby Cat" (short) - PlayOnLoop.com
+  Kaynak: https://opengameart.org/content/nintendo-style-funny-music-loop-02
+  Lisans: CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+  ATIF ZORUNLU: oyunun jeneriginde / magaza sayfasinda "Music: Chubby Cat by PlayOnLoop.com (CC-BY 4.0)" yazilmali.
+
+Muzik_JustSmoreFun.mp3
+  "Just S'more Fun" - RD (Rahul Dwivedi)
+  Kaynak: https://opengameart.org/content/just-smore-fun
+  Lisans: CC0 (atif gerekmez)

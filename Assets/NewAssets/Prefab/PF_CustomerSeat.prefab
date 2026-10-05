@@ -49,16 +49,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 7d27eb9e57e1ef9429851042599b5a92, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 7d27eb9e57e1ef9429851042599b5a92, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 5c49e358bb5d11b40b440ad090e055cd, type: 2}
+      objectReference: {fileID: 2100000, guid: 4c493f9a84861c448af671833ca5fd47, type: 2}
     - target: {fileID: -7511558181221131132, guid: 7d27eb9e57e1ef9429851042599b5a92, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: d7a260270c8f45640888c65ce8710563, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 7d27eb9e57e1ef9429851042599b5a92, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -2164214897086586521, guid: 30fc128015508804cbe6c781d5d6f048, type: 3}
     - target: {fileID: 919132149155446097, guid: 7d27eb9e57e1ef9429851042599b5a92, type: 3}
       propertyPath: m_Name
-      value: SM_CustomerSeat
+      value: PF_CustomerSeat
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

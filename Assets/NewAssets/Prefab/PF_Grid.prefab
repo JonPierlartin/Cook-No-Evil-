@@ -56,6 +56,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: 5a5cea6bd92d3a140814c0a96cb0565c, type: 2}
+    - target: {fileID: -5754084199372789682, guid: bb21b65592659f14097559c945f6f493, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 7103411965747975484, guid: c50a57a6c130c284ea630d2edf4c5ab2, type: 3}
     - target: {fileID: 919132149155446097, guid: bb21b65592659f14097559c945f6f493, type: 3}
       propertyPath: m_Name
       value: PF_Grid
@@ -92,5 +96,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.010044276, y: 0.0104953125, z: 0.011157407}
-  m_Center: {x: 0.000022140119, y: -0.0027673414, z: -0.0044212965}
+  m_Size: {x: 0.010516107, y: 0.010120076, z: 0.010970452}
+  m_Center: {x: -6.9849193e-10, y: -0.00020686723, z: 0.005485228}

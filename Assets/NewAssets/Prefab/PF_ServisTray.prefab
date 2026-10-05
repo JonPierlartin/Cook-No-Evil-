@@ -52,9 +52,13 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: a272ddbb3b0608044ae72ffa34a8f081, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 248ef0844798d5648a3f22f4588c2d80, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -2402973283937658377, guid: 4b5eaff501e654b41ad13d55d9048af7, type: 3}
     - target: {fileID: 919132149155446097, guid: 248ef0844798d5648a3f22f4588c2d80, type: 3}
       propertyPath: m_Name
-      value: SM_ServisTray
+      value: PF_ServisTray
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

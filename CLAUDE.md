@@ -923,6 +923,29 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     rozet + ad + kesik çizgi.
   - **Arayüz önizlemesi Play'siz alınabilir:** geçici bir dünya uzayı Canvas + ortografik kamera + RenderTexture
     (`Canvas.ForceUpdateCanvases` + `LayoutRebuilder` sonrası `cam.Render`); sahne kirlenmez.
+- **Harita eşyaları yenilendi (5 Eki 2026, artist):** yeni mesh'ler `NewAssets/FBX-2/`, dokular `NewAssets/Texture/`,
+  prefab'lar güncellendi; `PF_KitchenDoor` silindi → `SM_KitchenDoor` ×2; mutfakta iki kesme masası + kap masası
+  yerine tek **raflı tezgah `SM_Table_02`** (`PF_Table_02`; tezgah üstü y 1,43, raflar y 1,77 ve 2,12).
+  - **Mutfağın yeni yerleşimi (kuzey duvarı, batıdan doğuya):** `Cop_Mutfak` (köşe) · `SM_Table_02` (x −0,04…1,66):
+    üstünde iki `BurgerAssemblyStation` (x 0,41 ve 1,25) + aralarında `EkmekContainer`; orta rafta
+    `Kap_Marul/Domates/Tursu`, üst rafta `Kap_Sogan/Peynir` · `Izgara` (x 1,87…2,92; yuvalar x 2,14 / 2,66, yüzey
+    y 1,30). `Buzdolabi_Et` batı duvarında (x −0,69, z −1,24), kapağı doğuya bakar. İstasyon ve Kasa değişmedi.
+  - **Artist görseli taşıyınca işlev yerinde kalır:** kap / tezgah / ızgara / buzdolabı kökleri (collider, etkileşim,
+    yuva) eski yerde, görsel çocukları yeni yerde kalmıştı (kap tıklanamıyor, yerleştirme havada). Kural: **kök görsele
+    taşınır, görsel çocuğun yerel konumu sıfırlanır**; kap collider'ı görselin sınırına oturtulur. Yeni mesh'lerin
+    pivotu değiştiği için `PF_Grid`, `PF_Fridge`, `PF_Table` prefab'larındaki BoxCollider'lar da mesh'ten 1 m aşağıda
+    kalmıştı → **prefab'da mesh sınırına oturtuldu**. Yeni model geldiğinde ikisi de kontrol edilir.
+  - **Eklenen çarpışmalar (sahne örneğinde):** `SM_KitchenDoor` ×2 (yoksa Şef kasaya yürür) ve `SM_Table_02` — yalnızca
+    tezgah gövdesi (y ≤ 1,45); raf kısmına collider konmaz, yoksa nişan ışını kaplara ulaşamaz.
+  - **Okunamayan mesh'te yüzey ölçümü:** `mesh.vertices` boş döner (Read/Write kapalı); geçici bir `MeshCollider` +
+    `collider.Raycast` ile ölçülür (ızgara yüzeyi ve tezgah üstü böyle ölçüldü).
+  - Erişim (editörde, göz 1,98): mutfaktaki 14 hedefin hepsine Şef'in durabileceği yerden nişan ışını ulaşıyor
+    (en uzak `Kap_Peynir` 1,18 m). `M_Glass_02` saydam → Şef'te görünmez (buzdolabı kapağı).
+- **Müzik parçaları (5 Eki 2026):** `MusicPlayer.tracks` (ad + klip; veri) ve `GameSettings.MusicTrack` (yerel ayar);
+  `MusicTrackButton` (tıklayınca sıradaki parça) hem ana menüde (sol alt) hem ayarlar kartında. Parçalar
+  `Assets/Audio/Music/`: `Muzik_ChubbyCat.wav` (PlayOnLoop, **CC-BY 4.0 — atıf zorunlu**, bkz. `LISANSLAR.txt`) ve
+  `Muzik_JustSmoreFun.mp3` (RD, CC0). İkisi deneme amaçlı; biri seçilince diğeri ve düğme kaldırılabilir. Sentezlenmiş
+  `Muzik_Mutfak.wav` silindi.
 - **El animasyonları: artist klipleri + kodla üretilen yedekler (5 Eki 2026):**
   - **Öncelik (tek yer: `PlayerSignalDisplay`):** `SignalValue.clip` (artist) → `SignalValue.proceduralAnimation`
     (kodla üretilen) → `visualPrefab` (yer tutucu işaret). Emote'larda `EmoteDefinition.proceduralAnimation` → yoksa
@@ -972,7 +995,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     olduğu için `AudioSource.volume` işlemez). Mikrofon seviyesi gönderende ölçeklenemez (Steam sıkıştırılmış verir):
     paketle tek bayt (yüzde) gider, **alıcıda** uygulanır — `Gain = konuşanın mikrofon seviyesi × dinleyenin sesli
     sohbet ayarı`. Local Debug'da (`MockVoiceProvider`) ses iletilmediği için bu iki ayar yalnızca Steam'de denenir.
-  - `MusicPlayer` (sahne: `Muzik`; 2B, döngü, `Assets/Audio/Muzik_Mutfak.wav`): seviye `baseVolume × MusicVolume`.
+  - `MusicPlayer` (sahne: `Muzik`; 2B, döngü; parçalar için bkz. "Müzik parçaları"): seviye `baseVolume × MusicVolume`.
     Kaynakta **Bypass Listener Effects açık** — Komi'nin boğukluk filtresi müziğe uygulanmaz (müzik oyun dünyasının
     sesi değil). İlk ekranda da çalar (sahnenin `Main Camera` dinleyicisi).
   - `FootstepAudio` (Player kökü) + `AyakSesi` (3B, Linear, 1–8 m, `RoleAwareAudioRange`): adım,

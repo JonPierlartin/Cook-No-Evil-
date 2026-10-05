@@ -56,9 +56,13 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: 0710b0151660b574ea3cc6d067ad0f83, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 54cc33e76dd2ec64b9acff859e21b7d1, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 3457196441208563289, guid: 9b606f60c9dcd7e4e996a567ca23ba4a, type: 3}
     - target: {fileID: 919132149155446097, guid: 54cc33e76dd2ec64b9acff859e21b7d1, type: 3}
       propertyPath: m_Name
-      value: SM_CustomerTable (1)
+      value: PF_CustomerTable
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

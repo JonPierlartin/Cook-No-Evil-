@@ -56,6 +56,22 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: 23a4a8139c4df0e43b908cc818cffe14, type: 2}
+    - target: {fileID: -5808557723818020920, guid: 2eec87bbbcb91fc4897e34e572c617ac, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00234
+      objectReference: {fileID: 0}
+    - target: {fileID: -5808557723818020920, guid: 2eec87bbbcb91fc4897e34e572c617ac, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.01103
+      objectReference: {fileID: 0}
+    - target: {fileID: -5754084199372789682, guid: 2eec87bbbcb91fc4897e34e572c617ac, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 5952031514671971444, guid: c4cefa131f3d3564a952ba925d57ecac, type: 3}
+    - target: {fileID: -2895138150920933636, guid: 2eec87bbbcb91fc4897e34e572c617ac, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -5657617575330860105, guid: c4cefa131f3d3564a952ba925d57ecac, type: 3}
     - target: {fileID: 919132149155446097, guid: 2eec87bbbcb91fc4897e34e572c617ac, type: 3}
       propertyPath: m_Name
       value: PF_Fridge
@@ -100,5 +116,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.008091432, y: 0.00802156, z: 0.021078806}
-  m_Center: {x: -9.313226e-10, y: 0.0004908688, z: -0.0005394047}
+  m_Size: {x: 0.008091432, y: 0.008021561, z: 0.02107881}
+  m_Center: {x: -9.313226e-10, y: 0.0011627134, z: 0.010539405}

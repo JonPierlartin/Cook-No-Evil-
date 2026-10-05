@@ -12,6 +12,7 @@ public static class GameSettings
     private const string VoiceKey = "settings.voiceVolume";
     private const string MicKey = "settings.micGain";
     private const string SensitivityKey = "settings.mouseSensitivity";
+    private const string MusicTrackKey = "settings.musicTrack";
 
     public const float MaxMicGain = 2f;
     public const float MinMouseSensitivity = 0.2f;
@@ -23,6 +24,7 @@ public static class GameSettings
     private static float _voice = 1f;
     private static float _mic = 1f;
     private static float _sensitivity = 1f;
+    private static int _musicTrack;
 
     public static event Action Changed;
 
@@ -61,6 +63,23 @@ public static class GameSettings
         set => Set(ref _sensitivity, Mathf.Clamp(value, MinMouseSensitivity, MaxMouseSensitivity), SensitivityKey);
     }
 
+    // Çalan müzik parçasının dizini (liste MusicPlayer'dadır).
+    public static int MusicTrack
+    {
+        get { Load(); return _musicTrack; }
+        set
+        {
+            Load();
+            int clamped = Mathf.Max(0, value);
+            if (_musicTrack == clamped)
+                return;
+
+            _musicTrack = clamped;
+            PlayerPrefs.SetInt(MusicTrackKey, clamped);
+            Changed?.Invoke();
+        }
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
@@ -80,6 +99,7 @@ public static class GameSettings
         _voice = PlayerPrefs.GetFloat(VoiceKey, _voice);
         _mic = PlayerPrefs.GetFloat(MicKey, _mic);
         _sensitivity = PlayerPrefs.GetFloat(SensitivityKey, _sensitivity);
+        _musicTrack = PlayerPrefs.GetInt(MusicTrackKey, _musicTrack);
     }
 
     private static void Set(ref float field, float value, string key)

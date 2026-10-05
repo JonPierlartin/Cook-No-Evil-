@@ -52,9 +52,13 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 990155143b93e02458af3fbad7507875, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 70509e3c05c62b743aaaa8ad07f7e601, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 8956992006968590282, guid: 06f7b992b52249043a8f2bbdde64c7c9, type: 3}
     - target: {fileID: 919132149155446097, guid: 70509e3c05c62b743aaaa8ad07f7e601, type: 3}
       propertyPath: m_Name
-      value: SM_Floor_3x3
+      value: PF_Floor_3x3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
