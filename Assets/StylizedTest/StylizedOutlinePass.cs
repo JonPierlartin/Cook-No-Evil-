@@ -29,6 +29,8 @@ public class StylizedOutlinePass : ScriptableRenderPass
         using var builder = renderGraph.AddRasterRenderPass<PassData>("Stylized Outline", out var passData);
         passData.Material = _material;
         builder.SetRenderAttachment(resources.activeColorTexture, 0);
+        // Stencil okunur (toon shader'ın yazdığı kontur maskesi): derinlik-stencil hedefi salt okunur bağlanır.
+        builder.SetRenderAttachmentDepth(resources.activeDepthTexture, AccessFlags.Read);
         if (resources.cameraDepthTexture.IsValid())
             builder.UseTexture(resources.cameraDepthTexture);
         if (resources.cameraNormalsTexture.IsValid())
@@ -36,6 +38,10 @@ public class StylizedOutlinePass : ScriptableRenderPass
         // Shader derinlik/normal dokularını genel (global) adlarıyla okur.
         builder.UseAllGlobalTextures(true);
         builder.SetRenderFunc((PassData data, RasterGraphContext context) =>
-            context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, 0, MeshTopology.Triangles, 3));
+        {
+            // Geçiş 0: maskesiz pikseller (tüm kenarlar); geçiş 1: maskeli pikseller (yalnızca dış hat).
+            context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, 0, MeshTopology.Triangles, 3);
+            context.cmd.DrawProcedural(Matrix4x4.identity, data.Material, 1, MeshTopology.Triangles, 3);
+        });
     }
 }

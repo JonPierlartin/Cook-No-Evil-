@@ -21,6 +21,11 @@ Shader "CookNoEvil/StylizedTest/Toon"
         _RimIntensity ("Kenar siddeti", Range(0, 2)) = 0.35
         _RimPower ("Kenar inceligi", Range(0.5, 8)) = 3
 
+        // 1 = bu yüzeyde kontur yalnızca dış hat (siluet) çizer, iç ayrıntı çizgileri atlanır. Karakter gibi küçük
+        // ve ayrıntılı modellerde (parmaklar, gözler, tuşlar) iç çizgiler birbirine girip nesneyi karartıyordu.
+        // Stencil'in 1. bitine yazılır; kontur geçişi oradan okur.
+        [HideInInspector] _OutlineMask ("Kontur maskesi", Float) = 0
+
         // URP Lit geçişlerinin (ShadowCaster / DepthOnly / DepthNormals) beklediği özellikler.
         [HideInInspector] _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
         [HideInInspector] _BumpMap ("Normal Map", 2D) = "bump" {}
@@ -35,6 +40,15 @@ Shader "CookNoEvil/StylizedTest/Toon"
         {
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
+
+            Stencil
+            {
+                Ref [_OutlineMask]
+                ReadMask 1
+                WriteMask 1
+                Comp Always
+                Pass Replace
+            }
 
             HLSLPROGRAM
             #pragma vertex Vert

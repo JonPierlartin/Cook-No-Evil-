@@ -31,6 +31,11 @@ public class StylizedLookSettings : ScriptableObject
     public float outlineDepthThreshold = 0.05f;
     [Tooltip("Yüzey yönü farkı eşiği. Küçük = yumuşak kıvrımlar da çizilir.")]
     public float outlineNormalThreshold = 0.4f;
+    [Tooltip("Bu mesafeden (m) uzaktaki çizgiler 1 piksele iner (uzakta çizgiler nesneyi doldurmasın).")]
+    public float outlineThinDistance = 4f;
+    [Tooltip("Karakterlerde ve müşterilerde yalnızca dış hat çizilsin (parmak, göz, tuş gibi küçük ayrıntıların iç " +
+        "çizgileri atlanır; yoksa birbirine girip modeli karartıyor).")]
+    public bool simplifyCharacterOutlines = true;
 
     [Header("Ortam (görünüm açıkken; kapanınca eski değerler geri gelir)")]
     public bool overrideEnvironment = true;

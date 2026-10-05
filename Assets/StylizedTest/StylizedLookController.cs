@@ -30,6 +30,8 @@ public class StylizedLookController : MonoBehaviour
     private static readonly int LineThicknessId = Shader.PropertyToID("_LineThickness");
     private static readonly int DepthThresholdId = Shader.PropertyToID("_DepthThreshold");
     private static readonly int NormalThresholdId = Shader.PropertyToID("_NormalThreshold");
+    private static readonly int ThinDistanceId = Shader.PropertyToID("_ThinDistance");
+    private static readonly int OutlineMaskId = Shader.PropertyToID("_OutlineMask");
 
     private struct Environment
     {
@@ -46,6 +48,8 @@ public class StylizedLookController : MonoBehaviour
     private StylizedLookSettings _settings;
     private Shader _sourceShader;
     private readonly Dictionary<Material, Material> _toonByOriginal = new();
+    // Karakter / müşteri yüzeyleri için ayrı kopyalar (kontur maskesi açık).
+    private readonly Dictionary<Material, Material> _maskedToonByOriginal = new();
     private readonly Dictionary<Renderer, Material[]> _originalsByRenderer = new();
     private readonly List<Renderer> _deadRenderers = new();
     private Environment _savedEnvironment;
@@ -139,6 +143,7 @@ public class StylizedLookController : MonoBehaviour
         _outlineMaterial.SetFloat(LineThicknessId, _settings.outlineThickness);
         _outlineMaterial.SetFloat(DepthThresholdId, _settings.outlineDepthThreshold);
         _outlineMaterial.SetFloat(NormalThresholdId, _settings.outlineNormalThreshold);
+        _outlineMaterial.SetFloat(ThinDistanceId, _settings.outlineThinDistance);
         _outlinePass = new StylizedOutlinePass(_outlineMaterial);
         UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += HandleBeginCameraRendering;
     }
@@ -254,9 +259,10 @@ public class StylizedLookController : MonoBehaviour
 
             var materials = renderer.sharedMaterials;
             Material[] converted = null;
+            bool masked = _settings.simplifyCharacterOutlines && IsCharacter(renderer);
             for (int i = 0; i < materials.Length; i++)
             {
-                var toon = GetToonMaterial(materials[i]);
+                var toon = GetToonMaterial(materials[i], masked);
                 if (toon == null)
                     continue;
 
@@ -285,13 +291,22 @@ public class StylizedLookController : MonoBehaviour
         }
     }
 
+    // Oyuncu karakteri ya da müşteri mi (konturu sadeleştirilecek küçük, ayrıntılı modeller).
+    private static bool IsCharacter(Renderer renderer)
+    {
+        return renderer.GetComponentInParent<PlayerCharacterVisual>() != null
+            || renderer.GetComponentInParent<Customer>() != null;
+    }
+
     // Opak kaynak-shader materyali için (bir kez üretilen) toon kopyası; çevrilmeyecekse null.
-    private Material GetToonMaterial(Material original)
+    // masked: kontur maskesi açık kopya (yalnızca dış hat çizilir).
+    private Material GetToonMaterial(Material original, bool masked)
     {
         if (original == null || original.shader != _sourceShader || original.renderQueue >= (int)UnityEngine.Rendering.RenderQueue.AlphaTest)
             return null;
 
-        if (_toonByOriginal.TryGetValue(original, out var toon) && toon != null)
+        var cache = masked ? _maskedToonByOriginal : _toonByOriginal;
+        if (cache.TryGetValue(original, out var toon) && toon != null)
             return toon;
 
         toon = new Material(_settings.toonShader) { name = original.name + " (toon)", hideFlags = HideFlags.DontSave };
@@ -311,8 +326,9 @@ public class StylizedLookController : MonoBehaviour
         toon.SetColor(RimColorId, _settings.rimColor);
         toon.SetFloat(RimIntensityId, _settings.rimIntensity);
         toon.SetFloat(RimPowerId, _settings.rimPower);
+        toon.SetFloat(OutlineMaskId, masked ? 1f : 0f);
         toon.enableInstancing = original.enableInstancing;
-        _toonByOriginal[original] = toon;
+        cache[original] = toon;
         return toon;
     }
 

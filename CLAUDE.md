@@ -951,7 +951,10 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   **Kontur çizgileri** (`StylizedOutline.shader`, kör görüşle aynı derinlik+normal kenar bulma, sahnenin üstüne
   saydam bindirilir): renderer asset'ine feature EKLEMEDEN, `RenderPipelineManager.beginCameraRendering` içinde
   `scriptableRenderer.EnqueuePass(StylizedOutlinePass)` ile her kare kuyruğa eklenir (Render Graph geçişi;
-  `ConfigureInput(Depth | Normal)`). Görünüm kapanınca abonelik kalkar.
+  `ConfigureInput(Depth | Normal)`). Görünüm kapanınca abonelik kalkar. **Karakterlerde yalnızca dış hat:** küçük
+  ve kıvrımlı ayrıntılarda (parmak, göz, kasa tuşları) normal kenarları birbirine girip modeli karartıyordu; toon
+  shader karakter/müşteri yüzeylerinde stencil'in 1. bitini yazar (`_OutlineMask`), kontur geçişi o piksellerde
+  yalnızca derinlik kenarını çizer (iki geçiş, stencil Equal / NotEqual; geçişe derinlik-stencil salt okunur bağlanır).
   Sahne, materyal dosyası, proje ayarı değişmez; **klasör silinince iz kalmaz** — proje kodu bu klasöre bağımlı
   yazılmaz. *Editör tuzağı:* yeni bir shader ilk kez çizilirken varyantları arka planda derlenir ve ilk kare yanlış
   (düz, dokusuz) çıkabilir; önizleme bir kez boşa çizilip sonra alınır.

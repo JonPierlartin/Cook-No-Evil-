@@ -41,6 +41,8 @@ klasörünü silmek yeterlidir.**
 | `outlineThickness` | Çizgi kalınlığı (piksel). | 2 |
 | `outlineDepthThreshold` | Derinlik farkı eşiği. Küçük = daha çok çizgi (nesne-arka plan sınırları). | 0,05 |
 | `outlineNormalThreshold` | Yüzey yönü eşiği. Küçük = yumuşak kıvrımlar da çizilir; büyük = yalnız keskin köşeler. | 0,4 |
+| `outlineThinDistance` | Bu mesafeden (m) uzaktaki çizgiler 1 piksele iner. | 4 |
+| `simplifyCharacterOutlines` | Karakterlerde ve müşterilerde yalnızca dış hat çizilir; parmak, göz, tuş gibi küçük ayrıntıların iç çizgileri atlanır (yoksa birbirine girip modeli karartıyor). | açık |
 | `overrideEnvironment` | Sis, ortam ışığı ve ışık tonu da değişsin mi (kapalıysa yalnızca shader). | açık |
 | `skyColor / equatorColor / groundColor` | Gradient ortam ışığı: üstten, yandan ve alttan gelen renk. | açık mavi / şeftali / mor-gri |
 | `fogColor` | Mesafe sisinin rengi. | pembe-şeftali |
