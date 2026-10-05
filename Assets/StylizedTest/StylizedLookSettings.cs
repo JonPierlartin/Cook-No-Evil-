@@ -21,6 +21,17 @@ public class StylizedLookSettings : ScriptableObject
     [Range(0f, 2f)] public float rimIntensity = 0.35f;
     [Range(0.5f, 8f)] public float rimPower = 3f;
 
+    [Header("Kontur çizgileri (geometrinin kenarlarına ince koyu çizgi)")]
+    public bool outlineEnabled = true;
+    public Shader outlineShader;
+    public Color outlineColor = new(0.05f, 0.04f, 0.06f, 1f);
+    [Tooltip("Çizgi kalınlığı (piksel).")]
+    [Min(1f)] public float outlineThickness = 2f;
+    [Tooltip("Derinlik farkı eşiği (göz derinliğinin oranı). Küçük = daha çok çizgi.")]
+    public float outlineDepthThreshold = 0.05f;
+    [Tooltip("Yüzey yönü farkı eşiği. Küçük = yumuşak kıvrımlar da çizilir.")]
+    public float outlineNormalThreshold = 0.4f;
+
     [Header("Ortam (görünüm açıkken; kapanınca eski değerler geri gelir)")]
     public bool overrideEnvironment = true;
     public Color skyColor = new(0.62f, 0.74f, 0.95f);

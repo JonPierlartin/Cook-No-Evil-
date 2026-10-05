@@ -5,6 +5,8 @@ using UnityEngine.UI;
 // DENEME — stilize (toon) görünümü çalışma zamanında uygular. Kendini kurar (sahneye nesne eklemek gerekmez):
 // yerel oyuncunun rolü izinli rollerdense (Komi, Kasiyer) ve ayar açıksa, sahnedeki opak URP Lit materyallerini toon
 // kopyalarıyla DEĞİŞTİRİR ve ortamı (sis, gradient ortam ışığı, ışık tonu) ayarlar; kapanınca hepsini geri alır.
+// Kontur çizgileri (ayar açıksa) her kare kameranın renderer'ına eklenen bir geçişle çizilir (StylizedOutlinePass);
+// renderer asset'ine feature eklenmez.
 // Materyal dosyalarına dokunulmaz — değişen yalnızca renderer'ların o anki materyal listesidir.
 // Ayar yereldir (PlayerPrefs); ESC ayarlar kartına çalışma zamanında bir kutucuk satırı eklenir.
 // Kaldırmak için: Assets/StylizedTest klasörünü sil.
@@ -24,6 +26,10 @@ public class StylizedLookController : MonoBehaviour
     private static readonly int RimColorId = Shader.PropertyToID("_RimColor");
     private static readonly int RimIntensityId = Shader.PropertyToID("_RimIntensity");
     private static readonly int RimPowerId = Shader.PropertyToID("_RimPower");
+    private static readonly int LineColorId = Shader.PropertyToID("_LineColor");
+    private static readonly int LineThicknessId = Shader.PropertyToID("_LineThickness");
+    private static readonly int DepthThresholdId = Shader.PropertyToID("_DepthThreshold");
+    private static readonly int NormalThresholdId = Shader.PropertyToID("_NormalThreshold");
 
     private struct Environment
     {
@@ -46,6 +52,8 @@ public class StylizedLookController : MonoBehaviour
     private bool _applied;
     private float _nextScan;
     private SettingsMenuUI _decoratedMenu;
+    private Material _outlineMaterial;
+    private StylizedOutlinePass _outlinePass;
 
     // Oyuncunun yerel tercihi (varsayılan açık: deneme görülsün diye).
     public static bool Enabled
@@ -110,10 +118,46 @@ public class StylizedLookController : MonoBehaviour
         return System.Array.IndexOf(_settings.roles, RoleManager.Instance.LocalRole) >= 0;
     }
 
+    // Görünüm açıkken her oyun kamerasının renderer'ına kontur geçişi eklenir (kuyruk her kare boşalır).
+    private void HandleBeginCameraRendering(UnityEngine.Rendering.ScriptableRenderContext context, Camera camera)
+    {
+        if (_outlinePass == null || camera.cameraType != CameraType.Game)
+            return;
+
+        var data = camera.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        if (data != null && data.scriptableRenderer != null)
+            data.scriptableRenderer.EnqueuePass(_outlinePass);
+    }
+
+    private void StartOutline()
+    {
+        if (!_settings.outlineEnabled || _settings.outlineShader == null)
+            return;
+
+        _outlineMaterial = new Material(_settings.outlineShader) { hideFlags = HideFlags.DontSave };
+        _outlineMaterial.SetColor(LineColorId, _settings.outlineColor);
+        _outlineMaterial.SetFloat(LineThicknessId, _settings.outlineThickness);
+        _outlineMaterial.SetFloat(DepthThresholdId, _settings.outlineDepthThreshold);
+        _outlineMaterial.SetFloat(NormalThresholdId, _settings.outlineNormalThreshold);
+        _outlinePass = new StylizedOutlinePass(_outlineMaterial);
+        UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += HandleBeginCameraRendering;
+    }
+
+    private void StopOutline()
+    {
+        UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= HandleBeginCameraRendering;
+        _outlinePass = null;
+        if (_outlineMaterial != null)
+            Destroy(_outlineMaterial);
+
+        _outlineMaterial = null;
+    }
+
     private void Apply()
     {
         _applied = true;
         _nextScan = 0f;
+        StartOutline();
 
         if (!_settings.overrideEnvironment)
             return;
@@ -152,6 +196,7 @@ public class StylizedLookController : MonoBehaviour
     private void Restore()
     {
         _applied = false;
+        StopOutline();
 
         foreach (var pair in _originalsByRenderer)
         {

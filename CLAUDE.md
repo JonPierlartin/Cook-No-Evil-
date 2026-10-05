@@ -948,6 +948,10 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   README). `StylizedLookController` kendini kurar (`RuntimeInitializeOnLoadMethod`; sahnede nesnesi yok), yerel rol
   Komi/Kasiyer ve ayar açıksa opak URP Lit materyallerini **çalışma zamanında** toon kopyalarıyla değiştirir + sis /
   gradient ortam ışığı uygular, kapanınca geri alır. ESC ayarlar kartına kutucuk satırını da çalışırken ekler.
+  **Kontur çizgileri** (`StylizedOutline.shader`, kör görüşle aynı derinlik+normal kenar bulma, sahnenin üstüne
+  saydam bindirilir): renderer asset'ine feature EKLEMEDEN, `RenderPipelineManager.beginCameraRendering` içinde
+  `scriptableRenderer.EnqueuePass(StylizedOutlinePass)` ile her kare kuyruğa eklenir (Render Graph geçişi;
+  `ConfigureInput(Depth | Normal)`). Görünüm kapanınca abonelik kalkar.
   Sahne, materyal dosyası, proje ayarı değişmez; **klasör silinince iz kalmaz** — proje kodu bu klasöre bağımlı
   yazılmaz. *Editör tuzağı:* yeni bir shader ilk kez çizilirken varyantları arka planda derlenir ve ilk kare yanlış
   (düz, dokusuz) çıkabilir; önizleme bir kez boşa çizilip sonra alınır.

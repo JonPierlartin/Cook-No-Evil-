@@ -21,6 +21,12 @@ MonoBehaviour:
   rimColor: {r: 1, g: 0.93, b: 0.78, a: 1}
   rimIntensity: 0.35
   rimPower: 3
+  outlineEnabled: 1
+  outlineShader: {fileID: 4800000, guid: e28df8d97940c0d49b262808c988669c, type: 3}
+  outlineColor: {r: 0.05, g: 0.04, b: 0.06, a: 1}
+  outlineThickness: 2
+  outlineDepthThreshold: 0.05
+  outlineNormalThreshold: 0.4
   overrideEnvironment: 1
   skyColor: {r: 0.62, g: 0.74, b: 0.95, a: 1}
   equatorColor: {r: 0.95, g: 0.8, b: 0.66, a: 1}
