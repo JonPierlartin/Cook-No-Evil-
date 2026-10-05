@@ -937,6 +937,9 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     kalmıştı → **prefab'da mesh sınırına oturtuldu**. Yeni model geldiğinde ikisi de kontrol edilir.
   - **Eklenen çarpışmalar (sahne örneğinde):** `SM_KitchenDoor` ×2 (yoksa Şef kasaya yürür) ve `SM_Table_02` — yalnızca
     tezgah gövdesi (y ≤ 1,45); raf kısmına collider konmaz, yoksa nişan ışını kaplara ulaşamaz.
+  - **`LobbyCanvas` sahnede kapalı kaydedilmişti** (harita düzenlenirken görüşü açmak için kapatılmış): Play'e
+    basınca menü gelmiyor, yalnızca sahne kamerası görünüyordu. **Başkasının kaydettiği sahne alınırken kök
+    nesnelerin `m_IsActive` değeri önceki commit'le karşılaştırılır** (5 Eki: bu kontrol yapılmadan commit'lendi).
   - **Okunamayan mesh'te yüzey ölçümü:** `mesh.vertices` boş döner (Read/Write kapalı); geçici bir `MeshCollider` +
     `collider.Raycast` ile ölçülür (ızgara yüzeyi ve tezgah üstü böyle ölçüldü).
   - Erişim (editörde, göz 1,98): mutfaktaki 14 hedefin hepsine Şef'in durabileceği yerden nişan ışını ulaşıyor
