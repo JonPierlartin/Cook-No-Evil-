@@ -18,18 +18,4 @@ MonoBehaviour:
   displayName: Bilmiyorum
   description: 
   durationSeconds: 1.5
-  handPose:
-    enabled: 1
-    bothHands: 1
-    anchor: {x: 1, y: 0.46, z: 0.4}
-    anchorToBrow: 0
-    offset: {x: 0.28, y: 0, z: 0}
-    fingerDirection: {x: 0.8, y: 0, z: 0.6}
-    thumbDirection: {x: 0.6, y: 0, z: -0.8}
-    indexCurl: 0.1
-    othersCurl: 0.1
-    thumbCurl: 0.1
-    swing: {x: 0, y: 0.06, z: 0}
-    wagAxis: {x: 0, y: 0, z: 1}
-    wagAngle: 0
-    rate: 1.5
+  proceduralAnimation: {fileID: 11400000, guid: 5b26c59a0e7756442b0ffd4f47bb8073, type: 2}

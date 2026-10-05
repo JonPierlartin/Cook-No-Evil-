@@ -26645,7 +26645,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: f58f18e9f694b3045bac1a4e35ecff7e, type: 3}
-    m_FontSize: 26
+    m_FontSize: 22
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -26656,7 +26656,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "LOB\u0130YE D\xD6N"
+  m_Text: "ANA MEN\xDCYE D\xD6N"
 --- !u!222 &1613914071
 CanvasRenderer:
   m_ObjectHideFlags: 0

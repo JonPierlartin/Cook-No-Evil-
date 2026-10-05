@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9fa79b537b25384abff798288c8d32b, type: 3}
+  m_Name: Claude_El_Emote_ParmakSallama
+  m_EditorClassIdentifier: Assembly-CSharp::ProceduralHandAnimation
+  kind: 2
+  direction: {x: 0, y: 1, z: 0}
+  count: 1
+  pose:
+    enabled: 1
+    bothHands: 0
+    anchor: {x: 0.9, y: 0.52, z: 1}
+    anchorToBrow: 0
+    offset: {x: 0.1, y: 0, z: 0.12}
+    fingerDirection: {x: 0, y: 1, z: 0}
+    thumbDirection: {x: -1, y: 0, z: 0}
+    indexCurl: 0
+    othersCurl: 1
+    thumbCurl: 0.9
+    swing: {x: 0, y: 0, z: 0}
+    wagAxis: {x: 0, y: 0, z: 1}
+    wagAngle: 22
+    rate: 3

@@ -923,6 +923,31 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     rozet + ad + kesik çizgi.
   - **Arayüz önizlemesi Play'siz alınabilir:** geçici bir dünya uzayı Canvas + ortografik kamera + RenderTexture
     (`Canvas.ForceUpdateCanvases` + `LayoutRebuilder` sonrası `cam.Render`); sahne kirlenmez.
+- **El animasyonları: artist klipleri + kodla üretilen yedekler (5 Eki 2026):**
+  - **Öncelik (tek yer: `PlayerSignalDisplay`):** `SignalValue.clip` (artist) → `SignalValue.proceduralAnimation`
+    (kodla üretilen) → `visualPrefab` (yer tutucu işaret). Emote'larda `EmoteDefinition.proceduralAnimation` → yoksa
+    zıplama. Eski satır içi alanlar (`gestureDirection`, `gestureCount`, `EmoteDefinition.handPose`) KALDIRILDI.
+  - **Kodla üretilenler ad verilmiş varlık:** `ProceduralHandAnimation` (SO; tür Point / Count / Pose) —
+    `Assets/NewAssets/ClaudeHandAnimation/Claude_El_{Yon_Yukari|Asagi|Sol|Sag, Sayi_1..5, Emote_AskerSelami|
+    ParmakSallama|Bilmiyorum}.asset`. `ProceduralCharacterAnimator.Play(anim, süre)` türe göre oynatır. Artist klibi
+    olan sinyalde yedek olarak atanmış durur (klip alanı boşaltılırsa geri gelir).
+  - **Artist klipleri:** `Assets/NewAssets/HandAnimations/CookNoEvilCharacters_Animation_*.fbx` (ketçap üstünde, yalnız
+    SAĞ el = `rig.001`; her dosyada Blender'ın eski aksiyonları da geliyor, **doğrusu dosyadaki en yeni aksiyon**:
+    Hand1→`Action.001`, Hand2→`Action`, Hand3→`.002`, Hand4→`.003`, Up→`.004`, Down/Left→`Action`; parmak
+    açıklığı örneklenerek doğrulandı). Atama: `Sayi_1..4`, `Yon_Yukari/Asagi/Sol`; **`Yon_Sag` = Sol klibi aynalı**
+    (`clipMirrored`, sol elle). **5 için klip yok** → kodla üretilen (iki el). Klipler doğrudan FBX alt varlığı
+    olarak bağlı (kopya yok); FBX yeniden dışa aktarılırsa aksiyon adları değişebilir, atamalar kontrol edilir.
+  - **Oynatma (`ProceduralCharacterAnimator.PlayClip`):** Animator yok; klip gizli bir iskelet kopyasında
+    (`Prefabs/Characters/ElKlipIskeleti.prefab` = FBX'in `rig.001` düğümü, yalnız Transform) `SampleAnimation` ile
+    örneklenir. El yönü üç kemik noktasından (bilek, orta parmak kökü, başparmak kökü) kurulur — kemik eksenlerine
+    ve iskeletin −100 ölçeğine bağlı değil; parmak kemiklerinin yerel dönüşü ada göre ele kopyalanır. **Konum mutlak
+    alınmaz:** bileğin klipteki dinlenmeye göre yer değiştirmesi bizim elin dinlenme yerine eklenir (klip ketçaba
+    göre yapıldı; Hamburger/Kasa'da da çalışsın). Artist dosyası −Z'ye bakar → yarım tur (x, z işaret değiştirir).
+  - **Yükseltme (`liftClipToGestureHeight`, açık):** kliplerde el bel hizasında kalıyor (dünya ≈1,2–1,4; pencere
+    açıklığı 1,50–2,30) — uç noktada el `gestureCenter.y`'ye kaldırılır, yoksa Komi pencereden göremez.
+  - **Hız:** klipler ~3 sn; `SignalValue.clipSpeed` = 2 → ~1,5 sn (GDD 3.6.0 hedefi 1,2–1,5; sipariş süresi formülü
+    sinyal başına bu süreye göre). Süre = `clip.length / clipSpeed`.
+  - `AnimationClip.SampleAnimation` çalışma zamanında kullanılıyor — **build'de doğrulanmadı** (editörde önizlendi).
 - **Sayı jesti (4 Eki 2026):** `SignalValue.gestureCount` > 0 ise `PlayerSignalDisplay` →
   `ProceduralCharacterAnimator.PlayCount`: eller jest merkezinde (pencereden görünen yükseklik), avuç karşıya, sayı
   kadar parmak açık. **El modeli dört parmaklı** (işaret, orta, serçe, başparmak — `HandPose.Group`'a `Pinky`

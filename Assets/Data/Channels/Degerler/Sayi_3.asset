@@ -16,8 +16,9 @@ MonoBehaviour:
   icon: {fileID: 0}
   useWheelAngle: 0
   wheelAngle: 0
-  gestureDirection: {x: 0, y: 0, z: 0}
-  gestureCount: 3
   visualPrefab: {fileID: 8590031807063433760, guid: 1856a4b2c11de7d4694669689b1e4a4a, type: 3}
-  clip: {fileID: 0}
+  clip: {fileID: 8035156985772559433, guid: 4405d418910d6c048bc37a5e85401753, type: 3}
+  clipSpeed: 2
+  clipMirrored: 0
+  proceduralAnimation: {fileID: 11400000, guid: 7f4679aa2c7cd884eaf9dd3c5c9b0ad0, type: 2}
   durationSeconds: 1.3

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-// Bir emote'un el hareketi — VERİDİR (EmoteDefinition'da durur); ProceduralCharacterAnimator oynatır. Karakterlerde
+// Bir emote'un el hareketi — VERİDİR (ProceduralHandAnimation varlığında durur); ProceduralCharacterAnimator oynatır. Karakterlerde
 // iskelet/klip olmadığı için emote, elin gideceği yer + yönü + parmak kıvrımı + küçük bir salınım olarak tarif
 // edilir; yeni bir emote kod değil veri ekler. Değerler SAĞ EL içindir ve karakterin yerel uzayındadır; sol elde
 // X ekseninde aynalanır. Elin yeri gövdenin sınır kutusuna ORANLA verilir (hamburger, ketçap ve kasa çok farklı

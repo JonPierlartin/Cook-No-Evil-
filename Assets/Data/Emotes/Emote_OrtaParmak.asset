@@ -18,16 +18,4 @@ MonoBehaviour:
   displayName: Orta Parmak
   description: 
   durationSeconds: 1.3
-  handPose:
-    enabled: 0
-    bothHands: 0
-    offset: {x: 0, y: 0, z: 0}
-    fingerDirection: {x: 0, y: 1, z: 0}
-    thumbDirection: {x: -1, y: 0, z: 0}
-    indexCurl: 0
-    othersCurl: 0
-    thumbCurl: 0
-    swing: {x: 0, y: 0, z: 0}
-    wagAxis: {x: 0, y: 0, z: 1}
-    wagAngle: 0
-    rate: 2
+  proceduralAnimation: {fileID: 0}

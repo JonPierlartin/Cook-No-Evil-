@@ -17,15 +17,16 @@ public class SignalValue : ScriptableObject
     [SerializeField, Range(0f, 360f)] private float wheelAngle;
 
     [Header("Oynatma (GDD 3.6.0)")]
-    [Tooltip("Karakterin eliyle işaret edeceği yön (karakterin yerel uzayı: yukarı (0,1,0), kendi sağı (1,0,0)). " +
-        "Sıfırdan farklıysa sinyal karakterin jestiyle oynar; sıfırsa aşağıdaki yer tutucu işaret gösterilir.")]
-    [SerializeField] private Vector3 gestureDirection;
-    [Tooltip("Karakterin parmaklarıyla göstereceği sayı (0 = yok). Sıfırdan büyükse sinyal o kadar parmak açılarak oynar.")]
-    [SerializeField, Min(0)] private int gestureCount;
     [Tooltip("Yer tutucu işaret: sinyal oynarken Kasiyer'in üzerinde gösterilir. Collider taşımamalı. Animasyon gelince boşaltılır.")]
     [SerializeField] private GameObject visualPrefab;
-    [Tooltip("Final animasyon klibi. Atanırsa süre klipten okunur.")]
+    [Tooltip("Artist'in el animasyonu klibi. Atanırsa sinyal bununla oynar ve süre klipten okunur.")]
     [SerializeField] private AnimationClip clip;
+    [Tooltip("Klibin oynatma hızı (1 = olduğu gibi). Süre = klip uzunluğu / hız.")]
+    [SerializeField, Min(0.1f)] private float clipSpeed = 1f;
+    [Tooltip("Klip sağ el için yapılmıştır; işaretliyse aynalanıp SOL elle oynatılır (ör. Sol klibinden Sağ).")]
+    [SerializeField] private bool clipMirrored;
+    [Tooltip("Klip yoksa oynayan, kodla üretilen el animasyonu. O da yoksa yer tutucu işaret gösterilir.")]
+    [SerializeField] private ProceduralHandAnimation proceduralAnimation;
     [Tooltip("Klip yokken sinyalin süresi (sn). GDD üretim hedefi 1,2–1,5 sn.")]
     [SerializeField, Min(0.05f)] private float durationSeconds = 1.3f;
 
@@ -34,10 +35,10 @@ public class SignalValue : ScriptableObject
     public bool UseWheelAngle => useWheelAngle;
     public float WheelAngle => wheelAngle;
     public GameObject VisualPrefab => visualPrefab;
-    public Vector3 GestureDirection => gestureDirection;
-    public int GestureCount => gestureCount;
     public AnimationClip Clip => clip;
+    public bool ClipMirrored => clipMirrored;
+    public ProceduralHandAnimation ProceduralAnimation => proceduralAnimation;
 
-    // Sinyalin oynama süresi: klip varsa klibin uzunluğu, yoksa verideki süre.
-    public float Duration => clip != null ? clip.length : durationSeconds;
+    // Sinyalin oynama süresi: klip varsa klibin (hıza bölünmüş) uzunluğu, yoksa verideki süre.
+    public float Duration => clip != null ? clip.length / clipSpeed : durationSeconds;
 }

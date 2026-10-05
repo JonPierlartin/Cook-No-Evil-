@@ -55,17 +55,18 @@ public class PlayerSignalDisplay : NetworkBehaviour
         Clear();
 
         // Jest verisi olan sinyal (yön, sayı) karakterin eliyle oynar; olmayan yer tutucu işaretle gösterilir.
+        // Öncelik: artist klibi > kodla üretilen animasyon > yer tutucu işaret.
         if (character != null && character.Animator != null)
         {
-            if (signal.GestureDirection != Vector3.zero)
+            if (signal.Clip != null)
             {
-                character.Animator.PlayGesture(signal.GestureDirection, signal.Duration);
+                character.Animator.PlayClip(signal.Clip, signal.Duration, signal.ClipMirrored);
                 return;
             }
 
-            if (signal.GestureCount > 0)
+            if (signal.ProceduralAnimation != null)
             {
-                character.Animator.PlayCount(signal.GestureCount, signal.Duration);
+                character.Animator.Play(signal.ProceduralAnimation, signal.Duration);
                 return;
             }
         }

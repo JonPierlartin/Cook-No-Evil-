@@ -9646,6 +9646,7 @@ MonoBehaviour:
   bodySway: 3
   handSwing: 0.14
   responsiveness: 10
+  stepSoundMinWeight: 0.25
   idleBob: 0.012
   idleRate: 0.35
   gestureCenter: {x: 0, y: 1.55, z: 0.55}
@@ -9655,6 +9656,14 @@ MonoBehaviour:
   gesturePumpRate: 2
   gestureBlendTime: 0.18
   browPoint: {x: 0.13, y: 1.41, z: 0.26}
+  clipRigPrefab: {fileID: 2950936791678831011, guid: 7e6d97a4478c71d4f9fd78bc1dc7cb10, type: 3}
+  clipWristBone: DEF-hand.L
+  clipKnuckleBone: DEF-f_middle.01.L
+  clipThumbBone: DEF-thumb.01.L
+  clipFingerPrefixes:
+  - DEF-f_
+  - DEF-thumb
+  liftClipToGestureHeight: 1
   holdPalmOffset: 0.060267746
   holdPalmForward: 0.08875053
   holdBlendTime: 0.14

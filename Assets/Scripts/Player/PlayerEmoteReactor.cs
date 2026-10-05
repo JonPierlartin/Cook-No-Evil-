@@ -94,9 +94,9 @@ public class PlayerEmoteReactor : NetworkBehaviour
         StopReaction();
         var emote = availableEmotes[emoteIndex];
         // El hareketi tanımlı emote karakterin elleriyle oynar; tanımlı değilse yer tutucu tepki (zıplama).
-        if (emote.HandPose.Enabled && character != null && character.Animator != null)
+        if (emote.ProceduralAnimation != null && character != null && character.Animator != null)
         {
-            character.Animator.PlayEmote(emote.HandPose, emote.Duration);
+            character.Animator.Play(emote.ProceduralAnimation, emote.Duration);
             return;
         }
 

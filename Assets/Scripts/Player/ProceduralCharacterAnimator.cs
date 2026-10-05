@@ -10,11 +10,15 @@ using UnityEngine;
 //    yerinden aşağı inmez (pencere pervazının altında kalıp görünmez olmasın). Süre dışarıdan gelir.
 //  - Sayı (sayı sinyali): eller jest merkezinde, avuç karşıya; sayı kadar parmak açılır (bir elde dört parmak
 //    var; fazlası sol ele taşar).
+//  - Klip (artist'in el animasyonu): klip, gizli bir iskelet kopyasında örneklenir; bileğin dinlenmeye göre
+//    yer değiştirmesi, elin yönü ve parmak dönüşleri karakterin eline aktarılır. Klip tek karakter (ketçap) üstünde
+//    ve sağ el için yapıldığından konum MUTLAK alınmaz: hareket bizim elin dinlenme yerine eklenir, böylece üç
+//    karakterde de çalışır; aynalanınca sol elle oynar.
 //  - Emote (genel çark, GDD 3.6.0): el hareketi veridir (EmoteHandPose); el oraya gider, parmaklar pozu alır,
 //    salınır. Tek elli emote sağ elle oynar; sağ elde öğe varsa sol elle (aynalı).
 //  - Tutma: elde öğe varken sağ el öğenin altına girer (avuç yukarı, parmaklar yarı kapalı). Alırken el öğeyle
 //    birlikte önden gelir; bırakırken el öne uzanıp yerine döner.
-// Öncelik: jest > emote > tutma > yürüme salınımı. Tamamen yerel sunum: ağ verisi yoktur; uzak oyuncularda hız,
+// Öncelik: klip > jest > emote > tutma > yürüme salınımı. Tamamen yerel sunum: ağ verisi yoktur; uzak oyuncularda hız,
 // NetworkTransform'un taşıdığı konumdan ölçülür.
 public class ProceduralCharacterAnimator : MonoBehaviour
 {
@@ -75,6 +79,20 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         "yerleşir; sol el için X'te aynalanır. Karakterlerin yüzü gövdenin farklı yerinde olduğu için prefab başınadır.")]
     [SerializeField] private Vector3 browPoint = new(0.15f, 1.35f, 0.3f);
 
+    [Header("Klip (artist'in el animasyonu)")]
+    [Tooltip("Kliplerin örneklendiği gizli iskelet: kökünün altında klip yollarının başladığı düğüm (rig.001) durur. " +
+        "Görünmez; yalnızca kemik dönüşümleri okunur.")]
+    [SerializeField] private Transform clipRigPrefab;
+    [Tooltip("İskelette bilek, orta parmak kökü ve başparmak kökü kemiklerinin adları (elin yeri ve yönü bunlardan çıkar).")]
+    [SerializeField] private string clipWristBone = "DEF-hand.L";
+    [SerializeField] private string clipKnuckleBone = "DEF-f_middle.01.L";
+    [SerializeField] private string clipThumbBone = "DEF-thumb.01.L";
+    [Tooltip("Parmak kemiklerinin ad ön ekleri: bu adlı kemiklerin dönüşü iskeletten ele kopyalanır.")]
+    [SerializeField] private string[] clipFingerPrefixes = { "DEF-f_", "DEF-thumb" };
+    [Tooltip("Açıksa klibin en uç noktası jest merkezinin yüksekliğine kaldırılır. Artist klipleri bel hizasında " +
+        "oynuyor; karşıdaki oyuncu pencere pervazının üstünden görebilsin diye el yukarı taşınır.")]
+    [SerializeField] private bool liftClipToGestureHeight = true;
+
     [Header("Tutma (elde öğe)")]
     [Tooltip("Avuç yüzeyinin, öğenin tabanının ne kadar altında durduğu (m).")]
     [SerializeField] private float holdPalmOffset = 0.02f;
@@ -130,6 +148,23 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     private int _count;
     private float _countElapsed;
     private float _countDuration;
+
+    private struct BonePair
+    {
+        public Transform Hand;
+        public Transform Rig;
+    }
+
+    private AnimationClip _clip;
+    private float _clipElapsed;
+    private float _clipDuration;
+    private bool _clipMirrored;
+    private float _clipLift;
+    private float _clipPeakDistance;
+    private Vector3 _clipWristStart;
+    private Transform _clipRig;
+    private Transform _clipWrist, _clipKnuckle, _clipThumb;
+    private BonePair[] _leftFingerPairs, _rightFingerPairs;
 
     private EmoteHandPose _emote;
     private float _emoteElapsed;
@@ -192,6 +227,120 @@ public class ProceduralCharacterAnimator : MonoBehaviour
             _emoteElapsed = Mathf.Max(_emoteElapsed, _emoteDuration - gestureBlendTime);
         if (_count > 0)
             _countElapsed = Mathf.Max(_countElapsed, _countDuration - gestureBlendTime);
+        if (_clip != null)
+            _clipElapsed = Mathf.Max(_clipElapsed, _clipDuration - gestureBlendTime);
+    }
+
+    // Kodla üretilen el animasyonu (ad verilmiş veri): türüne göre yön / sayı / poz oynatır.
+    public void Play(ProceduralHandAnimation animation, float duration)
+    {
+        if (animation == null)
+            return;
+
+        switch (animation.AnimationKind)
+        {
+            case ProceduralHandAnimation.Kind.Point:
+                PlayGesture(animation.Direction, duration);
+                break;
+            case ProceduralHandAnimation.Kind.Count:
+                PlayCount(animation.Count, duration);
+                break;
+            default:
+                PlayEmote(animation.Pose, duration);
+                break;
+        }
+    }
+
+    // Artist'in el klibi. duration: klibin oynayacağı süre (hız buradan çıkar). mirrored: sol elle, aynalı.
+    public void PlayClip(AnimationClip clip, float duration, bool mirrored)
+    {
+        if (clip == null || duration <= 0f || !EnsureClipRig())
+            return;
+
+        _clip = clip;
+        _clipElapsed = 0f;
+        _clipDuration = duration;
+        _clipMirrored = mirrored;
+
+        // Klibin dinlenme noktası ve en uzak noktası (bir kez, başlarken): el oraya vardığında tam yüksekliğe çıkar.
+        _clipWristStart = SampleWrist(0f);
+        var peakDelta = Vector3.zero;
+        const int probes = 16;
+        for (int i = 1; i < probes; i++)
+        {
+            var delta = SampleWrist(clip.length * i / probes) - _clipWristStart;
+            if (delta.sqrMagnitude > peakDelta.sqrMagnitude)
+                peakDelta = delta;
+        }
+
+        _clipPeakDistance = peakDelta.magnitude;
+        var rest = mirrored ? _leftHandRest : _rightHandRest;
+        _clipLift = liftClipToGestureHeight ? Mathf.Max(0f, gestureCenter.y - (rest.Position.y + peakDelta.y)) : 0f;
+    }
+
+    private bool EnsureClipRig()
+    {
+        if (_clipRig != null)
+            return true;
+
+        if (clipRigPrefab == null)
+            return false;
+
+        _clipRig = Instantiate(clipRigPrefab, transform);
+        _clipRig.localPosition = Vector3.zero;
+        _clipRig.localRotation = Quaternion.identity;
+
+        var rigBones = new System.Collections.Generic.Dictionary<string, Transform>();
+        foreach (var bone in _clipRig.GetComponentsInChildren<Transform>(true))
+        {
+            if (!rigBones.ContainsKey(bone.name))
+                rigBones.Add(bone.name, bone);
+        }
+
+        rigBones.TryGetValue(clipWristBone, out _clipWrist);
+        rigBones.TryGetValue(clipKnuckleBone, out _clipKnuckle);
+        rigBones.TryGetValue(clipThumbBone, out _clipThumb);
+        if (_clipWrist == null || _clipKnuckle == null || _clipThumb == null)
+        {
+            Debug.LogError($"[ProceduralCharacterAnimator] '{name}': klip iskeletinde bilek/parmak kemikleri bulunamadı; klipler oynatılamaz.", this);
+            Destroy(_clipRig.gameObject);
+            _clipRig = null;
+            return false;
+        }
+
+        _leftFingerPairs = CollectFingerPairs(leftHand, rigBones);
+        _rightFingerPairs = CollectFingerPairs(rightHand, rigBones);
+        return true;
+    }
+
+    private BonePair[] CollectFingerPairs(Transform hand, System.Collections.Generic.Dictionary<string, Transform> rigBones)
+    {
+        var pairs = new System.Collections.Generic.List<BonePair>();
+        foreach (var bone in hand.GetComponentsInChildren<Transform>(true))
+        {
+            bool isFinger = false;
+            foreach (var prefix in clipFingerPrefixes)
+                isFinger |= bone.name.StartsWith(prefix);
+
+            if (isFinger && rigBones.TryGetValue(bone.name, out var rigBone))
+                pairs.Add(new BonePair { Hand = bone, Rig = rigBone });
+        }
+
+        return pairs.ToArray();
+    }
+
+    // Klibi 'time' anında iskelete uygular ve bileğin karakter uzayındaki yerini döndürür.
+    private Vector3 SampleWrist(float time)
+    {
+        _clip.SampleAnimation(_clipRig.gameObject, time);
+        return ClipToCharacter(_clipRig.InverseTransformPoint(_clipWrist.position));
+    }
+
+    // Artist dosyasında karakter -Z'ye bakar; bizde +Z. Y ekseni çevresinde yarım tur (x ve z işaret değiştirir);
+    // aynalı oynatmada x bir kez daha çevrilir.
+    private Vector3 ClipToCharacter(Vector3 value)
+    {
+        return new Vector3(_clipMirrored ? value.x : -value.x, value.y, -value.z);
     }
 
     // Sayı sinyali: 'count' kadar parmak açılır.
@@ -295,6 +444,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
             _emoteElapsed += dt;
         if (_count > 0)
             _countElapsed += dt;
+        if (_clip != null)
+            _clipElapsed += dt;
 
         // Eller karşı ayakla birlikte salınır.
         ApplyHand(leftHand, leftHandPose, ref _leftCurl, _leftHandRest, _phase + Mathf.PI, direction, dt, false);
@@ -304,6 +455,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
             _emote = null;
         if (_count > 0 && _countElapsed >= _countDuration)
             _count = 0;
+        if (_clip != null && _clipElapsed >= _clipDuration)
+            _clip = null;
     }
 
     private void ApplyFoot(Transform foot, Rest rest, float phase, Vector3 direction)
@@ -353,6 +506,11 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         if (hand == _gestureHand)
             ApplyGesture(side, dt, ref position, ref rotation, ref targetCurl);
 
+        bool clipHand = _clip != null && (side < 0f) == _clipMirrored;
+        float clipBlend = 0f;
+        if (clipHand)
+            clipBlend = ApplyClip(side, ref position, ref rotation);
+
         hand.localPosition = position;
         hand.localRotation = rotation;
 
@@ -363,6 +521,40 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         curl.Thumb = Mathf.MoveTowards(curl.Thumb, targetCurl.Thumb, step);
         if (pose != null)
             pose.Apply(curl.Index, curl.Others, curl.Pinky, curl.Thumb);
+
+        // Klip oynarken parmakları klip sürer (kemik dönüşleri iskeletten kopyalanır).
+        if (clipHand)
+        {
+            foreach (var pair in side < 0f ? _leftFingerPairs : _rightFingerPairs)
+                pair.Hand.localRotation = Quaternion.Slerp(pair.Hand.localRotation, pair.Rig.localRotation, clipBlend);
+        }
+    }
+
+    // Klibin o anki bilek hareketini ve el yönünü uygular; geçiş ağırlığını döndürür.
+    private float ApplyClip(float side, ref Vector3 position, ref Quaternion rotation)
+    {
+        float blendIn = Mathf.Clamp01(_clipElapsed / gestureBlendTime);
+        float blendOut = Mathf.Clamp01((_clipDuration - _clipElapsed) / gestureBlendTime);
+        float blend = Mathf.SmoothStep(0f, 1f, Mathf.Min(blendIn, blendOut));
+
+        float time = Mathf.Clamp01(_clipElapsed / _clipDuration) * _clip.length;
+        var wrist = SampleWrist(time);
+        var knuckle = ClipToCharacter(_clipRig.InverseTransformPoint(_clipKnuckle.position));
+        var thumb = ClipToCharacter(_clipRig.InverseTransformPoint(_clipThumb.position));
+
+        // Konum: bileğin klipteki dinlenmeye göre yer değiştirmesi, bizim elin dinlenme yerine eklenir. El uzaklaştıkça
+        // jest yüksekliğine doğru kaldırılır (uç noktada tam).
+        var delta = wrist - _clipWristStart;
+        float reach = _clipPeakDistance > 0.0001f ? Mathf.Clamp01(delta.magnitude / _clipPeakDistance) : 0f;
+        var rest = side < 0f ? _leftHandRest : _rightHandRest;
+        var clipPosition = rest.Position + delta + Vector3.up * (_clipLift * Mathf.SmoothStep(0f, 1f, reach));
+
+        // Yön: parmaklar bilekten orta parmak köküne, başparmak tarafı bilekten başparmak köküne bakar.
+        var clipRotation = Quaternion.LookRotation(knuckle - wrist, thumb - wrist);
+
+        position = Vector3.Lerp(position, clipPosition, blend);
+        rotation = Quaternion.Slerp(rotation, clipRotation, blend);
+        return blend;
     }
 
     private void ApplyHold(float side, float dt, ref Vector3 position, ref Quaternion rotation, ref Curl targetCurl)

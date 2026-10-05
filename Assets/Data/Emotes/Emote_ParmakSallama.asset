@@ -18,18 +18,4 @@ MonoBehaviour:
   displayName: Parmak Sallama
   description: 
   durationSeconds: 1.5
-  handPose:
-    enabled: 1
-    bothHands: 0
-    anchor: {x: 0.9, y: 0.52, z: 1}
-    anchorToBrow: 0
-    offset: {x: 0.1, y: 0, z: 0.12}
-    fingerDirection: {x: 0, y: 1, z: 0}
-    thumbDirection: {x: -1, y: 0, z: 0}
-    indexCurl: 0
-    othersCurl: 1
-    thumbCurl: 0.9
-    swing: {x: 0, y: 0, z: 0}
-    wagAxis: {x: 0, y: 0, z: 1}
-    wagAngle: 22
-    rate: 3
+  proceduralAnimation: {fileID: 11400000, guid: 7e9aea6619708f944b92375a2d74b68f, type: 2}

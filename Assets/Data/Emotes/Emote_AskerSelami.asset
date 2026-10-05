@@ -18,18 +18,4 @@ MonoBehaviour:
   displayName: "Asker Selam\u0131"
   description: 
   durationSeconds: 1.5
-  handPose:
-    enabled: 1
-    bothHands: 0
-    anchor: {x: 1, y: 0.76, z: 0.4}
-    anchorToBrow: 1
-    offset: {x: 0.17, y: -0.08, z: 0.06}
-    fingerDirection: {x: -0.75, y: 0.6, z: 0.1}
-    thumbDirection: {x: 0, y: 0, z: -1}
-    indexCurl: 0
-    othersCurl: 0
-    thumbCurl: 0.3
-    swing: {x: 0, y: 0, z: 0}
-    wagAxis: {x: 0, y: 0, z: 1}
-    wagAngle: 0
-    rate: 2
+  proceduralAnimation: {fileID: 11400000, guid: f41203a17c7aa144d955281955e1943f, type: 2}

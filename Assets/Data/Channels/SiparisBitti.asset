@@ -14,6 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SignalValue
   displayName: "Sipari\u015F Bitti"
   icon: {fileID: 0}
+  useWheelAngle: 0
+  wheelAngle: 0
   visualPrefab: {fileID: 8205188134222151099, guid: d839d39dbc447614eabaadc7618d0bce, type: 3}
   clip: {fileID: 0}
+  clipSpeed: 1
+  clipMirrored: 0
+  proceduralAnimation: {fileID: 0}
   durationSeconds: 1.3

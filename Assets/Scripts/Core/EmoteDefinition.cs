@@ -18,8 +18,8 @@ public class EmoteDefinition : ScriptableObject
     // Tepkinin süresi (GDD 3.6.0: hedef 1,2–1,5 sn). "Bitmeden yenisi başlatılamaz" kuralı ve görsel bunu okur;
     // final animasyon geldiğinde klip uzunluğuyla değiştirilir.
     [SerializeField, Min(0.1f)] private float durationSeconds = 1.3f;
-    [Tooltip("Emote'un el hareketi. Kapalıysa yer tutucu tepki (zıplama) oynar.")]
-    [SerializeField] private EmoteHandPose handPose = new();
+    [Tooltip("Emote'un kodla üretilen el animasyonu. Boşsa yer tutucu tepki (zıplama) oynar.")]
+    [SerializeField] private ProceduralHandAnimation proceduralAnimation;
 
     public string LocalizationKey => localizationKey;
     public Sprite Icon => icon;
@@ -27,5 +27,5 @@ public class EmoteDefinition : ScriptableObject
     public string DisplayName => displayName;
     public string Description => description;
     public float Duration => durationSeconds;
-    public EmoteHandPose HandPose => handPose;
+    public ProceduralHandAnimation ProceduralAnimation => proceduralAnimation;
 }
