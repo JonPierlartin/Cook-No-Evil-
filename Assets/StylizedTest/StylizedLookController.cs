@@ -1,0 +1,325 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+// DENEME — stilize (toon) görünümü çalışma zamanında uygular. Kendini kurar (sahneye nesne eklemek gerekmez):
+// yerel oyuncunun rolü izinli rollerdense (Komi, Kasiyer) ve ayar açıksa, sahnedeki opak URP Lit materyallerini toon
+// kopyalarıyla DEĞİŞTİRİR ve ortamı (sis, gradient ortam ışığı, ışık tonu) ayarlar; kapanınca hepsini geri alır.
+// Materyal dosyalarına dokunulmaz — değişen yalnızca renderer'ların o anki materyal listesidir.
+// Ayar yereldir (PlayerPrefs); ESC ayarlar kartına çalışma zamanında bir kutucuk satırı eklenir.
+// Kaldırmak için: Assets/StylizedTest klasörünü sil.
+public class StylizedLookController : MonoBehaviour
+{
+    private const string PrefKey = "stylizedTest.enabled";
+    private const string SettingsResource = "StylizedLookSettings";
+    private const string ToggleRowName = "Satir_StilizeGorunum";
+    private const string ToggleRowLabel = "STİLİZE GÖRÜNÜM";
+    private const string RowTemplateName = "Satir_TamEkran";
+
+    private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int RampId = Shader.PropertyToID("_RampTex");
+    private static readonly int ShadowColorId = Shader.PropertyToID("_ShadowColor");
+    private static readonly int AmbientStrengthId = Shader.PropertyToID("_AmbientStrength");
+    private static readonly int RimColorId = Shader.PropertyToID("_RimColor");
+    private static readonly int RimIntensityId = Shader.PropertyToID("_RimIntensity");
+    private static readonly int RimPowerId = Shader.PropertyToID("_RimPower");
+
+    private struct Environment
+    {
+        public bool Fog;
+        public FogMode FogMode;
+        public Color FogColor;
+        public float FogStart, FogEnd;
+        public UnityEngine.Rendering.AmbientMode AmbientMode;
+        public Color Sky, Equator, Ground;
+        public Light Sun;
+        public Color SunColor;
+    }
+
+    private StylizedLookSettings _settings;
+    private Shader _sourceShader;
+    private readonly Dictionary<Material, Material> _toonByOriginal = new();
+    private readonly Dictionary<Renderer, Material[]> _originalsByRenderer = new();
+    private readonly List<Renderer> _deadRenderers = new();
+    private Environment _savedEnvironment;
+    private bool _applied;
+    private float _nextScan;
+    private SettingsMenuUI _decoratedMenu;
+
+    // Oyuncunun yerel tercihi (varsayılan açık: deneme görülsün diye).
+    public static bool Enabled
+    {
+        get => PlayerPrefs.GetInt(PrefKey, 1) == 1;
+        set => PlayerPrefs.SetInt(PrefKey, value ? 1 : 0);
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Bootstrap()
+    {
+        var settings = Resources.Load<StylizedLookSettings>(SettingsResource);
+        if (settings == null || settings.toonShader == null)
+            return;
+
+        var host = new GameObject("StylizedLook (deneme)");
+        DontDestroyOnLoad(host);
+        host.AddComponent<StylizedLookController>()._settings = settings;
+    }
+
+    private void Start()
+    {
+        _sourceShader = Shader.Find(_settings.sourceShaderName);
+    }
+
+    private void OnDestroy()
+    {
+        if (_applied)
+            Restore();
+    }
+
+    private void Update()
+    {
+        EnsureSettingsToggle();
+
+        bool shouldApply = Enabled && IsLocalRoleStylized();
+        if (shouldApply != _applied)
+        {
+            if (shouldApply)
+                Apply();
+            else
+                Restore();
+        }
+
+        if (_applied && Time.unscaledTime >= _nextScan)
+        {
+            _nextScan = Time.unscaledTime + _settings.scanInterval;
+            ConvertRenderers();
+        }
+    }
+
+    // Yerel oyuncu izinli rollerden biri mi ve oyunda mı (lobide 3B görünüm yok).
+    private bool IsLocalRoleStylized()
+    {
+        if (RoleManager.Instance == null || GameLoopManager.Instance == null)
+            return false;
+
+        var network = Unity.Netcode.NetworkManager.Singleton;
+        if (network == null || !network.IsListening || GameLoopManager.Instance.CurrentRoundState.Value == RoundState.Lobby)
+            return false;
+
+        return System.Array.IndexOf(_settings.roles, RoleManager.Instance.LocalRole) >= 0;
+    }
+
+    private void Apply()
+    {
+        _applied = true;
+        _nextScan = 0f;
+
+        if (!_settings.overrideEnvironment)
+            return;
+
+        _savedEnvironment = new Environment
+        {
+            Fog = RenderSettings.fog,
+            FogMode = RenderSettings.fogMode,
+            FogColor = RenderSettings.fogColor,
+            FogStart = RenderSettings.fogStartDistance,
+            FogEnd = RenderSettings.fogEndDistance,
+            AmbientMode = RenderSettings.ambientMode,
+            Sky = RenderSettings.ambientSkyColor,
+            Equator = RenderSettings.ambientEquatorColor,
+            Ground = RenderSettings.ambientGroundColor,
+            Sun = RenderSettings.sun != null ? RenderSettings.sun : FindDirectionalLight()
+        };
+
+        RenderSettings.fog = true;
+        RenderSettings.fogMode = FogMode.Linear;
+        RenderSettings.fogColor = _settings.fogColor;
+        RenderSettings.fogStartDistance = _settings.fogStart;
+        RenderSettings.fogEndDistance = _settings.fogEnd;
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+        RenderSettings.ambientSkyColor = _settings.skyColor;
+        RenderSettings.ambientEquatorColor = _settings.equatorColor;
+        RenderSettings.ambientGroundColor = _settings.groundColor;
+
+        if (_savedEnvironment.Sun != null)
+        {
+            _savedEnvironment.SunColor = _savedEnvironment.Sun.color;
+            _savedEnvironment.Sun.color = _savedEnvironment.SunColor * _settings.sunTint;
+        }
+    }
+
+    private void Restore()
+    {
+        _applied = false;
+
+        foreach (var pair in _originalsByRenderer)
+        {
+            if (pair.Key != null)
+                pair.Key.sharedMaterials = pair.Value;
+        }
+
+        _originalsByRenderer.Clear();
+
+        if (!_settings.overrideEnvironment)
+            return;
+
+        RenderSettings.fog = _savedEnvironment.Fog;
+        RenderSettings.fogMode = _savedEnvironment.FogMode;
+        RenderSettings.fogColor = _savedEnvironment.FogColor;
+        RenderSettings.fogStartDistance = _savedEnvironment.FogStart;
+        RenderSettings.fogEndDistance = _savedEnvironment.FogEnd;
+        RenderSettings.ambientMode = _savedEnvironment.AmbientMode;
+        RenderSettings.ambientSkyColor = _savedEnvironment.Sky;
+        RenderSettings.ambientEquatorColor = _savedEnvironment.Equator;
+        RenderSettings.ambientGroundColor = _savedEnvironment.Ground;
+        if (_savedEnvironment.Sun != null)
+            _savedEnvironment.Sun.color = _savedEnvironment.SunColor;
+    }
+
+    private static Light FindDirectionalLight()
+    {
+        foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
+        {
+            if (light.type == LightType.Directional)
+                return light;
+        }
+
+        return null;
+    }
+
+    // Sahnedeki (ve sonradan doğan) renderer'ları tarar: opak kaynak-shader materyalleri toon kopyalarıyla değişir.
+    private void ConvertRenderers()
+    {
+        // Yok olmuş renderer'ların kaydı silinir.
+        _deadRenderers.Clear();
+        foreach (var renderer in _originalsByRenderer.Keys)
+        {
+            if (renderer == null)
+                _deadRenderers.Add(renderer);
+        }
+
+        foreach (var renderer in _deadRenderers)
+            _originalsByRenderer.Remove(renderer);
+
+        foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+        {
+            if (!(renderer is MeshRenderer) && !(renderer is SkinnedMeshRenderer))
+                continue;
+
+            var materials = renderer.sharedMaterials;
+            Material[] converted = null;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                var toon = GetToonMaterial(materials[i]);
+                if (toon == null)
+                    continue;
+
+                converted ??= (Material[])materials.Clone();
+                converted[i] = toon;
+            }
+
+            if (converted == null)
+                continue;
+
+            // İlk çevirişte asıl liste saklanır; sonradan değişen tek bir materyal için asıl liste güncellenir.
+            if (!_originalsByRenderer.TryGetValue(renderer, out var originals) || originals.Length != materials.Length)
+            {
+                _originalsByRenderer[renderer] = materials;
+            }
+            else
+            {
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    if (converted[i] != materials[i])
+                        originals[i] = materials[i];
+                }
+            }
+
+            renderer.sharedMaterials = converted;
+        }
+    }
+
+    // Opak kaynak-shader materyali için (bir kez üretilen) toon kopyası; çevrilmeyecekse null.
+    private Material GetToonMaterial(Material original)
+    {
+        if (original == null || original.shader != _sourceShader || original.renderQueue >= (int)UnityEngine.Rendering.RenderQueue.AlphaTest)
+            return null;
+
+        if (_toonByOriginal.TryGetValue(original, out var toon) && toon != null)
+            return toon;
+
+        toon = new Material(_settings.toonShader) { name = original.name + " (toon)", hideFlags = HideFlags.DontSave };
+        if (original.HasProperty(BaseMapId))
+        {
+            toon.SetTexture(BaseMapId, original.GetTexture(BaseMapId));
+            toon.SetTextureScale(BaseMapId, original.GetTextureScale(BaseMapId));
+            toon.SetTextureOffset(BaseMapId, original.GetTextureOffset(BaseMapId));
+        }
+
+        if (original.HasProperty(BaseColorId))
+            toon.SetColor(BaseColorId, original.GetColor(BaseColorId));
+
+        toon.SetTexture(RampId, _settings.ramp);
+        toon.SetColor(ShadowColorId, _settings.shadowColor);
+        toon.SetFloat(AmbientStrengthId, _settings.ambientStrength);
+        toon.SetColor(RimColorId, _settings.rimColor);
+        toon.SetFloat(RimIntensityId, _settings.rimIntensity);
+        toon.SetFloat(RimPowerId, _settings.rimPower);
+        toon.enableInstancing = original.enableInstancing;
+        _toonByOriginal[original] = toon;
+        return toon;
+    }
+
+    // ESC ayarlar kartına "Stilize görünüm" kutucuğu ekler: var olan "Tam ekran" satırı kopyalanır, kart bir satır
+    // uzatılır. Sahne değişmez — satır yalnızca çalışırken vardır.
+    private void EnsureSettingsToggle()
+    {
+        if (_decoratedMenu != null)
+            return;
+
+        var menu = FindFirstObjectByType<SettingsMenuUI>(FindObjectsInactive.Include);
+        if (menu == null)
+            return;
+
+        _decoratedMenu = menu;
+        var card = (RectTransform)menu.transform;
+        var template = card.Find(RowTemplateName) as RectTransform;
+        if (template == null || card.Find(ToggleRowName) != null)
+            return;
+
+        // En alttaki satırın altına yerleşir.
+        float lowest = float.MaxValue;
+        float rowStep = 52f;
+        foreach (RectTransform child in card)
+        {
+            if (child.name.StartsWith("Satir_"))
+                lowest = Mathf.Min(lowest, child.anchoredPosition.y);
+        }
+
+        var row = Instantiate(template, card);
+        row.name = ToggleRowName;
+        row.anchoredPosition = new Vector2(template.anchoredPosition.x, lowest - rowStep);
+        var label = row.GetComponentInChildren<Text>(true);
+        if (label != null)
+            label.text = ToggleRowLabel;
+
+        var toggle = row.GetComponentInChildren<Toggle>(true);
+        toggle.onValueChanged = new Toggle.ToggleEvent();
+        toggle.SetIsOnWithoutNotify(Enabled);
+        toggle.onValueChanged.AddListener(on => Enabled = on);
+
+        // Kart bir satır uzar: satırlar üst kenarla birlikte yukarı, alttaki düğmeler aşağı kayar.
+        card.sizeDelta += new Vector2(0f, rowStep);
+        foreach (RectTransform child in card)
+        {
+            bool isBottomButton = child.GetComponent<Button>() != null;
+            child.anchoredPosition += new Vector2(0f, isBottomButton ? -rowStep * 0.5f : rowStep * 0.5f);
+        }
+
+        // Kartın gölgesi (kartın kardeşi) de aynı kadar uzar.
+        var shadow = card.parent.Find("Golge") as RectTransform;
+        if (shadow != null)
+            shadow.sizeDelta += new Vector2(0f, rowStep);
+    }
+}

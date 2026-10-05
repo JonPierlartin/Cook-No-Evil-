@@ -944,6 +944,15 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     `collider.Raycast` ile ölçülür (ızgara yüzeyi ve tezgah üstü böyle ölçüldü).
   - Erişim (editörde, göz 1,98): mutfaktaki 14 hedefin hepsine Şef'in durabileceği yerden nişan ışını ulaşıyor
     (en uzak `Kap_Peynir` 1,18 m). `M_Glass_02` saydam → Şef'te görünmez (buzdolabı kapağı).
+- **Stilize görünüm — DENEME, kalıcı değil (5 Eki 2026):** tamamı `Assets/StylizedTest/` içinde (ayrıntı oradaki
+  README). `StylizedLookController` kendini kurar (`RuntimeInitializeOnLoadMethod`; sahnede nesnesi yok), yerel rol
+  Komi/Kasiyer ve ayar açıksa opak URP Lit materyallerini **çalışma zamanında** toon kopyalarıyla değiştirir + sis /
+  gradient ortam ışığı uygular, kapanınca geri alır. ESC ayarlar kartına kutucuk satırını da çalışırken ekler.
+  Sahne, materyal dosyası, proje ayarı değişmez; **klasör silinince iz kalmaz** — proje kodu bu klasöre bağımlı
+  yazılmaz. *Editör tuzağı:* yeni bir shader ilk kez çizilirken varyantları arka planda derlenir ve ilk kare yanlış
+  (düz, dokusuz) çıkabilir; önizleme bir kez boşa çizilip sonra alınır.
+- **Adım sesleri (5 Eki):** `Assets/Audio/Footsteps/Adim_Ahsap_1-3.ogg`, `Adim_Tas_1.ogg` (TinyWorlds, CC0; bkz.
+  `LISANSLAR.txt`). Sentezlenmiş `Adim_1-3.wav` silindi.
 - **Müzik parçaları (5 Eki 2026):** `MusicPlayer.tracks` (ad + klip; veri) ve `GameSettings.MusicTrack` (yerel ayar);
   `MusicTrackButton` (tıklayınca sıradaki parça) hem ana menüde (sol alt) hem ayarlar kartında. Parçalar
   `Assets/Audio/Music/`: `Muzik_ChubbyCat.wav` (PlayOnLoop, **CC-BY 4.0 — atıf zorunlu**, bkz. `LISANSLAR.txt`) ve

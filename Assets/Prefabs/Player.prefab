@@ -690,9 +690,10 @@ MonoBehaviour:
   character: {fileID: 37509965985435541}
   source: {fileID: 896466399022189534}
   clips:
-  - {fileID: 8300000, guid: 8a1b42f98aac7e84086ac6b385783cb6, type: 3}
-  - {fileID: 8300000, guid: eabbbc1963ec77f41a9ca78967f9a4a0, type: 3}
-  - {fileID: 8300000, guid: 1065b33719bb6d54b9756b773488c7c2, type: 3}
+  - {fileID: 8300000, guid: 73e984990c9105040bc56096ea2f9181, type: 3}
+  - {fileID: 8300000, guid: 27c0cebef09eb4847bafa2efa31f8605, type: 3}
+  - {fileID: 8300000, guid: 52f0358690fac2a4e9a677c359e5e943, type: 3}
+  - {fileID: 8300000, guid: 9271153ee27f76f4396b25165e91a75c, type: 3}
   pitchRange: {x: 0.9, y: 1.12}
 --- !u!1 &5548880153533344472
 GameObject:
