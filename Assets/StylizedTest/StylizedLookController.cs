@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 // DENEME — stilize (toon) görünümü çalışma zamanında uygular. Kendini kurar (sahneye nesne eklemek gerekmez):
 // yerel oyuncunun rolü izinli rollerdense (Komi, Kasiyer) ve ayar açıksa, sahnedeki opak URP Lit materyallerini toon
@@ -8,15 +7,14 @@ using UnityEngine.UI;
 // Kontur çizgileri (ayar açıksa) her kare kameranın renderer'ına eklenen bir geçişle çizilir (StylizedOutlinePass);
 // renderer asset'ine feature eklenmez.
 // Materyal dosyalarına dokunulmaz — değişen yalnızca renderer'ların o anki materyal listesidir.
-// Ayar yereldir (PlayerPrefs); ESC ayarlar kartına çalışma zamanında bir kutucuk satırı eklenir.
+// Açık olup olmadığı oyuncunun yerel görünüm tercihinden okunur (LookPreference; ayarlar kartındaki GÖRÜNÜM satırı).
 // Kaldırmak için: Assets/StylizedTest klasörünü sil.
 public class StylizedLookController : MonoBehaviour
 {
-    private const string PrefKey = "stylizedTest.enabled";
+    private const string LegacyPrefKey = "stylizedTest.enabled";
     private const string SettingsResource = "StylizedLookSettings";
-    private const string ToggleRowName = "Satir_StilizeGorunum";
-    private const string ToggleRowLabel = "STİLİZE GÖRÜNÜM";
-    private const string RowTemplateName = "Satir_TamEkran";
+    private const string LookId = "stylized";
+    private const string LookLabel = "STİLİZE";
 
     private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -55,16 +53,8 @@ public class StylizedLookController : MonoBehaviour
     private Environment _savedEnvironment;
     private bool _applied;
     private float _nextScan;
-    private SettingsMenuUI _decoratedMenu;
     private Material _outlineMaterial;
     private StylizedOutlinePass _outlinePass;
-
-    // Oyuncunun yerel tercihi (varsayılan açık: deneme görülsün diye).
-    public static bool Enabled
-    {
-        get => PlayerPrefs.GetInt(PrefKey, 1) == 1;
-        set => PlayerPrefs.SetInt(PrefKey, value ? 1 : 0);
-    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -72,6 +62,11 @@ public class StylizedLookController : MonoBehaviour
         var settings = Resources.Load<StylizedLookSettings>(SettingsResource);
         if (settings == null || settings.toonShader == null)
             return;
+
+        LookPreference.Register(LookId, LookLabel);
+        // Oyuncu henüz seçim yapmadıysa eski kutucuğun durumu taşınır (varsayılan açıktı).
+        if (!LookPreference.HasSavedSelection)
+            LookPreference.Selected = PlayerPrefs.GetInt(LegacyPrefKey, 1) == 1 ? LookId : LookPreference.Off;
 
         var host = new GameObject("StylizedLook (deneme)");
         DontDestroyOnLoad(host);
@@ -91,9 +86,7 @@ public class StylizedLookController : MonoBehaviour
 
     private void Update()
     {
-        EnsureSettingsToggle();
-
-        bool shouldApply = Enabled && IsLocalRoleStylized();
+        bool shouldApply = LookPreference.IsSelected(LookId) && IsLocalRoleStylized();
         if (shouldApply != _applied)
         {
             if (shouldApply)
@@ -330,57 +323,5 @@ public class StylizedLookController : MonoBehaviour
         toon.enableInstancing = original.enableInstancing;
         cache[original] = toon;
         return toon;
-    }
-
-    // ESC ayarlar kartına "Stilize görünüm" kutucuğu ekler: var olan "Tam ekran" satırı kopyalanır, kart bir satır
-    // uzatılır. Sahne değişmez — satır yalnızca çalışırken vardır.
-    private void EnsureSettingsToggle()
-    {
-        if (_decoratedMenu != null)
-            return;
-
-        var menu = FindFirstObjectByType<SettingsMenuUI>(FindObjectsInactive.Include);
-        if (menu == null)
-            return;
-
-        _decoratedMenu = menu;
-        var card = (RectTransform)menu.transform;
-        var template = card.Find(RowTemplateName) as RectTransform;
-        if (template == null || card.Find(ToggleRowName) != null)
-            return;
-
-        // En alttaki satırın altına yerleşir.
-        float lowest = float.MaxValue;
-        float rowStep = 52f;
-        foreach (RectTransform child in card)
-        {
-            if (child.name.StartsWith("Satir_"))
-                lowest = Mathf.Min(lowest, child.anchoredPosition.y);
-        }
-
-        var row = Instantiate(template, card);
-        row.name = ToggleRowName;
-        row.anchoredPosition = new Vector2(template.anchoredPosition.x, lowest - rowStep);
-        var label = row.GetComponentInChildren<Text>(true);
-        if (label != null)
-            label.text = ToggleRowLabel;
-
-        var toggle = row.GetComponentInChildren<Toggle>(true);
-        toggle.onValueChanged = new Toggle.ToggleEvent();
-        toggle.SetIsOnWithoutNotify(Enabled);
-        toggle.onValueChanged.AddListener(on => Enabled = on);
-
-        // Kart bir satır uzar: satırlar üst kenarla birlikte yukarı, alttaki düğmeler aşağı kayar.
-        card.sizeDelta += new Vector2(0f, rowStep);
-        foreach (RectTransform child in card)
-        {
-            bool isBottomButton = child.GetComponent<Button>() != null;
-            child.anchoredPosition += new Vector2(0f, isBottomButton ? -rowStep * 0.5f : rowStep * 0.5f);
-        }
-
-        // Kartın gölgesi (kartın kardeşi) de aynı kadar uzar.
-        var shadow = card.parent.Find("Golge") as RectTransform;
-        if (shadow != null)
-            shadow.sizeDelta += new Vector2(0f, rowStep);
     }
 }

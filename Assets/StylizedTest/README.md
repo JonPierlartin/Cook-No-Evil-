@@ -10,7 +10,7 @@ klasörünü silmek yeterlidir.**
 - Yerel oyuncunun rolü **Komi ya da Kasiyer** ise ve ayar açıksa: sahnedeki opak URP Lit materyallerini toon
   kopyalarıyla değiştirir, sis + gradient ortam ışığı + sıcak ışık tonu uygular. Şef'e uygulanmaz (kör görüş ayrı
   bir render'dır). Kapatılınca her şey eski hâline döner.
-- **Aç/kapa:** ESC → Ayarlar → "STİLİZE GÖRÜNÜM" kutucuğu (satır çalışırken eklenir). Tercih bu makinede saklanır.
+- **Aç/kapa:** ESC → Ayarlar → "GÖRÜNÜM" satırı (düğmeye bastıkça KAPALI → STİLİZE → CNE TOON). Tercih bu makinede saklanır.
 - Sonradan doğan nesneler (öğeler, müşteriler, karakterler) yarım saniyede bir taranıp çevrilir; yeni doğan bir nesne
   en çok yarım saniye eski görünümle kalabilir.
 

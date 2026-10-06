@@ -20,3 +20,20 @@ MonoBehaviour:
   debugPriority: 1000
   grayscaleKey: 102
   outlineKey: 103
+  optionLabel: CNE TOON
+  roles: 0200000001000000
+  sourceShaderName: Universal Render Pipeline/Lit
+  surfaceTemplate: {fileID: 2100000, guid: 735e8534ac168a140aa66b6e84e86cd3, type: 2}
+  characterTemplate: {fileID: 2100000, guid: ba2b0937aa07b12409986b564ab7b381, type: 2}
+  scanInterval: 0.5
+  outlineLayer:
+    serializedVersion: 0
+    m_Bits: 256
+  outlineCharacters: 1
+  outlineItems: 1
+  outlineInteractables: 1
+  overrideLighting: 1
+  sunColor: {r: 1, g: 0.9137255, b: 0.78039217, a: 1}
+  sunIntensity: 1
+  ambientColor: {r: 0.1, g: 0.13, b: 0.18, a: 1}
+  lookdevButtonLabel: TOON TEST

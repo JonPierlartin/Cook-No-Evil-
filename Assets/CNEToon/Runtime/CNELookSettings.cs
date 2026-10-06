@@ -25,6 +25,37 @@ public class CNELookSettings : ScriptableObject
     public Key grayscaleKey = Key.F9;
     public Key outlineKey = Key.F10;
 
+    [Header("Oyunda uygulama (görünüm seçiliyken, çalışırken; materyal dosyaları ve prefab'lar değişmez)")]
+    [Tooltip("Ayarlar menüsündeki GÖRÜNÜM satırında bu görünümün adı.")]
+    public string optionLabel = "CNE TOON";
+    [Tooltip("Görünümü hangi roller görür. Kör rol (Şef) eklenmez: onun görüşü ayrı bir render'dır.")]
+    public PlayerRole[] roles = { PlayerRole.Komi, PlayerRole.Kasiyer };
+    [Tooltip("Bu shader'ı kullanan opak materyaller CNE/Toon kopyalarıyla değiştirilir.")]
+    public string sourceShaderName = "Universal Render Pipeline/Lit";
+    [Tooltip("Çevrilen materyallerin ayar şablonu (ışık, gölge...). Doku ve renk asıl materyalden alınır.")]
+    public Material surfaceTemplate;
+    [Tooltip("Karakter ve müşteri yüzeyleri için şablon (kenar ışığı açık).")]
+    public Material characterTemplate;
+    [Tooltip("Yeni doğan nesnelerin taranma aralığı (sn).")]
+    [Min(0.05f)] public float scanInterval = 0.5f;
+
+    [Header("Outline katmanı (çalışırken atanır; diğer bitler korunur)")]
+    public RenderingLayerMask outlineLayer;
+    [Tooltip("Oyuncu karakterleri ve müşteriler çizgi alsın.")]
+    public bool outlineCharacters = true;
+    [Tooltip("Taşınabilir öğeler (elde ve yuvada) çizgi alsın.")]
+    public bool outlineItems = true;
+    [Tooltip("Etkileşilen nesneler (kap, ızgara, tezgah, çöp, yuva...) çizgi alsın.")]
+    public bool outlineInteractables = true;
+
+    [Header("Işık (görünüm açıkken; kapanınca eski değerler geri gelir)")]
+    [Tooltip("Kapalıysa sahnenin ışığına dokunulmaz. Açık ortam ışığı ve güçlü güneş bantları yok eder.")]
+    public bool overrideLighting = true;
+    public Color sunColor = new Color32(0xFF, 0xE9, 0xC7, 0xFF);
+    [Min(0f)] public float sunIntensity = 1f;
+    [Tooltip("Düz ortam ışığı rengi (koyu tutulur).")]
+    public Color ambientColor = new(0.10f, 0.13f, 0.18f);
+
     [Header("Test sahnesi")]
     [Tooltip("Ana menüdeki test sahnesi düğmesinin yazısı.")]
     public string lookdevButtonLabel = "TOON TEST";

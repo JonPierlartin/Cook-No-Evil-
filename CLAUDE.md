@@ -958,6 +958,40 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   Sahne, materyal dosyası, proje ayarı değişmez; **klasör silinince iz kalmaz** — proje kodu bu klasöre bağımlı
   yazılmaz. *Editör tuzağı:* yeni bir shader ilk kez çizilirken varyantları arka planda derlenir ve ilk kare yanlış
   (düz, dokusuz) çıkabilir; önizleme bir kez boşa çizilip sonra alınır.
+- **CNE Toon görünümü — DENEME, eski stilize denemeden bağımsız (6 Eki 2026):** tamamı `Assets/CNEToon/`; ayrıntı ve
+  tüm parametreler `docs/ToonShader.md`. Klasör dışındaki kalıcı izler: `PC_Renderer`'daki `CNEOutline` feature'ı,
+  Tags and Layers'ta `Outline` rendering layer'ı (bit 8), build listesinde `ToonLookdev` sahnesi.
+  - `CNE/Toon` (el yazımı HLSL; ForwardLit, ShadowCaster, DepthOnly, DepthNormals, Meta): **DepthNormals yalnızca
+    geometrik normal yazar; shader'a normal map / metalik / pürüzlülük / vertex kaydırma EKLENMEZ** (K2, GDD §5.6).
+    Tüm özellikler tek `UnityPerMaterial` bloğunda (`CNEToonInput.hlsl`). `_BaseColor` adı korunur: pişme rengi
+    (`ItemPhaseColoring`, MaterialPropertyBlock) kod değişmeden çalışır.
+  - `CNEOutlineFeature` (Render Graph): `Outline` katmanındaki nesneler maskeye, derinlik + normal kenarı yalnızca
+    maskenin dokunduğu yere. Yalnızca `PC_Renderer`'da; kör görüş renderer'ına eklenmez. Statik `Enabled` anahtarı
+    (görünüm kapalıyken geçiş hiç kuyruğa girmez). Katman atanırken diğer bitler korunur (`|=`).
+  - `CNELook.Active` görünümün açık/kapalı durumu. `CNEPostProcessController` (kendini kurar): açıkken global Volume
+    (`CNE_Global`) + **varsayılan renderer'la çizen** kameralarda post-process ve SMAA; kapanınca geri alır.
+    `BlindVisionCamera` kör görüşte post-process ve AA'yı kapalı tutar. F9 gri test, F10 outline (Editor / Dev).
+  - `CNELookApplier` (kendini kurar): görünüm seçiliyse, rol Komi/Kasiyer ise ve round sürüyorsa opak URP Lit
+    materyallerini **çalışırken** şablon materyalden (`Materials/CNE_Sablon_*`) üretilen kopyalarla değiştirir,
+    karakter / öğe / etkileşilen nesnelere Outline katmanını ekler, ışığı ayarlar (güneş şiddeti 1, düz koyu ortam
+    ışığı — açık ortam ışığı ve güçlü güneş toplamı `_LightClamp`'e çarptırıp bantları yok eder). Ayarlar
+    `Resources/CNELookSettings`. Prefab ve materyal dosyaları kalıcı çevrilmedi.
+  - **Görünüm seçimi:** `LookPreference` (Core; yerel tercih, görünümler kendini kaydeder) + `LookSelectorRow`
+    (ayarlar kartına çalışırken "GÖRÜNÜM" satırı: KAPALI → STİLİZE → CNE TOON). `StylizedLookController` artık kendi
+    kutucuğunu eklemez, buradan okur. Bir görünümün klasörü silinirse seçeneği kendiliğinden kaybolur.
+  - **`ToonLookdev` test sahnesi** kodla üretilir (*CNE → Lookdev → Build Scene*); lightmap bake'li. Ana menüdeki
+    "TOON TEST" düğmesi çalışırken eklenir (`CNELookdev`): sahne **ek olarak** yüklenir, ana sahnenin çizen kökleri
+    geçici kapatılır (tek sahne olarak yüklense, oturumdan sonra `DontDestroyOnLoad`'a geçmiş NetworkManager geri
+    dönüşte çiftlenirdi). Profiller *CNE → Post → Create Profiles* ile üretilir, var olanın üzerine yazılmaz.
+  - Ölçüldü (editörde): Şef görüşü CNE/Toon ile URP Lit arasında 0 piksel fark (test sahnesi + ana sahnede iki bakış);
+    dört sinyal rengi + beyaz ekranda birebir; outline yalnızca katmanda, kör renderer'da 0 piksel.
+  - *Tuzaklar:* `ShaderUtil.GetSRPBatcherCompatibilityCode` (dahili) editörü ÇÖKERTTİ — çağrılmaz. · Properties bloğu
+    olmayan shader'a `Material.SetColor` rengi linear'a çevirmeden yollar (çizgi rengi 8 kat açık çıkıyordu) →
+    `.linear` elle. · URP `MetaInput.hlsl` `MetaFragment` adını makro olarak tanımlar; aynı adla fonksiyon yazılmaz.
+    · Kamera `targetTexture` yokken `WorldToViewportPoint` Game görünümünün en-boy oranını kullanır (ölçüm kayar).
+- **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
+  (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
+  konsol her kare "There are no audio listeners" yazıyordu.
 - **Adım sesleri (5 Eki):** `Assets/Audio/Footsteps/Adim_Ahsap_1-3.ogg`, `Adim_Tas_1.ogg` (TinyWorlds, CC0; bkz.
   `LISANSLAR.txt`). Sentezlenmiş `Adim_1-3.wav` silindi.
 - **Müzik parçaları (5 Eki 2026):** `MusicPlayer.tracks` (ad + klip; veri) ve `GameSettings.MusicTrack` (yerel ayar);
@@ -1306,9 +1340,6 @@ Dersler "Unity / Editor" tuzaklarında.)*
   noktaları~~ · ~~cızırtı menzili (5 m)~~ — yapıldı. **Kalan:** protein çeşitleri (tavuk/balık/veji; Yön
   kanalı, Şef siluetten ayırır — modeller hazır) · menü / hamburger varyantı verisi (tarif kitapçığı +
   sipariş) · malzeme/stok'un editörden ayarlanması (kaplar şu an sınırsız).
-- Kopma zaman aşımında (`fed5b33`) istemcinin kamerası: oyuncu nesnesi yok olunca sahne kamerası geri
-  açılmıyor (`PlayerController` kapatmıştı); hata ekranı yine görünür (Overlay canvas). Host kopması
-  yolunda da aynı durum var.
 - Birden fazla oyuncu kopup biri dönerse `ServerResumeAfterReconnect` duraklatmayı kaldırıyor (diğeri
   hâlâ yokken). Zaman aşımı sayacı da sıfırlanır. Faz 0'da 3 oyuncu, nadir.
 - `GameLoopManager.StartRound()` yalnızca `AssignedRoleCount >= MaxPlayers` bakıyor, üç rolün
