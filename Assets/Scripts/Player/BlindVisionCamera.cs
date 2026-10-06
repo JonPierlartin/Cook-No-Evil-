@@ -61,5 +61,13 @@ public class BlindVisionCamera : MonoBehaviour
     {
         IsBlind = role == blindRole;
         _cameraData.SetRenderer(IsBlind ? blindVisionRendererIndex : DefaultRendererIndex);
+
+        // Kör görüşte post-process ve kenar yumuşatma YOKTUR: tonemapping / bloom / AA beyaz kontur çizgilerini
+        // grileştirir ya da bulandırır. Başka bir sistem bu kamerada post-process açmış olsa da burada kapanır.
+        if (IsBlind)
+        {
+            _cameraData.renderPostProcessing = false;
+            _cameraData.antialiasing = AntialiasingMode.None;
+        }
     }
 }

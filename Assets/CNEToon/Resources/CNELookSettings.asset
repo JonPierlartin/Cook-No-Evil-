@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f494c1e2627c7b44a6b48e650fcbb97, type: 3}
+  m_Name: CNELookSettings
+  m_EditorClassIdentifier: Assembly-CSharp::CNELookSettings
+  globalProfile: {fileID: 11400000, guid: f815d88ce4091f94e8498261940beafd, type: 2}
+  globalPriority: 100
+  antialiasing: 2
+  antialiasingQuality: 2
+  grayscaleProfile: {fileID: 11400000, guid: da0c299f17fd19b499ccd6351a2117b3, type: 2}
+  debugPriority: 1000
+  grayscaleKey: 102
+  outlineKey: 103
