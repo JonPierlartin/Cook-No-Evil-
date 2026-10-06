@@ -20,6 +20,7 @@ public class CNEToonShaderGUI : ShaderGUI
         Draw(editor, properties, "_Wrap", "Işık sarması", "0,5 = half-Lambert. Büyüdükçe ışık yüzeyin arkasına doğru sarar, gölge alanı küçülür.");
         Draw(editor, properties, "_ShadowThreshold", "Gölge eşiği", "Işık ile gölge bandının ayrıldığı yer. Büyüdükçe gölge alanı büyür.");
         Draw(editor, properties, "_ShadowSoftness", "Geçiş yumuşaklığı", "Bantlar arasındaki geçişin genişliği. Küçük = keskin çizgi film kenarı.");
+        Draw(editor, properties, "_CastShadowSoftness", "Düşen gölge kenarı", "Başka nesnenin düşürdüğü gölgenin kenar yumuşaklığı. Küçük = keskin ama gölge haritasının pikselleri görünür; büyük = yumuşak kenar.");
         if (Toggle(editor, properties, "_MidBand", "Ara bant", "Işık ile gölge arasına üçüncü bir ton ekler."))
         {
             Draw(editor, properties, "_MidThreshold", "Ara bant eşiği", "Ara tonun tam ışığa döndüğü yer. Gölge eşiğinden büyük olmalı.");

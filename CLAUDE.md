@@ -987,6 +987,11 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     dönüşte çiftlenirdi). Profiller *CNE → Post → Create Profiles* ile üretilir, var olanın üzerine yazılmaz.
   - Ölçüldü (editörde): Şef görüşü CNE/Toon ile URP Lit arasında 0 piksel fark (test sahnesi + ana sahnede iki bakış);
     dört sinyal rengi + beyaz ekranda birebir; outline yalnızca katmanda, kör renderer'da 0 piksel.
+  - **Gölge (6 Eki):** `PC_RPAsset` gölge mesafesi 50 → **18 m**, çözünürlük 2048 → **4096**, kademe 4 → **2**,
+    normal bias 0,5 → **1** (iç mekân; tüm roller ve görünümler için geçerli). Toon shader'da yüzeyin yönü ile düşen
+    gölge AYRI basamaklanır (`CNEBand`; `_CastShadowSoftness`): çarpılıp tek eşikten geçince gölge haritasının
+    pikselleri testere dişi gibi görünüyordu. Şablonlarda gölge eşiği 0,56 (yüzeyin kendi üstündeki gölge pürüzünü
+    bant örter). Sahnedeki güneşin kendi "Soft Shadow Quality" değeri Low; sahne dosyasına dokunulmadı.
   - *Tuzaklar:* `ShaderUtil.GetSRPBatcherCompatibilityCode` (dahili) editörü ÇÖKERTTİ — çağrılmaz. · Properties bloğu
     olmayan shader'a `Material.SetColor` rengi linear'a çevirmeden yollar (çizgi rengi 8 kat açık çıkıyordu) →
     `.linear` elle. · URP `MetaInput.hlsl` `MetaFragment` adını makro olarak tanımlar; aynı adla fonksiyon yazılmaz.

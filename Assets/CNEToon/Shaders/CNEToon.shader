@@ -18,6 +18,7 @@ Shader "CNE/Toon"
         _Wrap ("Isik sarmasi", Range(0, 1)) = 0.5
         _ShadowThreshold ("Golge esigi", Range(0, 1)) = 0.5
         _ShadowSoftness ("Golge gecis yumusakligi", Range(0.001, 0.5)) = 0.03
+        _CastShadowSoftness ("Dusen golge kenar yumusakligi", Range(0.001, 0.5)) = 0.15
         [Toggle(_MIDBAND_ON)] _MidBand ("Ara bant", Float) = 0
         _MidThreshold ("Ara bant esigi", Range(0, 1)) = 0.75
         _MidStrength ("Ara bant koyulugu", Range(0, 1)) = 0.35

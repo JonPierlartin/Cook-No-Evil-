@@ -116,17 +116,22 @@ void InitializeInputData(Varyings input, out InputData inputData)
 #endif
 }
 
-// Işığın yüzeye düşen miktarı (0–1) → bant. Gerçek zamanlı gölge aynı değere katılır: gölgedeki yüzey ile ışığa
-// dönük olmayan yüzey aynı tonu alır.
+// Işığın yüzeye düşen miktarı → bant (0 = gölge tonu, 1 = tam ışık). Gölgedeki yüzey ile ışığa dönük olmayan yüzey
+// aynı tonu alır.
+// Yüzeyin yönü ve düşen gölge AYRI basamaklanır, sonra birleştirilir: ikisi çarpılıp tek eşikten geçirilirse düşen
+// gölgenin kenarı yüzeyin açısına göre kayar ve gölge haritasının pikselleri testere dişi gibi görünür. Düşen
+// gölgenin kenarı kendi yumuşaklığıyla (_CastShadowSoftness) geçer; yumuşak gölge filtresinin 0–1 geçişinin ortası
+// alındığı için kenar gölge haritasının piksellerini değil, filtrelenmiş çizgiyi izler.
 half CNEBand(half nDotL, half shadow)
 {
-    half lit = saturate(nDotL * (1.0 - _Wrap) + _Wrap) * shadow;
-    half band = smoothstep(_ShadowThreshold - _ShadowSoftness, _ShadowThreshold + _ShadowSoftness, lit);
+    half facing = saturate(nDotL * (1.0 - _Wrap) + _Wrap);
+    half band = smoothstep(_ShadowThreshold - _ShadowSoftness, _ShadowThreshold + _ShadowSoftness, facing);
 #if defined(_MIDBAND_ON)
-    half mid = smoothstep(_MidThreshold - _ShadowSoftness, _MidThreshold + _ShadowSoftness, lit);
+    half mid = smoothstep(_MidThreshold - _ShadowSoftness, _MidThreshold + _ShadowSoftness, facing);
     band *= lerp(1.0 - _MidStrength, 1.0, mid);
 #endif
-    return band;
+    half cast = smoothstep(0.5 - _CastShadowSoftness, 0.5 + _CastShadowSoftness, shadow);
+    return min(band, cast);
 }
 
 #if defined(_SPECULAR_ON)

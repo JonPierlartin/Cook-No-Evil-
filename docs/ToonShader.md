@@ -54,11 +54,17 @@ bozulur.
 | Işık sarması (`_Wrap`) | 0,5 = half-Lambert. Büyüdükçe ışık yüzeyin arkasına sarar. | 0,5 |
 | Gölge eşiği (`_ShadowThreshold`) | Işık ile gölge bandının ayrıldığı yer. | 0,5 |
 | Geçiş yumuşaklığı (`_ShadowSoftness`) | Bant kenarının genişliği. Küçük = keskin. | 0,03 |
+| Düşen gölge kenarı (`_CastShadowSoftness`) | Başka nesnenin düşürdüğü gölgenin kenar yumuşaklığı. Küçük = keskin ama gölge haritasının pikselleri görünür. | 0,15 |
 | Ara bant, eşiği, koyuluğu | Üçüncü ton (ışık ile gölge arası). | kapalı / 0,75 / 0,35 |
 | Gölge rengi (`_ShadowTint`) | Gölgedeki yüzey bu renge doğru çarpılır. | `#3E4A7A` |
 | Gölge gücü (`_ShadowStrength`) | 0 = gölge yok, 1 = tamamen gölge rengi. | 0,55 |
 | Dolaylı ışık gücü (`_GIStrength`) | Lightmap, light probe ve ortam ışığının katkısı; basamaksız eklenir. | 0,5 |
 | Işık üst sınırı (`_LightClamp`) | Toplam ışık çarpanı bunu geçemez. | 1,2 |
+
+**Gölge kalitesi.** Yüzeyin yönü ve düşen gölge ayrı basamaklanır. Düşen gölgenin temizliği URP asset'indeki gölge
+ayarlarına bağlıdır (`PC_RPAsset`: mesafe 18 m, çözünürlük 4096, 2 kademe, normal bias 1) — oyun iç mekân olduğu için
+mesafe kısa tutulur, böylece gölge haritasının pikselleri küçülür. Şablon materyallerde gölge eşiği 0,56'dır: bant
+sınırı ışığa biraz daha dönük tarafa kayar ve gölge haritasının yüzeyin kendi üstündeki pürüzünü örter.
 
 **Formül.** Gölgedeki renk = `renk × lerp(1, gölge rengi, gölge gücü)`. Gerçek zamanlı gölge aynı banda katılır:
 gölgede kalan yüzey ile ışığa dönük olmayan yüzey aynı tonu alır. Ek ışıklar (lamba, neon) aynı basamakla, mesafeyle

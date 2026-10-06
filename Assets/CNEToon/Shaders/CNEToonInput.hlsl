@@ -13,6 +13,7 @@ CBUFFER_START(UnityPerMaterial)
     half _Wrap;
     half _ShadowThreshold;
     half _ShadowSoftness;
+    half _CastShadowSoftness;
     half _MidThreshold;
     half _MidStrength;
     half4 _ShadowTint;

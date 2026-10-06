@@ -43,6 +43,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaClip: 0
+    - _CastShadowSoftness: 0.15
     - _Cutoff: 0.5
     - _Emission: 0
     - _GIStrength: 0.5
@@ -62,7 +63,7 @@ Material:
     - _RimUpBias: 0.5
     - _ShadowSoftness: 0.03
     - _ShadowStrength: 0.55
-    - _ShadowThreshold: 0.5
+    - _ShadowThreshold: 0.56
     - _SpecSize: 0.05
     - _SpecSoftness: 0.005
     - _Specular: 0
