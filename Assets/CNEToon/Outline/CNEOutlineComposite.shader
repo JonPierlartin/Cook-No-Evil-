@@ -113,8 +113,20 @@ Shader "Hidden/CNE/OutlineComposite"
                 // Çizgi yalnızca maskedeki bir nesneye dokunuyorsa çizilir; yalnızca mimariye ait kenarlar maskede
                 // olmadığı için atlanır. Tam çizgi alan nesnede siluet + iç kırımlar; yalnızca siluet alan nesnede
                 // (karakterler: parmak, göz, tuş gibi küçük ayrıntıların iç çizgileri modeli karartır) yalnızca siluet.
-                half2 mask = max(max(max(Mask(uvBL), Mask(uvTR)), max(Mask(uvBR), Mask(uvTL))), Mask(uv));
-                float edge = max(max(silhouette, crease) * mask.r, silhouette * mask.g);
+                half2 mBL = Mask(uvBL);
+                half2 mTR = Mask(uvTR);
+                half2 mBR = Mask(uvBR);
+                half2 mTL = Mask(uvTL);
+                half2 mC = Mask(uv);
+                half2 maskMax = max(max(max(mBL, mTR), max(mBR, mTL)), mC);
+                half2 maskMin = min(min(min(mBL, mTR), min(mBR, mTL)), mC);
+                float edge = max(max(silhouette, crease) * maskMax.r, silhouette * maskMax.g);
+
+                // Dış hat MASKENİN KENDİ SINIRINDAN da alınır (maskenin bittiği yer = nesnenin görünen silueti).
+                // Yalnızca derinlik farkına bakılırsa kıvrımlı nesnenin kenar pikselleri kameraya sıyırarak baktığı
+                // için eşiği geçemez ve uzaktan çizgi nokta nokta kopar; maskenin sınırı mesafeden etkilenmez.
+                half2 maskEdge = maskMax - maskMin;
+                edge = max(edge, max(maskEdge.r, maskEdge.g));
 
                 // Uzakta çizgi solar.
                 edge *= 1.0 - smoothstep(_FadeStart, _FadeEnd, nearest);

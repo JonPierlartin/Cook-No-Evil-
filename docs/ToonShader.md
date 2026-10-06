@@ -121,7 +121,8 @@ yok, wrap Clamp, sRGB açık. Adı `_Prop` ile biten dosyada sRGB kapalıdır (m
 `PC_Renderer`'a eklidir; kör görüş renderer'ında yoktur. Ayarları `Assets/Settings/PC_Renderer.asset` → CNEOutline.
 
 **Nasıl çalışır.** (a) `Outline` ve `Outline Silhouette` rendering layer'larındaki opak nesneler kameranın derinliğine
-karşı iki kanallı bir maskeye çizilir (R = tam çizgi, G = yalnızca siluet). (b) Derinlik + normal dokularında kenar bulunur. (c) Çizgi yalnızca maskenin dokunduğu yerde
+karşı iki kanallı bir maskeye çizilir (R = tam çizgi, G = yalnızca siluet). (b) Derinlik + normal dokularında kenar bulunur; dış hat ayrıca maskenin kendi sınırından alınır (yalnızca derinliğe
+bakılınca kıvrımlı nesnenin çizgisi uzaktan nokta nokta kopuyordu). (c) Çizgi yalnızca maskenin dokunduğu yerde
 çizilir: etiketli nesnenin silueti ve iç kırımları çizgi alır, yalnızca mimariye ait kenarlar almaz.
 
 | Ayar | Ne yapar | Varsayılan |

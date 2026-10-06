@@ -55,6 +55,20 @@ public class CNEOutlineFeature : ScriptableRendererFeature
     // Çizgiyi çalışırken açıp kapatır (görünüm seçici, debug tuşu). Sabit stil: nesne başına değil, tümü birden.
     public static bool Enabled { get; set; } = true;
 
+#if UNITY_EDITOR
+    // Play'den çıkınca anahtar oyunda bırakıldığı hâlde kalmasın: editörde (sahne görünümü, test sahnesi) outline
+    // varsayılan olarak açıktır.
+    [UnityEditor.InitializeOnLoadMethod]
+    private static void ResetOnExitPlayMode()
+    {
+        UnityEditor.EditorApplication.playModeStateChanged += state =>
+        {
+            if (state == UnityEditor.PlayModeStateChange.EnteredEditMode)
+                Enabled = true;
+        };
+    }
+#endif
+
     [SerializeField] private Settings settings = new();
 
     private static readonly int MaskChannelsId = Shader.PropertyToID("_MaskChannels");
