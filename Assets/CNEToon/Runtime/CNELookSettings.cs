@@ -25,6 +25,10 @@ public class CNELookSettings : ScriptableObject
     public Key grayscaleKey = Key.F9;
     public Key outlineKey = Key.F10;
 
+    [Header("Test sahnesi")]
+    [Tooltip("Ana menüdeki test sahnesi düğmesinin yazısı.")]
+    public string lookdevButtonLabel = "TOON TEST";
+
     private static CNELookSettings _instance;
 
     // Ayar varlığı yoksa null döner; çağıran taraf görünümü uygulamaz (hata fırlatmaz).

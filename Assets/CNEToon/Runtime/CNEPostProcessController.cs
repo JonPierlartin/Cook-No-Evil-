@@ -7,8 +7,8 @@ using UnityEngine.Rendering.Universal;
 // CNE Toon görünümü açıkken post-process'i ve outline'ı devreye sokar, kapanınca eski hâline döndürür.
 // Kendini kurar (sahnede nesnesi yoktur). Görünüm kapalıyken hiçbir kameraya ve Volume'a dokunmaz.
 //
-// Kör görüşle çizen kameraya (Şef) dokunmaz: o kamerada post-process'i BlindVisionCamera kapalı tutar. "Kör mü"
-// kuralı burada yeniden yazılmaz, BlindVisionCamera.IsBlind'den okunur.
+// Kör görüşle çizen kameraya (Şef) dokunmaz: yalnızca URP asset'inin VARSAYILAN renderer'ını kullanan kameralara
+// uygulanır; kör görüş ayrı bir renderer'dır (ve BlindVisionCamera o kamerada post-process'i kapalı tutar).
 public class CNEPostProcessController : MonoBehaviour
 {
     private struct CameraState
@@ -87,10 +87,11 @@ public class CNEPostProcessController : MonoBehaviour
             if (camera.cameraType != CameraType.Game)
                 continue;
 
-            if (camera.TryGetComponent<BlindVisionCamera>(out var blind) && blind.IsBlind)
+            // Yalnızca varsayılan renderer'la çizen kameralar: kör görüş ayrı bir renderer'dır ve post-process almaz.
+            var data = camera.GetUniversalAdditionalCameraData();
+            if (data.scriptableRenderer != UniversalRenderPipeline.asset.scriptableRenderer)
                 continue;
 
-            var data = camera.GetUniversalAdditionalCameraData();
             if (!_original.ContainsKey(data))
             {
                 _original[data] = new CameraState

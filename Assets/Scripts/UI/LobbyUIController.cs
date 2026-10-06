@@ -19,6 +19,10 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private Button browseButton;
     [Tooltip("Oyundan çıkar (yalnızca ilk ekranda).")]
     [SerializeField] private Button quitButton;
+
+    // İlk ekranın düğmelerinden biri: ilk ekrana düğme ekleyen yardımcılar (ör. test sahnesi girişi) bunu şablon
+    // olarak kopyalar ve görünürlüğünü buna uydurur.
+    public Button InitialButtonTemplate => quitButton;
     [Tooltip("Lobi oluştur / lobi listesi / şifre pencereleri.")]
     [SerializeField] private LobbyBrowserUI browser;
     [SerializeField] private Button inviteButton;

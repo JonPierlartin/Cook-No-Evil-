@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/ToonLookdev.unity
+    guid: bce67bbf06e41f84c9dab5f27736229e
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 09750aa35719d2647b917863289d2888, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
