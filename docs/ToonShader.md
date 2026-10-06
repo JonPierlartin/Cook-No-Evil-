@@ -17,8 +17,8 @@ bağımsızdır.
 6. Karakterlerde **Kenar ışığı**nı aç.
 7. AO'yu Blender'da vertex renginin **R** kanalına pişir; shader onu okur (`Vertex AO gücü`).
 8. Normal map, metalik, pürüzlülük, AO dokusu **yoktur ve eklenmez** (aşağıda "Değişmez kurallar").
-9. Çizgi alacak nesnenin Renderer'ında **Rendering Layer Mask**'e `Outline` ekle (karakterler, oynanış nesneleri).
-   Duvar, zemin, tezgah gibi mimariye ekleme.
+9. Çizgi alacak nesnenin Renderer'ında **Rendering Layer Mask**'e `Outline` ekle (oynanış nesneleri); karakterlerde
+   `Outline Silhouette` kullan (yalnızca dış hat). Duvar, zemin, tezgah gibi mimariye ekleme.
 10. Denemek için `Assets/Scenes/ToonLookdev.unity` sahnesini aç ve Play'e bas (ya da oyunda ana menü → TOON TEST).
 
 ## Değişmez kurallar
@@ -114,13 +114,14 @@ yok, wrap Clamp, sRGB açık. Adı `_Prop` ile biten dosyada sRGB kapalıdır (m
 
 `PC_Renderer`'a eklidir; kör görüş renderer'ında yoktur. Ayarları `Assets/Settings/PC_Renderer.asset` → CNEOutline.
 
-**Nasıl çalışır.** (a) `Outline` rendering layer'ındaki opak nesneler kameranın derinliğine karşı tek kanallı bir
-maskeye çizilir. (b) Derinlik + normal dokularında kenar bulunur. (c) Çizgi yalnızca maskenin dokunduğu yerde
+**Nasıl çalışır.** (a) `Outline` ve `Outline Silhouette` rendering layer'larındaki opak nesneler kameranın derinliğine
+karşı iki kanallı bir maskeye çizilir (R = tam çizgi, G = yalnızca siluet). (b) Derinlik + normal dokularında kenar bulunur. (c) Çizgi yalnızca maskenin dokunduğu yerde
 çizilir: etiketli nesnenin silueti ve iç kırımları çizgi alır, yalnızca mimariye ait kenarlar almaz.
 
 | Ayar | Ne yapar | Varsayılan |
 |---|---|---|
-| Outline Layer | Çizgi alacak rendering layer. | Outline |
+| Outline Layer | Tam çizgi alacak rendering layer: siluet + iç kırımlar (öğeler, etkileşilen nesneler). | Outline |
+| Silhouette Layer | Yalnızca dış hat alacak rendering layer (karakterler, müşteriler). Parmak, göz, tuş gibi küçük ayrıntıların iç çizgileri birbirine girip modeli karartır; bu katmanda çizilmezler. | Outline Silhouette |
 | Pass Event | Geçişin sırası (saydamlardan ve post-process'ten önce). | AfterRenderingSkybox |
 | Outline Color | Çizgi rengi. | `#24233A` |
 | Color Blend | 1 = düz çizgi rengi; 0 = nesnenin kendi renginin koyu tonu. | 1 |

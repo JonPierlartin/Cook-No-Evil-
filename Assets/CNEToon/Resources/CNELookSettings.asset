@@ -29,6 +29,9 @@ MonoBehaviour:
   outlineLayer:
     serializedVersion: 0
     m_Bits: 256
+  silhouetteLayer:
+    serializedVersion: 0
+    m_Bits: 512
   outlineCharacters: 1
   outlineItems: 1
   outlineInteractables: 1

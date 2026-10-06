@@ -66,9 +66,10 @@ Shader "Hidden/CNE/OutlineComposite"
                 return LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
             }
 
-            half Mask(float2 uv)
+            // R = tam çizgi, G = yalnızca siluet.
+            half2 Mask(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_LOD(_CNEOutlineMask, sampler_LinearClamp, uv, 0).r;
+                return SAMPLE_TEXTURE2D_LOD(_CNEOutlineMask, sampler_LinearClamp, uv, 0).rg;
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -106,14 +107,14 @@ Shader "Hidden/CNE/OutlineComposite"
                 float3 n2 = SampleSceneNormals(uvTL) - SampleSceneNormals(uvBR);
                 float normalEdge = sqrt(dot(n1, n1) + dot(n2, n2));
 
-                float edge = max(
-                    smoothstep(depthThreshold, depthThreshold * (1.0 + _EdgeSoftness), depthEdge),
-                    smoothstep(_NormalThreshold, _NormalThreshold * (1.0 + _EdgeSoftness), normalEdge));
+                float silhouette = smoothstep(depthThreshold, depthThreshold * (1.0 + _EdgeSoftness), depthEdge);
+                float crease = smoothstep(_NormalThreshold, _NormalThreshold * (1.0 + _EdgeSoftness), normalEdge);
 
-                // Çizgi yalnızca Outline katmanındaki bir nesneye dokunuyorsa çizilir (silueti ve iç kırımları);
-                // yalnızca mimariye ait kenarlar maskede olmadığı için atlanır.
-                half mask = max(max(max(Mask(uvBL), Mask(uvTR)), max(Mask(uvBR), Mask(uvTL))), Mask(uv));
-                edge *= mask;
+                // Çizgi yalnızca maskedeki bir nesneye dokunuyorsa çizilir; yalnızca mimariye ait kenarlar maskede
+                // olmadığı için atlanır. Tam çizgi alan nesnede siluet + iç kırımlar; yalnızca siluet alan nesnede
+                // (karakterler: parmak, göz, tuş gibi küçük ayrıntıların iç çizgileri modeli karartır) yalnızca siluet.
+                half2 mask = max(max(max(Mask(uvBL), Mask(uvTR)), max(Mask(uvBR), Mask(uvTL))), Mask(uv));
+                float edge = max(max(silhouette, crease) * mask.r, silhouette * mask.g);
 
                 // Uzakta çizgi solar.
                 edge *= 1.0 - smoothstep(_FadeStart, _FadeEnd, nearest);

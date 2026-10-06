@@ -967,7 +967,9 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     (`ItemPhaseColoring`, MaterialPropertyBlock) kod değişmeden çalışır.
   - `CNEOutlineFeature` (Render Graph): `Outline` katmanındaki nesneler maskeye, derinlik + normal kenarı yalnızca
     maskenin dokunduğu yere. Yalnızca `PC_Renderer`'da; kör görüş renderer'ına eklenmez. Statik `Enabled` anahtarı
-    (görünüm kapalıyken geçiş hiç kuyruğa girmez). Katman atanırken diğer bitler korunur (`|=`).
+    (görünüm kapalıyken geçiş hiç kuyruğa girmez). Katman atanırken diğer bitler korunur (`|=`). **İki katman:**
+    `Outline` (bit 8; siluet + iç kırımlar — öğeler, etkileşilen nesneler) ve `Outline Silhouette` (bit 9; yalnızca
+    dış hat — karakterler, müşteriler, elde tutulan öğe). Karakterlerde iç çizgiler parmakları ve tuşları karartıyordu.
   - `CNELook.Active` görünümün açık/kapalı durumu. `CNEPostProcessController` (kendini kurar): açıkken global Volume
     (`CNE_Global`) + **varsayılan renderer'la çizen** kameralarda post-process ve SMAA; kapanınca geri alır.
     `BlindVisionCamera` kör görüşte post-process ve AA'yı kapalı tutar. F9 gri test, F10 outline (Editor / Dev).
@@ -988,6 +990,9 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - *Tuzaklar:* `ShaderUtil.GetSRPBatcherCompatibilityCode` (dahili) editörü ÇÖKERTTİ — çağrılmaz. · Properties bloğu
     olmayan shader'a `Material.SetColor` rengi linear'a çevirmeden yollar (çizgi rengi 8 kat açık çıkıyordu) →
     `.linear` elle. · URP `MetaInput.hlsl` `MetaFragment` adını makro olarak tanımlar; aynı adla fonksiyon yazılmaz.
+    · Renderer listesiyle (override material) çizilen shader'da materyal özelliği `Properties` + `UnityPerMaterial`
+    bloğunda olmalı: çıplak uniform'a `Material.Set…` ile yazılan değer SRP Batcher yolunda shader'a ULAŞMADI (maske
+    boş kaldı, hiç çizgi çıkmadı; hata yok). Tam ekran `DrawProcedural` geçişinde aynı desen çalışıyor.
     · Kamera `targetTexture` yokken `WorldToViewportPoint` Game görünümünün en-boy oranını kullanır (ölçüm kayar).
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte

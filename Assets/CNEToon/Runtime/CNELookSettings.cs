@@ -40,7 +40,10 @@ public class CNELookSettings : ScriptableObject
     [Min(0.05f)] public float scanInterval = 0.5f;
 
     [Header("Outline katmanı (çalışırken atanır; diğer bitler korunur)")]
+    [Tooltip("Tam çizgi (siluet + iç kırımlar): öğeler ve etkileşilen nesneler.")]
     public RenderingLayerMask outlineLayer;
+    [Tooltip("Yalnızca siluet: karakterler, müşteriler ve elde tutulan öğe (iç çizgiler küçük ayrıntıları karartır).")]
+    public RenderingLayerMask silhouetteLayer;
     [Tooltip("Oyuncu karakterleri ve müşteriler çizgi alsın.")]
     public bool outlineCharacters = true;
     [Tooltip("Taşınabilir öğeler (elde ve yuvada) çizgi alsın.")]

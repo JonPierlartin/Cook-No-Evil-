@@ -1,8 +1,15 @@
-// CNE outline — maske geçişi. Outline rendering layer'ındaki nesneler bu shader'la (override material) tek kanallı bir
-// dokuya çizilir: kameranın derinliğine karşı sınanır (önünde başka nesne varsa o kısım maskeye girmez), derinliğe
-// yazmaz. Kenar geçişi çizgiyi yalnızca bu maskenin dokunduğu yerde uygular.
+// CNE outline — maske geçişi. Outline rendering layer'larındaki nesneler bu shader'la (override material) iki kanallı
+// bir dokuya çizilir: R = tam çizgi alan nesneler (siluet + iç kırımlar), G = yalnızca siluet alan nesneler
+// (karakterler). Kameranın derinliğine karşı sınanır (önünde başka nesne varsa o kısım maskeye girmez), derinliğe
+// yazmaz. Kanallar birbirini ezmesin diye Max ile karışır. Hangi kanala yazılacağını CNEOutlineFeature verir.
 Shader "Hidden/CNE/OutlineMask"
 {
+    Properties
+    {
+        // CNEOutlineFeature yazar: (1,0,0,0) = tam çizgi kanalı, (0,1,0,0) = siluet kanalı.
+        [HideInInspector] _MaskChannels ("Maske kanallari", Vector) = (1, 0, 0, 0)
+    }
+
     SubShader
     {
         Tags { "RenderPipeline" = "UniversalPipeline" }
@@ -14,6 +21,8 @@ Shader "Hidden/CNE/OutlineMask"
             ZWrite Off
             ZTest LEqual
             Cull Back
+            BlendOp Max
+            Blend One One
 
             HLSLPROGRAM
             #pragma vertex Vert
@@ -21,6 +30,10 @@ Shader "Hidden/CNE/OutlineMask"
             #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                half4 _MaskChannels;
+            CBUFFER_END
 
             struct Attributes
             {
@@ -43,7 +56,7 @@ Shader "Hidden/CNE/OutlineMask"
 
             half4 Frag(Varyings input) : SV_Target
             {
-                return half4(1, 1, 1, 1);
+                return _MaskChannels;
             }
             ENDHLSL
         }

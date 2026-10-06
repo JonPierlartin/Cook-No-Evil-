@@ -15,8 +15,11 @@ public class CNEOutlineFeature : ScriptableRendererFeature
     [System.Serializable]
     public class Settings
     {
-        [Tooltip("Çizgi alacak renderer'ların rendering layer'ı (Tags and Layers → Rendering Layers: Outline).")]
+        [Tooltip("Tam çizgi alacak renderer'ların rendering layer'ı: siluet + iç kırımlar (Rendering Layers: Outline).")]
         public RenderingLayerMask outlineLayer;
+        [Tooltip("Yalnızca siluet (dış hat) alacak renderer'ların rendering layer'ı (Rendering Layers: Outline Silhouette). " +
+            "Karakterler için: küçük ve kıvrımlı ayrıntıların iç çizgileri birbirine girip modeli karartır.")]
+        public RenderingLayerMask silhouetteLayer;
         [Tooltip("Geçişin sırası. Gökyüzünden sonra: saydamlar ve efektler çizginin üstünde kalır, AA çizgiyi de yumuşatır.")]
         public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingSkybox;
 
@@ -54,14 +57,26 @@ public class CNEOutlineFeature : ScriptableRendererFeature
 
     [SerializeField] private Settings settings = new();
 
+    private static readonly int MaskChannelsId = Shader.PropertyToID("_MaskChannels");
+
     private Material _maskMaterial;
+    private Material _silhouetteMaskMaterial;
     private Material _compositeMaterial;
     private OutlinePass _pass;
 
     public override void Create()
     {
-        if (settings.maskShader != null && _maskMaterial == null)
-            _maskMaterial = CoreUtils.CreateEngineMaterial(settings.maskShader);
+        if (settings.maskShader != null)
+        {
+            // R kanalı = tam çizgi, G kanalı = yalnızca siluet.
+            if (_maskMaterial == null)
+                _maskMaterial = CoreUtils.CreateEngineMaterial(settings.maskShader);
+            if (_silhouetteMaskMaterial == null)
+                _silhouetteMaskMaterial = CoreUtils.CreateEngineMaterial(settings.maskShader);
+
+            _maskMaterial.SetVector(MaskChannelsId, new Vector4(1f, 0f, 0f, 0f));
+            _silhouetteMaskMaterial.SetVector(MaskChannelsId, new Vector4(0f, 1f, 0f, 0f));
+        }
         if (settings.compositeShader != null && _compositeMaterial == null)
             _compositeMaterial = CoreUtils.CreateEngineMaterial(settings.compositeShader);
 
@@ -70,22 +85,27 @@ public class CNEOutlineFeature : ScriptableRendererFeature
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
-        if (!Enabled || _maskMaterial == null || _compositeMaterial == null || settings.outlineLayer.value == 0)
+        if (!Enabled || _maskMaterial == null || _silhouetteMaskMaterial == null || _compositeMaterial == null)
+            return;
+
+        if (settings.outlineLayer.value == 0 && settings.silhouetteLayer.value == 0)
             return;
 
         var cameraType = renderingData.cameraData.cameraType;
         if (cameraType == CameraType.Preview || cameraType == CameraType.Reflection)
             return;
 
-        _pass.Setup(settings, _maskMaterial, _compositeMaterial);
+        _pass.Setup(settings, _maskMaterial, _silhouetteMaskMaterial, _compositeMaterial);
         renderer.EnqueuePass(_pass);
     }
 
     protected override void Dispose(bool disposing)
     {
         CoreUtils.Destroy(_maskMaterial);
+        CoreUtils.Destroy(_silhouetteMaskMaterial);
         CoreUtils.Destroy(_compositeMaterial);
         _maskMaterial = null;
+        _silhouetteMaskMaterial = null;
         _compositeMaterial = null;
     }
 
@@ -112,11 +132,13 @@ public class CNEOutlineFeature : ScriptableRendererFeature
 
         private Settings _settings;
         private Material _maskMaterial;
+        private Material _silhouetteMaskMaterial;
         private Material _compositeMaterial;
 
         private class MaskPassData
         {
-            public RendererListHandle RendererList;
+            public RendererListHandle FullList;
+            public RendererListHandle SilhouetteList;
         }
 
         private class CompositePassData
@@ -130,10 +152,11 @@ public class CNEOutlineFeature : ScriptableRendererFeature
             ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
         }
 
-        public void Setup(Settings settings, Material maskMaterial, Material compositeMaterial)
+        public void Setup(Settings settings, Material maskMaterial, Material silhouetteMaskMaterial, Material compositeMaterial)
         {
             _settings = settings;
             _maskMaterial = maskMaterial;
+            _silhouetteMaskMaterial = silhouetteMaskMaterial;
             _compositeMaterial = compositeMaterial;
             renderPassEvent = settings.passEvent;
 
@@ -158,10 +181,10 @@ public class CNEOutlineFeature : ScriptableRendererFeature
             var cameraData = frameData.Get<UniversalCameraData>();
             var lightData = frameData.Get<UniversalLightData>();
 
-            // (a) Maske: Outline katmanındaki opak nesneler, kameranın derinliğine karşı.
+            // (a) Maske: Outline katmanlarındaki opak nesneler, kameranın derinliğine karşı. R = tam çizgi, G = siluet.
             var maskDesc = renderGraph.GetTextureDesc(resources.activeColorTexture);
             maskDesc.name = "_CNEOutlineMask";
-            maskDesc.format = UnityEngine.Experimental.Rendering.GraphicsFormat.R8_UNorm;
+            maskDesc.format = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8_UNorm;
             maskDesc.clearBuffer = true;
             maskDesc.clearColor = Color.clear;
             TextureHandle mask = renderGraph.CreateTexture(maskDesc);
@@ -171,18 +194,25 @@ public class CNEOutlineFeature : ScriptableRendererFeature
                 var drawing = RenderingUtils.CreateDrawingSettings(
                     ShaderTags, renderingData, cameraData, lightData,
                     cameraData.defaultOpaqueSortFlags);
-                drawing.overrideMaterial = _maskMaterial;
                 drawing.overrideMaterialPassIndex = 0;
 
-                var filtering = new FilteringSettings(RenderQueueRange.opaque, -1, _settings.outlineLayer.value);
-                passData.RendererList = renderGraph.CreateRendererList(
-                    new RendererListParams(renderingData.cullResults, drawing, filtering));
+                drawing.overrideMaterial = _maskMaterial;
+                passData.FullList = renderGraph.CreateRendererList(new RendererListParams(renderingData.cullResults, drawing,
+                    new FilteringSettings(RenderQueueRange.opaque, -1, _settings.outlineLayer.value)));
 
-                builder.UseRendererList(passData.RendererList);
+                drawing.overrideMaterial = _silhouetteMaskMaterial;
+                passData.SilhouetteList = renderGraph.CreateRendererList(new RendererListParams(renderingData.cullResults, drawing,
+                    new FilteringSettings(RenderQueueRange.opaque, -1, _settings.silhouetteLayer.value)));
+
+                builder.UseRendererList(passData.FullList);
+                builder.UseRendererList(passData.SilhouetteList);
                 builder.SetRenderAttachment(mask, 0);
                 builder.SetRenderAttachmentDepth(resources.activeDepthTexture, AccessFlags.Read);
                 builder.SetRenderFunc((MaskPassData data, RasterGraphContext context) =>
-                    context.cmd.DrawRendererList(data.RendererList));
+                {
+                    context.cmd.DrawRendererList(data.FullList);
+                    context.cmd.DrawRendererList(data.SilhouetteList);
+                });
             }
 
             // (b) + (c) Kenar bulma ve bindirme.

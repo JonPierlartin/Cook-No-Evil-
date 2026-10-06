@@ -31,8 +31,8 @@ public class CNELookApplier : MonoBehaviour
     private readonly Dictionary<Material, Material> _surfaceByOriginal = new();
     private readonly Dictionary<Material, Material> _characterByOriginal = new();
     private readonly Dictionary<Renderer, Material[]> _originalsByRenderer = new();
-    // Outline bitini BİZİM eklediğimiz renderer'lar (zaten taşıyanlara geri alırken dokunulmaz).
-    private readonly HashSet<Renderer> _outlined = new();
+    // Outline bitlerini BİZİM eklediğimiz renderer'lar ve eklenen bitler (zaten taşıyanlara geri alırken dokunulmaz).
+    private readonly Dictionary<Renderer, uint> _outlined = new();
     private readonly List<Renderer> _dead = new();
 
     private CNELookSettings _settings;
@@ -138,11 +138,10 @@ public class CNELookApplier : MonoBehaviour
 
         _originalsByRenderer.Clear();
 
-        uint outlineBit = _settings.outlineLayer.value;
-        foreach (var renderer in _outlined)
+        foreach (var pair in _outlined)
         {
-            if (renderer != null)
-                renderer.renderingLayerMask &= ~outlineBit;
+            if (pair.Key != null)
+                pair.Key.renderingLayerMask &= ~pair.Value;
         }
 
         _outlined.Clear();
@@ -183,7 +182,15 @@ public class CNELookApplier : MonoBehaviour
         foreach (var renderer in _dead)
             _originalsByRenderer.Remove(renderer);
 
-        _outlined.RemoveWhere(renderer => renderer == null);
+        _dead.Clear();
+        foreach (var renderer in _outlined.Keys)
+        {
+            if (renderer == null)
+                _dead.Add(renderer);
+        }
+
+        foreach (var renderer in _dead)
+            _outlined.Remove(renderer);
 
         foreach (var renderer in FindObjectsByType<Renderer>(FindObjectsInactive.Exclude))
         {
@@ -234,18 +241,28 @@ public class CNELookApplier : MonoBehaviour
     // Elde tutulan öğenin görseli oyuncu karakterinin altında durduğu için karakterle birlikte çizgi alır.
     private void ApplyOutlineLayer(Renderer renderer, bool character)
     {
-        uint outlineBit = _settings.outlineLayer.value;
-        if (outlineBit == 0 || (renderer.renderingLayerMask & outlineBit) != 0)
+        if (_outlined.ContainsKey(renderer))
             return;
 
-        bool wanted = (character && _settings.outlineCharacters)
-            || (_settings.outlineItems && renderer.GetComponentInParent<Item>() != null)
-            || (_settings.outlineInteractables && renderer.GetComponentInParent<HoldOrPressInteractable>() != null);
-        if (!wanted)
+        // Karakterler yalnızca siluet alır; öğeler ve etkileşilen nesneler tam çizgi.
+        uint bit = 0;
+        if (character)
+        {
+            if (_settings.outlineCharacters)
+                bit = _settings.silhouetteLayer.value;
+        }
+        else if ((_settings.outlineItems && renderer.GetComponentInParent<Item>() != null)
+            || (_settings.outlineInteractables && renderer.GetComponentInParent<HoldOrPressInteractable>() != null))
+        {
+            bit = _settings.outlineLayer.value;
+        }
+
+        uint added = bit & ~renderer.renderingLayerMask;
+        if (added == 0)
             return;
 
-        renderer.renderingLayerMask |= outlineBit;
-        _outlined.Add(renderer);
+        renderer.renderingLayerMask |= added;
+        _outlined[renderer] = added;
     }
 
     private static bool IsCharacter(Renderer renderer)

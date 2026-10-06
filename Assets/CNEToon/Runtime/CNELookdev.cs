@@ -89,7 +89,7 @@ public static class CNELookdev
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AddMenuButton()
     {
-        var lobby = Object.FindFirstObjectByType<LobbyUIController>(FindObjectsInactive.Include);
+        var lobby = Object.FindAnyObjectByType<LobbyUIController>(FindObjectsInactive.Include);
         if (lobby == null || lobby.InitialButtonTemplate == null)
             return;
 

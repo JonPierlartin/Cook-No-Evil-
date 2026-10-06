@@ -73,6 +73,9 @@ MonoBehaviour:
     outlineLayer:
       serializedVersion: 0
       m_Bits: 256
+    silhouetteLayer:
+      serializedVersion: 0
+      m_Bits: 512
     passEvent: 400
     outlineColor: {r: 0.14117648, g: 0.13725491, b: 0.22745098, a: 1}
     colorBlend: 1

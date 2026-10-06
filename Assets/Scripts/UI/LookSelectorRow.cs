@@ -37,7 +37,7 @@ public class LookSelectorRow : MonoBehaviour
 
     private void TryBuild()
     {
-        var menu = FindFirstObjectByType<SettingsMenuUI>(FindObjectsInactive.Include);
+        var menu = FindAnyObjectByType<SettingsMenuUI>(FindObjectsInactive.Include);
         if (menu == null)
             return;
 
