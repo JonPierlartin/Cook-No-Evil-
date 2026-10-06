@@ -25,6 +25,9 @@ public class PlayerController : NetworkBehaviour
     private InputAction _lookAction;
     private float _pitch;
     private float _verticalVelocity;
+    // Bu karakterin kapattigi sahne kamerasi (uzerinde sahnenin AudioListener'i da var). Karakter yok olunca ya da
+    // sahipligi bitince geri acilir: acilmazsa sahnede ne kamera ne dinleyici kalir.
+    private Camera _disabledSceneCamera;
 
     private void Awake()
     {
@@ -34,6 +37,11 @@ public class PlayerController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         ApplyOwnershipState();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        RestoreSceneCamera();
     }
 
     // BULUNAN HATA: round-ici rejoin'de PlayerSpawner ayni objeyi yeniden Spawn ETMIYOR,
@@ -85,7 +93,10 @@ public class PlayerController : NetworkBehaviour
         // kapaliysa) SetActive(false) idempotent, zararsizdir.
         var sceneCamera = Camera.main;
         if (sceneCamera != null)
+        {
             sceneCamera.gameObject.SetActive(false);
+            _disabledSceneCamera = sceneCamera;
+        }
 
         if (playerCamera != null)
             playerCamera.gameObject.SetActive(true);
@@ -119,7 +130,17 @@ public class PlayerController : NetworkBehaviour
         if (playerCamera != null)
             playerCamera.gameObject.SetActive(false);
 
+        RestoreSceneCamera();
         enabled = false;
+    }
+
+    // Yalnizca sahne kamerasini KENDISI kapatmis olan karakter geri acar (uzak oyuncularin karakterleri dokunmaz).
+    private void RestoreSceneCamera()
+    {
+        if (_disabledSceneCamera != null)
+            _disabledSceneCamera.gameObject.SetActive(true);
+
+        _disabledSceneCamera = null;
     }
 
     private void Update()
