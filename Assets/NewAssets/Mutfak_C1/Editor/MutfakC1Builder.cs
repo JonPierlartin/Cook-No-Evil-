@@ -27,10 +27,6 @@ public static class MutfakC1Builder
     private const string OutlineLayerName = "Outline";
     private const string SilhouetteLayerName = "Outline Silhouette";
 
-    // Yalnızca dış hat alan asset'ler: ince ve sık ayrıntıda (ızgara çubukları, fritöz sepetleri ve sapları) iç
-    // çizgiler birbirine girip yüzeyi karartıyor; ızgaradaki et seçilmiyordu. Diğerleri iç kırımlarıyla çizilir.
-    private static readonly HashSet<string> SilhouetteOnlyAssets = new() { "SM_Grill", "SM_Fryer" };
-
     // Paketteki değerler (BENIOKU.md → Materyaller).
     private const float PaletteEmission = 2.5f;
     private const float DisplayEmission = 2f;
@@ -219,9 +215,9 @@ public static class MutfakC1Builder
                     continue;
                 }
 
-                string assetName = AssetNameOf(asset.name);
-                var flags = ReadFlags(assetName);
-                uint lineBit = SilhouetteOnlyAssets.Contains(assetName) ? silhouetteBit : outlineBit;
+                // Eşyalar tam çizgi katmanındadır: kalın dış hat + ince, soluk iç çizgi (ağırlıklar CNEOutline
+                // feature'ında). Yalnızca-siluet katmanı karakterler içindir.
+                var flags = ReadFlags(AssetNameOf(asset.name));
                 foreach (var renderer in asset.GetComponentsInChildren<Renderer>(true))
                 {
                     var shared = renderer.sharedMaterials;
@@ -243,7 +239,7 @@ public static class MutfakC1Builder
                     // Diğer bitler korunur; çizgi yalnızca asset listesinde "Outline" işaretli olanlara.
                     renderer.renderingLayerMask &= ~(outlineBit | silhouetteBit);
                     if (flags.Outline)
-                        renderer.renderingLayerMask |= lineBit;
+                        renderer.renderingLayerMask |= outlineBit;
                 }
             }
 

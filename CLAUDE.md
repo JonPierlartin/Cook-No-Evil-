@@ -1034,9 +1034,16 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Yalnızca dekor (Faz 0 dışı):** fritöz ×2, patates istasyonu, interkom, stok kapağı, sos yuvası, kapı kanatları,
     davlumbaz, tavan lambaları (ışık kaynağı eklenmedi), pervazdaki `Side_*` soketleri.
   - Sahne kaydının gürültüsü yine temizlendi (`cleanscene.py`): yalnızca eklenen bloklar ve bu işin değiştirdikleri.
-  - **Izgara ve fritöz yalnızca dış hat alır** (`MutfakC1Builder.SilhouetteOnlyAssets` → `Outline Silhouette`
-    katmanı): ızgara çubukları ile fritöz sepet ve saplarında iç çizgiler yüzeyi karartıyor, ızgaradaki et
-    seçilmiyordu (7 Eki, Ersel). Diğer mutfak eşyaları iç kırımlarıyla çizilir.
+  - **ÇİZGİ KURALI — yeni gelen her asset'e de uygulanır (7 Eki 2026, Ersel):** eşyalar **kalın, tam koyu dış hat +
+    ince, soluk iç çizgi** alır. Çok çizgi de (ızgara çubukları, fritöz sepetleri yüzeyi karartıyor, et seçilmiyordu)
+    çizgisizlik de (yalnızca-siluet denendi: "çok boş") reddedildi; ortası bu. Uygulama: eşya `Outline` katmanına
+    konur (asset'in `cne_outline` bayrağı açıksa), başka bir şey yapılmaz — ağırlıklar `CNEOutline` feature'ında
+    (`innerWidthPx` 1, `innerOpacity` 0,5, `innerFadeStart/End` 3 / 7 m). Karakterler ve müşteriler `Outline
+    Silhouette` katmanında kalır (iç çizgi yok). Mimari (duvar, zemin) hiçbir katmana konmaz.
+    **Dış hat** üç kaynaktan gelir: maskenin sınırı, **nesne kimliği** (maske dokusunun B kanalı; renderer'ın pivot
+    konumundan — yan yana iki eşyanın ve bir eşyanın ayrı parçasının (kapak, sepet, kapı) sınırı) ve derinlik
+    kademesi. **İç çizgi** normal kırımlarıdır. Asset'e özel "bu yalnızca siluet olsun" listesi TUTULMAZ; bir eşyada
+    çizgi fazla geliyorsa önce feature'daki iç çizgi ağırlığına bakılır.
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
   konsol her kare "There are no audio listeners" yazıyordu.

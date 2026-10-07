@@ -128,7 +128,7 @@ bakılınca kıvrımlı nesnenin çizgisi uzaktan nokta nokta kopuyordu). (c) Ç
 
 | Ayar | Ne yapar | Varsayılan |
 |---|---|---|
-| Outline Layer | Tam çizgi alacak rendering layer: siluet + iç kırımlar (öğeler, etkileşilen nesneler). | Outline |
+| Outline Layer | Tam çizgi alacak rendering layer: kalın dış hat + ince, soluk iç çizgi (eşyalar, öğeler). | Outline |
 | Silhouette Layer | Yalnızca dış hat alacak rendering layer (karakterler, müşteriler). Parmak, göz, tuş gibi küçük ayrıntıların iç çizgileri birbirine girip modeli karartır; bu katmanda çizilmezler. | Outline Silhouette |
 | Pass Event | Geçişin sırası (saydamlardan ve post-process'ten önce). | AfterRenderingSkybox |
 | Outline Color | Çizgi rengi. | `#24233A` |
@@ -140,6 +140,14 @@ bakılınca kıvrımlı nesnenin çizgisi uzaktan nokta nokta kopuyordu). (c) Ç
 | Normal Threshold | Yüzey yönü eşiği. Büyük = yalnız keskin kırımlar. | 0,5 |
 | Edge Softness | Kenar geçişinin yumuşaklığı. | 0,5 |
 | Fade Start / End | Çizginin solmaya başladığı ve kaybolduğu mesafe (m). | 12 / 25 |
+| Inner Width Px | İç çizginin kalınlığı (referans yükseklikte piksel). | 1 |
+| Inner Opacity | İç çizginin koyuluğu. 0 = yalnızca dış hat, 1 = dış hat kadar koyu. | 0,5 |
+| Inner Fade Start / End | İç çizgilerin solmaya başladığı ve kaybolduğu mesafe (m). | 3 / 7 |
+
+**İki çizgi ağırlığı.** Dış hat (kalın, tam koyu): nesnenin silueti, komşu nesneyle ya da kendi ayrı parçasıyla
+(kapak, sepet, kapı kanadı) sınırı, derinlik kademeleri. İç çizgi (ince, soluk, yakında): yüzeyin yön değiştirdiği
+kırımlar. İç çizgiler dış hat kadar ağır çizilince sık ayrıntı yüzeyi karartır; hiç çizilmeyince eşya boş kalır.
+Yeni asset için yapılacak tek şey Renderer'a `Outline` katmanını vermektir.
 
 **Katman atama.** Renderer → Rendering Layer Mask → `Outline`. Koddan atanıyorsa diğer bitler korunur:
 `renderer.renderingLayerMask |= RenderingLayerMask.GetMask("Outline")`.

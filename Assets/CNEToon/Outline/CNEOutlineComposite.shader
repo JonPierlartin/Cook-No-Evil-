@@ -41,6 +41,10 @@ Shader "Hidden/CNE/OutlineComposite"
             float _EdgeSoftness;
             float _FadeStart;
             float _FadeEnd;
+            float _InnerWidthPx;
+            float _InnerOpacity;
+            float _InnerFadeStart;
+            float _InnerFadeEnd;
 
             struct Attributes
             {
@@ -66,10 +70,10 @@ Shader "Hidden/CNE/OutlineComposite"
                 return LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
             }
 
-            // R = tam çizgi, G = yalnızca siluet.
-            half2 Mask(float2 uv)
+            // R = tam çizgi, G = yalnızca siluet, B = nesne kimliği. Kimlik ara değer almasın diye noktasal okunur.
+            half3 Mask(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_LOD(_CNEOutlineMask, sampler_LinearClamp, uv, 0).rg;
+                return SAMPLE_TEXTURE2D_LOD(_CNEOutlineMask, sampler_PointClamp, uv, 0).rgb;
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -103,30 +107,44 @@ Shader "Hidden/CNE/OutlineComposite"
                 float nDotV = saturate(dot(centerNormal, normalize(GetCameraPositionWS() - positionWS)));
                 float depthThreshold = _DepthThreshold / max(nDotV, 0.1);
 
-                float3 n1 = SampleSceneNormals(uvTR) - SampleSceneNormals(uvBL);
-                float3 n2 = SampleSceneNormals(uvTL) - SampleSceneNormals(uvBR);
-                float normalEdge = sqrt(dot(n1, n1) + dot(n2, n2));
-
                 float silhouette = smoothstep(depthThreshold, depthThreshold * (1.0 + _EdgeSoftness), depthEdge);
+
+                // İKİ ÇİZGİ AĞIRLIĞI. Kalın ve tam koyu DIŞ HAT: nesnenin silueti, komşu nesneyle / kendi ayrı
+                // parçasıyla sınırı ve derinlik kademeleri. İnce ve soluk İÇ ÇİZGİ: yüzeyin yön değiştirdiği kırımlar.
+                // İç çizgiler de dış hat kadar kalın ve koyu çizilince sık ayrıntı (ızgara çubuğu, sepet teli)
+                // yüzeyi karartıyordu; hiç çizilmeyince eşya boş kalıyordu.
+                half3 mBL = Mask(uvBL);
+                half3 mTR = Mask(uvTR);
+                half3 mBR = Mask(uvBR);
+                half3 mTL = Mask(uvTL);
+                half3 mC = Mask(uv);
+                half3 maskMax = max(max(max(mBL, mTR), max(mBR, mTL)), mC);
+                half3 maskMin = min(min(min(mBL, mTR), min(mBR, mTL)), mC);
+
+                // Dış hat 1: maskenin kendi sınırı (maskenin bittiği yer = nesnenin görünen silueti). Yalnızca
+                // derinlik farkına bakılırsa kıvrımlı nesnenin kenar pikselleri kameraya sıyırarak baktığı için
+                // eşiği geçemez ve uzaktan çizgi nokta nokta kopar; maskenin sınırı mesafeden etkilenmez.
+                float outer = max(maskMax.r - maskMin.r, maskMax.g - maskMin.g);
+
+                // Dış hat 2: farklı nesne kimlikleri yan yana (ikisi de maskede). Maskede olmayan örnek (kimlik 0)
+                // sayılmaz; o sınır zaten yukarıda yakalandı.
+                half idMin = min(min(min(mBL.b > 0 ? mBL.b : maskMax.b, mTR.b > 0 ? mTR.b : maskMax.b),
+                    min(mBR.b > 0 ? mBR.b : maskMax.b, mTL.b > 0 ? mTL.b : maskMax.b)), mC.b > 0 ? mC.b : maskMax.b);
+                outer = max(outer, step(0.5 / 255.0, maskMax.b - idMin));
+
+                // Dış hat 3: derinlik kademesi (nesnenin kendi içinde öne çıkan parça, kapak, raf).
+                outer = max(outer, silhouette * max(maskMax.r, maskMax.g));
+
+                // İç çizgi: yalnızca tam çizgi alan nesnelerde, kendi (ince) kalınlığında, soluk ve yakında.
+                float innerStep = max(1.0, round(_InnerWidthPx * _ScaledScreenParams.y / _ReferenceHeight));
+                float2 innerTexel = texel * innerStep;
+                float3 n1 = SampleSceneNormals(uv + innerTexel) - centerNormal;
+                float3 n2 = SampleSceneNormals(uv + float2(0.0, innerTexel.y)) - SampleSceneNormals(uv + float2(innerTexel.x, 0.0));
+                float normalEdge = sqrt(dot(n1, n1) + dot(n2, n2));
                 float crease = smoothstep(_NormalThreshold, _NormalThreshold * (1.0 + _EdgeSoftness), normalEdge);
+                float inner = crease * mC.r * _InnerOpacity * (1.0 - smoothstep(_InnerFadeStart, _InnerFadeEnd, centerDepth));
 
-                // Çizgi yalnızca maskedeki bir nesneye dokunuyorsa çizilir; yalnızca mimariye ait kenarlar maskede
-                // olmadığı için atlanır. Tam çizgi alan nesnede siluet + iç kırımlar; yalnızca siluet alan nesnede
-                // (karakterler: parmak, göz, tuş gibi küçük ayrıntıların iç çizgileri modeli karartır) yalnızca siluet.
-                half2 mBL = Mask(uvBL);
-                half2 mTR = Mask(uvTR);
-                half2 mBR = Mask(uvBR);
-                half2 mTL = Mask(uvTL);
-                half2 mC = Mask(uv);
-                half2 maskMax = max(max(max(mBL, mTR), max(mBR, mTL)), mC);
-                half2 maskMin = min(min(min(mBL, mTR), min(mBR, mTL)), mC);
-                float edge = max(max(silhouette, crease) * maskMax.r, silhouette * maskMax.g);
-
-                // Dış hat MASKENİN KENDİ SINIRINDAN da alınır (maskenin bittiği yer = nesnenin görünen silueti).
-                // Yalnızca derinlik farkına bakılırsa kıvrımlı nesnenin kenar pikselleri kameraya sıyırarak baktığı
-                // için eşiği geçemez ve uzaktan çizgi nokta nokta kopar; maskenin sınırı mesafeden etkilenmez.
-                half2 maskEdge = maskMax - maskMin;
-                edge = max(edge, max(maskEdge.r, maskEdge.g));
+                float edge = max(outer, inner);
 
                 // Uzakta çizgi solar.
                 edge *= 1.0 - smoothstep(_FadeStart, _FadeEnd, nearest);

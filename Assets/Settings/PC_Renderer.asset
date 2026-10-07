@@ -82,6 +82,10 @@ MonoBehaviour:
     darken: 0.35
     widthPx: 2
     referenceHeight: 1080
+    innerWidthPx: 1
+    innerOpacity: 0.5
+    innerFadeStart: 3
+    innerFadeEnd: 7
     depthThreshold: 0.05
     normalThreshold: 0.5
     edgeSoftness: 0.5

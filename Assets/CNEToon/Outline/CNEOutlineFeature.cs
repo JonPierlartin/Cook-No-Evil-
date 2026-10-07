@@ -35,6 +35,16 @@ public class CNEOutlineFeature : ScriptableRendererFeature
         [Tooltip("Kalınlığın tanımlandığı ekran yüksekliği (piksel).")]
         [Min(1f)] public float referenceHeight = 1080f;
 
+        [Header("İç çizgiler (yüzey kırımları; dış hattan ince ve soluk)")]
+        [Tooltip("İç çizginin kalınlığı, referans yükseklikte piksel.")]
+        [Min(0.5f)] public float innerWidthPx = 1f;
+        [Tooltip("İç çizginin koyuluğu. 0 = iç çizgi yok (yalnızca dış hat), 1 = dış hat kadar koyu.")]
+        [Range(0f, 1f)] public float innerOpacity = 0.5f;
+        [Tooltip("İç çizgilerin solmaya başladığı ve kaybolduğu mesafe (m). Uzakta sık ayrıntı lekeye dönmesin diye " +
+            "dış hattan önce solar.")]
+        [Min(0f)] public float innerFadeStart = 3f;
+        [Min(0f)] public float innerFadeEnd = 7f;
+
         [Header("Kenar bulma")]
         [Tooltip("Derinlik farkı eşiği (mesafeye oranla). Küçük = daha çok siluet çizgisi.")]
         [Min(0.0001f)] public float depthThreshold = 0.05f;
@@ -141,6 +151,10 @@ public class CNEOutlineFeature : ScriptableRendererFeature
         private static readonly int EdgeSoftnessId = Shader.PropertyToID("_EdgeSoftness");
         private static readonly int FadeStartId = Shader.PropertyToID("_FadeStart");
         private static readonly int FadeEndId = Shader.PropertyToID("_FadeEnd");
+        private static readonly int InnerWidthId = Shader.PropertyToID("_InnerWidthPx");
+        private static readonly int InnerOpacityId = Shader.PropertyToID("_InnerOpacity");
+        private static readonly int InnerFadeStartId = Shader.PropertyToID("_InnerFadeStart");
+        private static readonly int InnerFadeEndId = Shader.PropertyToID("_InnerFadeEnd");
 
         private static readonly MaterialPropertyBlock PropertyBlock = new();
 
@@ -186,6 +200,10 @@ public class CNEOutlineFeature : ScriptableRendererFeature
             compositeMaterial.SetFloat(EdgeSoftnessId, settings.edgeSoftness);
             compositeMaterial.SetFloat(FadeStartId, settings.fadeStart);
             compositeMaterial.SetFloat(FadeEndId, Mathf.Max(settings.fadeEnd, settings.fadeStart + 0.01f));
+            compositeMaterial.SetFloat(InnerWidthId, settings.innerWidthPx);
+            compositeMaterial.SetFloat(InnerOpacityId, settings.innerOpacity);
+            compositeMaterial.SetFloat(InnerFadeStartId, settings.innerFadeStart);
+            compositeMaterial.SetFloat(InnerFadeEndId, Mathf.Max(settings.innerFadeEnd, settings.innerFadeStart + 0.01f));
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -195,10 +213,11 @@ public class CNEOutlineFeature : ScriptableRendererFeature
             var cameraData = frameData.Get<UniversalCameraData>();
             var lightData = frameData.Get<UniversalLightData>();
 
-            // (a) Maske: Outline katmanlarındaki opak nesneler, kameranın derinliğine karşı. R = tam çizgi, G = siluet.
+            // (a) Maske: Outline katmanlarındaki opak nesneler, kameranın derinliğine karşı. R = tam çizgi, G = siluet,
+            // B = nesne kimliği.
             var maskDesc = renderGraph.GetTextureDesc(resources.activeColorTexture);
             maskDesc.name = "_CNEOutlineMask";
-            maskDesc.format = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8_UNorm;
+            maskDesc.format = UnityEngine.Experimental.Rendering.GraphicsFormat.R8G8B8A8_UNorm;
             maskDesc.clearBuffer = true;
             maskDesc.clearColor = Color.clear;
             TextureHandle mask = renderGraph.CreateTexture(maskDesc);
