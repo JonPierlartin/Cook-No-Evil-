@@ -89,6 +89,8 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     [SerializeField] private string clipWristBone = "DEF-hand.L";
     [SerializeField] private string clipKnuckleBone = "DEF-f_middle.01.L";
     [SerializeField] private string clipThumbBone = "DEF-thumb.01.L";
+    [Tooltip("İşaret parmağının uç kemiği: yüze giden kliplerde (gözüm üstünde) bu nokta kaş noktasına oturtulur.")]
+    [SerializeField] private string clipFingertipBone = "DEF-f_index.03.L";
     [Tooltip("Parmak kemiklerinin ad ön ekleri: bu adlı kemiklerin dönüşü iskeletten ele kopyalanır.")]
     [SerializeField] private string[] clipFingerPrefixes = { "DEF-f_", "DEF-thumb" };
     [Tooltip("Açıksa klibin en uç noktası jest merkezinin yüksekliğine kaldırılır. Artist klipleri bel hizasında " +
@@ -161,12 +163,13 @@ public class ProceduralCharacterAnimator : MonoBehaviour
     private class ClipRig
     {
         public Transform Root;
-        public Transform Wrist, Knuckle, Thumb;
+        public Transform Wrist, Knuckle, Thumb, Fingertip;
         public BonePair[] LeftFingers, RightFingers;
     }
 
     // Bir ELİN o an oynattığı klip. Mirrored: sağ elin klibi sol elde aynalı oynuyor.
-    // Anchored: iki elin buluştuğu klip — konum dinlenmeye göre değil, buluşma noktasına göre yerleşir.
+    // Anchored: konum dinlenmeye göre değil, klipteki yerin sabit bir kaydırmasıyla verilir (eller buluşuyor ya da
+    // el yüze gidiyor; bkz. ClipAnchorMode).
     private class ClipTrack
     {
         public AnimationClip Clip;
@@ -287,10 +290,9 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         SetupTrack(mirrored ? _leftClip : _rightClip, clip, rig, mirrored);
     }
 
-    // Artist'in İKİ elli klibi: sağ elin klibi sağ elde, sol elin klibi sol elde (biri boş olabilir).
-    // handsMeet: eller klipte buluşuyor (ovuşturma gibi) — eller dinlenme yerlerine göre değil, buluştukları
-    // noktaya göre yerleşir ki gövdesi geniş karakterde de birbirine değsin; buluşma noktası jest merkezine gelir.
-    public void PlayClips(AnimationClip rightClip, AnimationClip leftClip, float duration, bool handsMeet)
+    // Artist'in klipleri: sağ elin klibi sağ elde, sol elin klibi sol elde (biri boş olabilir).
+    // anchor: hareketin gövdeye nasıl oturtulacağı (dinlenmeye göre / eller buluşuyor / el yüze gidiyor).
+    public void PlayClips(AnimationClip rightClip, AnimationClip leftClip, float duration, ClipAnchor anchor)
     {
         var rightRig = rightClip != null ? EnsureClipRig(ref _rightClipRig, clipRigPrefab) : null;
         var leftRig = leftClip != null ? EnsureClipRig(ref _leftClipRig, leftClipRigPrefab) : null;
@@ -303,8 +305,32 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         if (leftRig != null)
             SetupTrack(_leftClip, leftClip, leftRig, false);
 
-        if (handsMeet && _rightClip.Clip != null && _leftClip.Clip != null)
+        var mode = anchor != null ? anchor.Mode : ClipAnchorMode.Rest;
+        if (mode == ClipAnchorMode.HandsMeet && _rightClip.Clip != null && _leftClip.Clip != null)
+        {
             AnchorToMeetingPoint();
+        }
+        else if (mode == ClipAnchorMode.Face)
+        {
+            AnchorToFace(_rightClip, 1f, anchor);
+            AnchorToFace(_leftClip, -1f, anchor);
+        }
+    }
+
+    // Seçilen anda işaret parmağının ucu karakterin kaş noktasına gelecek kadar bütün hareket kaydırılır. Yüzler
+    // gövdenin farklı yerinde olduğu için (ketçapta üstte, hamburger ve kasada daha aşağıda ve önde) el sabit bir
+    // yüksekliğe değil, karakterin kendi yüzüne gider.
+    private void AnchorToFace(ClipTrack track, float side, ClipAnchor anchor)
+    {
+        if (track.Clip == null || track.Rig.Fingertip == null)
+            return;
+
+        track.Clip.SampleAnimation(track.Rig.Root.gameObject, track.Clip.length * anchor.Time);
+        var fingertip = ClipToCharacter(track, track.Rig.Fingertip.position);
+        var target = new Vector3((browPoint.x + anchor.Offset.x) * side, browPoint.y + anchor.Offset.y, browPoint.z + anchor.Offset.z);
+
+        track.Anchored = true;
+        track.AnchorOffset = target - fingertip;
     }
 
     private void StartClips(float duration)
@@ -384,6 +410,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         rigBones.TryGetValue(clipWristBone, out created.Wrist);
         rigBones.TryGetValue(clipKnuckleBone, out created.Knuckle);
         rigBones.TryGetValue(clipThumbBone, out created.Thumb);
+        rigBones.TryGetValue(clipFingertipBone, out created.Fingertip);
         if (created.Wrist == null || created.Knuckle == null || created.Thumb == null)
         {
             Debug.LogError($"[ProceduralCharacterAnimator] '{name}': klip iskeletinde ({prefab.name}) bilek/parmak kemikleri bulunamadı; klipler oynatılamaz.", this);
@@ -634,7 +661,7 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         Vector3 clipPosition;
         if (track.Anchored)
         {
-            // Eller buluşuyor: klipteki yer, buluşma noktası jest merkezine gelecek kadar kaydırılır.
+            // Klipteki yer sabit bir kaydırmayla kullanılır (buluşma noktası jest merkezine / parmak ucu yüze).
             clipPosition = wrist + track.AnchorOffset;
         }
         else

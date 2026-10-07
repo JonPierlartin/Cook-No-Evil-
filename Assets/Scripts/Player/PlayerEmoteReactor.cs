@@ -97,7 +97,7 @@ public class PlayerEmoteReactor : NetworkBehaviour
         bool hasAnimator = character != null && character.Animator != null;
         if (emote.HasClip && hasAnimator)
         {
-            character.Animator.PlayClips(emote.Clip, emote.LeftClip, emote.Duration, emote.HandsMeet);
+            character.Animator.PlayClips(emote.Clip, emote.LeftClip, emote.Duration, emote.ClipAnchor);
             return;
         }
 

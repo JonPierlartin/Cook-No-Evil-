@@ -28,9 +28,8 @@ public class EmoteDefinition : ScriptableObject
     [SerializeField] private AnimationClip leftClip;
     [Tooltip("Klibin oynatma hızı. Süre = en uzun klibin uzunluğu / hız.")]
     [SerializeField, Min(0.1f)] private float clipSpeed = 1f;
-    [Tooltip("Eller klipte buluşuyor (ovuşturma gibi): eller buluşma noktasına göre yerleşir, gövdesi geniş karakterde " +
-        "de birbirine değer. Eller ayrı hareket ediyorsa kapalı.")]
-    [SerializeField] private bool handsMeet;
+    [Tooltip("Hareketin gövdeye nasıl oturtulacağı: dinlenmeye göre, eller buluşuyor ya da el yüze gidiyor.")]
+    [SerializeField] private ClipAnchor clipAnchor = new();
 
     public string LocalizationKey => localizationKey;
     public Sprite Icon => icon;
@@ -45,5 +44,5 @@ public class EmoteDefinition : ScriptableObject
     public bool HasClip => clip != null || leftClip != null;
     public AnimationClip Clip => clip;
     public AnimationClip LeftClip => leftClip;
-    public bool HandsMeet => handsMeet;
+    public ClipAnchor ClipAnchor => clipAnchor;
 }

@@ -22,4 +22,7 @@ MonoBehaviour:
   clip: {fileID: -6851493242495694946, guid: 8e2b4bb28c7e36b46926ec399688dd42, type: 3}
   leftClip: {fileID: 0}
   clipSpeed: 1.25
-  handsMeet: 0
+  clipAnchor:
+    mode: 2
+    time: 0.42
+    offset: {x: 0, y: -0.05, z: 0.09}

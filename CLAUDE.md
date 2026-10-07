@@ -1045,6 +1045,11 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     Blender'ın yan ürünü. Bağlananlar: Gözüm Üstünde (tek el, hız 1,25), Nah (iki el, 1,25), El Ovuşturma (iki el,
     buluşan, 1,5). Editörde yalnızca sayısal karşılaştırma yapıldı (sol iskelet dinlenmede sağla aynı sapmada);
     görsel olarak oyunda doğrulanmadı.
+  - **Klibin gövdeye oturtulması veridir (`ClipAnchor`, 7 Eki):** `Rest` (dinlenme + yer değiştirme + jest
+    yüksekliğine kaldırma), `HandsMeet` (eski `handsMeet` alanının yerine), `Face` (seçilen anda işaret parmağının
+    ucu `browPoint` + paya gelir; `clipFingertipBone`). Gözüm Üstünde `Face` (an 0,42; pay 0 / −0,05 / 0,09): `Rest`
+    modunda el her karakterde sabit 1,55 m'ye kaldırılıyor, gözler (1,41) altında kalıyordu. Orta Parmak klibi
+    bağlandı (tek el, `Rest`, hız 1,3).
 - **Sayı jesti (4 Eki 2026):** `SignalValue.gestureCount` > 0 ise `PlayerSignalDisplay` →
   `ProceduralCharacterAnimator.PlayCount`: eller jest merkezinde (pencereden görünen yükseklik), avuç karşıya, sayı
   kadar parmak açık. **El modeli dört parmaklı** (işaret, orta, serçe, başparmak — `HandPose.Group`'a `Pinky`
