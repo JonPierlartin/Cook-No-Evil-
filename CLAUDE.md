@@ -999,7 +999,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     bloğunda olmalı: çıplak uniform'a `Material.Set…` ile yazılan değer SRP Batcher yolunda shader'a ULAŞMADI (maske
     boş kaldı, hiç çizgi çıkmadı; hata yok). Tam ekran `DrawProcedural` geçişinde aynı desen çalışıyor.
     · Kamera `targetTexture` yokken `WorldToViewportPoint` Game görünümünün en-boy oranını kullanır (ölçüm kayar).
-- **C1 mutfak paketi — içe alındı, SAHNEYE HENÜZ KONMADI (7 Eki 2026):** `Assets/NewAssets/Mutfak_C1/` (34 model +
+- **C1 mutfak paketi (7 Eki 2026; sahnede kurulu):** `Assets/NewAssets/Mutfak_C1/` (34 model +
   yerleşim; artist'in `BENIOKU.md`'si yanında). Kararlar (Ersel): **glTFast paketi** (`com.unity.cloud.gltfast`
   6.20.0; GLB pivot / hareketli parça / soketleriyle gelir), **kalıcı `CNE/Toon` materyalleri** (görünüm ayarından
   bağımsız; KAPALI ve STİLİZE mutfak eşyalarını değiştirmez), **mutfak büyütülecek ve pencere ortalanacak**
@@ -1013,10 +1013,27 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Cam (`MI_Palette_Glass`) URP Lit saydam:** `CNE/Toon` yalnızca opak. Derinliğe yazmadığı için Şef'te
     görünmez (K2); paket "derinliğe yazmalı" diyor — açık iş.
   - Shader'a `_EmissionBaseTint` eklendi: 1 iken yüzey kendi palet renginde ışır (paletli ışıklı yüzeyler).
-  - **Kalan (ayrı adım):** duvar / zemin (yer tutucu), eski mutfak eşyalarının kaldırılması, işlevsel köklerin
-    (ızgara yuvaları, tezgahlar, kaplar, buzdolabı, çöp, pencere yuvaları, hata paneli, doğma noktası) yeni yerlere
-    taşınması, çarpışmalar, erişim ölçümü. Faz 0 dışı modeller (fritöz, patates istasyonu, interkom, stok kapağı, sos
-    yuvası) yalnızca dekor olarak gelecek.
+  - **Sahne kurulumu (`MutfakC1SceneInstaller`, menü *CNE → Mutfak C1 → Install In Scene*; yeniden çalıştırılabilir):**
+    `Mutfak_C1` (yerleşim prefab'ı; orijin 4,5 / 0,30 / −3,58) + `Mutfak_C1_Mimari` (yer tutucu kutular: kuzey duvarı
+    z 2,42'ye taşındı, zemin uzantısı, pencere ve kapı açıklıklı doğu / güney duvarları, kapıyı ve eşyaları kapatan
+    görünmez engeller). **Mutfak artık x −1,2…4,5 / z −3,58…2,42.** Pencere z −1,89…0,73 (eskiden −3,58…−0,58),
+    Mutfak↔Kasa kapısı x −0,11…1,51. Eski duvar parçaları, `SM_Table_02`, `SM_KitchenDoor` ×2, `PF_Frier` ve
+    sepetleri KAPALI (silinmedi); işlevsel köklerin eski görsel çocukları kapalı.
+  - **İşlev → model:** `Izgara_Yuva_Sol` → 1. ızgara, `Izgara_Yuva_Sag` → 2. ızgara (**ızgara başına tek yuva**, iki
+    soketin ortası — Ersel) · `BurgerAssemblyStation` ×2 → kesme tahtaları · `EkmekContainer` → ekmek tepsisi
+    (görünmez tıklama hacmi) · `Kap_*` → malzeme alanının `Socket_Bin_*` soketleri · `Buzdolabi_Et` → cam kapılı
+    buzdolabı · `Cop_Mutfak` + **`Cop_Mutfak_2`** (yeni ağ nesnesi; ikisi de çalışır) · `MutfakPencere_Yuva_1-3` →
+    pervazın `Socket_Burger_*` soketleri (tıklama hacmi duvarı boydan boya geçer; iki taraftan erişilir) ·
+    `Dogma_Sef` fritöz hattı ile yarımada arasındaki koridorda.
+  - **Hata paneli:** `HataPaneli_C1.prefab` = `SM_XPanel` modeli + eski panelin sönük işaret Canvas'ı.
+    `ErrorWallPanel.modelSlots` doluysa yanan X şablondan kopyalanmaz, modelin `X_*` düğümleri kullanılır (K2 kuralı
+    aynı: sönük X Canvas, yanan X geometri). Mutfaktaki panel bu; Kasa ve İstasyon panelleri eski prefab.
+  - **Çarpışma kuralı:** üstünde etkileşim hedefi duran eşyanın engeli o yüzeyin altında biter (ızgara 0,98, yarımada
+    0,98, malzeme alanı 0,83 m); yoksa nişan ışını engele çarpar. Ölçüldü (editörde, göz 1,98): 16 hedefin hepsi
+    Şef'in durabileceği yerden, pencere yuvaları Komi tarafından da erişiliyor (en uzak çöp kovası 1,19 m).
+  - **Yalnızca dekor (Faz 0 dışı):** fritöz ×2, patates istasyonu, interkom, stok kapağı, sos yuvası, kapı kanatları,
+    davlumbaz, tavan lambaları (ışık kaynağı eklenmedi), pervazdaki `Side_*` soketleri.
+  - Sahne kaydının gürültüsü yine temizlendi (`cleanscene.py`): yalnızca eklenen bloklar ve bu işin değiştirdikleri.
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
   konsol her kare "There are no audio listeners" yazıyordu.
