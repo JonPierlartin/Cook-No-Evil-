@@ -1034,6 +1034,9 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Yalnızca dekor (Faz 0 dışı):** fritöz ×2, patates istasyonu, interkom, stok kapağı, sos yuvası, kapı kanatları,
     davlumbaz, tavan lambaları (ışık kaynağı eklenmedi), pervazdaki `Side_*` soketleri.
   - Sahne kaydının gürültüsü yine temizlendi (`cleanscene.py`): yalnızca eklenen bloklar ve bu işin değiştirdikleri.
+  - **Izgara ve fritöz yalnızca dış hat alır** (`MutfakC1Builder.SilhouetteOnlyAssets` → `Outline Silhouette`
+    katmanı): ızgara çubukları ile fritöz sepet ve saplarında iç çizgiler yüzeyi karartıyor, ızgaradaki et
+    seçilmiyordu (7 Eki, Ersel). Diğer mutfak eşyaları iç kırımlarıyla çizilir.
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
   konsol her kare "There are no audio listeners" yazıyordu.
