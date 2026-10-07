@@ -267,7 +267,8 @@ void ForwardFragment(
 #endif
 
 #if defined(_EMISSION_ON)
-    color += _EmissionColor.rgb * props.g;
+    // _EmissionBaseTint 1 iken yüzey kendi palet renginde ışır (emission rengi yalnızca şiddeti verir).
+    color += _EmissionColor.rgb * lerp(half3(1, 1, 1), base.rgb, _EmissionBaseTint) * props.g;
 #endif
 
     color = MixFog(color, inputData.fogCoord);

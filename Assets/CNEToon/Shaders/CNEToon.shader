@@ -44,6 +44,7 @@ Shader "CNE/Toon"
 
         [Toggle(_EMISSION_ON)] _Emission ("Emission", Float) = 0
         [HDR] _EmissionColor ("Emission rengi", Color) = (0, 0, 0, 1)
+        _EmissionBaseTint ("Emission palet rengini alsin", Range(0, 1)) = 0
 
         [Toggle(_HATCH_ON)] _Hatch ("Tarama deseni", Float) = 0
         [NoScaleOffset] _HatchTex ("Tarama dokusu", 2D) = "white" {}
@@ -320,7 +321,8 @@ Shader "CNE/Toon"
                 MetaInput metaInput = (MetaInput)0;
                 metaInput.Albedo = CNESampleBase(input.uv).rgb;
             #if defined(_EMISSION_ON)
-                metaInput.Emission = _EmissionColor.rgb * SAMPLE_TEXTURE2D(_PropMap, sampler_PropMap, input.uv).g;
+                metaInput.Emission = _EmissionColor.rgb * lerp(half3(1, 1, 1), metaInput.Albedo, _EmissionBaseTint)
+                    * SAMPLE_TEXTURE2D(_PropMap, sampler_PropMap, input.uv).g;
             #endif
                 return UniversalFragmentMeta(input, metaInput);
             }

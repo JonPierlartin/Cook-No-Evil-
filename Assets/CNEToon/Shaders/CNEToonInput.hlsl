@@ -30,6 +30,7 @@ CBUFFER_START(UnityPerMaterial)
     half _RimStrength;
     half _RimUpBias;
     half4 _EmissionColor;
+    half _EmissionBaseTint;
     half _HatchStrength;
     half _HatchScale;
 CBUFFER_END

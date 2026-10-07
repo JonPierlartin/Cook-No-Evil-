@@ -999,6 +999,24 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     bloğunda olmalı: çıplak uniform'a `Material.Set…` ile yazılan değer SRP Batcher yolunda shader'a ULAŞMADI (maske
     boş kaldı, hiç çizgi çıkmadı; hata yok). Tam ekran `DrawProcedural` geçişinde aynı desen çalışıyor.
     · Kamera `targetTexture` yokken `WorldToViewportPoint` Game görünümünün en-boy oranını kullanır (ölçüm kayar).
+- **C1 mutfak paketi — içe alındı, SAHNEYE HENÜZ KONMADI (7 Eki 2026):** `Assets/NewAssets/Mutfak_C1/` (34 model +
+  yerleşim; artist'in `BENIOKU.md`'si yanında). Kararlar (Ersel): **glTFast paketi** (`com.unity.cloud.gltfast`
+  6.20.0; GLB pivot / hareketli parça / soketleriyle gelir), **kalıcı `CNE/Toon` materyalleri** (görünüm ayarından
+  bağımsız; KAPALI ve STİLİZE mutfak eşyalarını değiştirmez), **mutfak büyütülecek ve pencere ortalanacak**
+  (yerleşim 5,60 × 6,00 m; mevcut pencere duvarı 5,08 m — kuzey duvarı 0,92 m dışarı, pakette mimari yok).
+  - `MutfakC1Builder` (menü *CNE → Mutfak C1 → Build*): materyalleri (`Materials/MI_*`; var olanın üzerine yazmaz)
+    ve `Assets/Prefabs/Mutfak/Mutfak_C1_Yerlesim.prefab`'ı üretir — yerleşim GLB'sinin örneği, glTFast materyalleri
+    aynı adlı toon materyalleriyle değiştirilmiş. Çizgi (`Outline` katmanı) ve gölge atma her asset'in kendi GLB
+    dosyasındaki `extras` alanından (`cne_outline`, `cne_cast_shadow`) okunur. Referans zemin (`REF_*`) kapalı.
+  - **Eksen:** glTFast X'i çevirir; yerleşim Unity'de x −5,6…0, z 0…6. Pencere duvarının iç yüzü x=0, kapı duvarı
+    z=0. Dünya eşlemesi (planlanan): yerleşim orijini = mutfağın güneydoğu iç köşesi (4,5 / 0,30 / −3,58), dönüş yok.
+  - **Cam (`MI_Palette_Glass`) URP Lit saydam:** `CNE/Toon` yalnızca opak. Derinliğe yazmadığı için Şef'te
+    görünmez (K2); paket "derinliğe yazmalı" diyor — açık iş.
+  - Shader'a `_EmissionBaseTint` eklendi: 1 iken yüzey kendi palet renginde ışır (paletli ışıklı yüzeyler).
+  - **Kalan (ayrı adım):** duvar / zemin (yer tutucu), eski mutfak eşyalarının kaldırılması, işlevsel köklerin
+    (ızgara yuvaları, tezgahlar, kaplar, buzdolabı, çöp, pencere yuvaları, hata paneli, doğma noktası) yeni yerlere
+    taşınması, çarpışmalar, erişim ölçümü. Faz 0 dışı modeller (fritöz, patates istasyonu, interkom, stok kapağı, sos
+    yuvası) yalnızca dekor olarak gelecek.
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
   konsol her kare "There are no audio listeners" yazıyordu.

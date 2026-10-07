@@ -56,7 +56,10 @@ public class CNEToonShaderGUI : ShaderGUI
 
         Header("Emission");
         if (Toggle(editor, properties, "_Emission", "Emission", "Kendi ışığını veren yüzey (neon). Maskenin G kanalında; bloom alır."))
+        {
             Draw(editor, properties, "_EmissionColor", "Emission rengi", "HDR renk. Şiddeti 1'in üstüne çıkınca bloom parlatır.");
+            Draw(editor, properties, "_EmissionBaseTint", "Palet rengini al", "1 = yüzey kendi palet renginde ışır; emission rengi yalnızca şiddeti verir (palet materyalleri için). 0 = emission rengi olduğu gibi.");
+        }
 
         Header("Desen (tarama)");
         if (Toggle(editor, properties, "_Hatch", "Tarama deseni", "Gölge bandına düşük kontrastlı tarama çizgileri. Maskenin B kanalında. Varsayılan kapalı."))

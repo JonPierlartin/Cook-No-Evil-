@@ -97,6 +97,7 @@ rengi palet hex'iyle aynıdır (ölçüldü: ketçap `#E0262B`, hardal `#F5C518`
 | Parametre | Ne yapar | Varsayılan |
 |---|---|---|
 | Emission / rengi | Kendi ışığını veren yüzey; maskenin G kanalında. HDR şiddet > 1 bloom alır. | kapalı / siyah |
+| Palet rengini al (`_EmissionBaseTint`) | 1 = yüzey kendi palet renginde ışır, emission rengi yalnızca şiddeti verir. | 0 |
 
 ### Desen (tarama)
 
