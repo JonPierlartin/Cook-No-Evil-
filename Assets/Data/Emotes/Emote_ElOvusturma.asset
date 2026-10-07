@@ -19,3 +19,7 @@ MonoBehaviour:
   description: 
   durationSeconds: 1.3
   proceduralAnimation: {fileID: 0}
+  clip: {fileID: -6851493242495694946, guid: 2276419ed37965943ae21bf97c6c0717, type: 3}
+  leftClip: {fileID: -7819035856102921626, guid: 2276419ed37965943ae21bf97c6c0717, type: 3}
+  clipSpeed: 1.5
+  handsMeet: 1

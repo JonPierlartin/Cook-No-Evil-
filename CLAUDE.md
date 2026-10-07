@@ -1034,6 +1034,17 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Hız:** klipler ~3 sn; `SignalValue.clipSpeed` = 2 → ~1,5 sn (GDD 3.6.0 hedefi 1,2–1,5; sipariş süresi formülü
     sinyal başına bu süreye göre). Süre = `clip.length / clipSpeed`.
   - `AnimationClip.SampleAnimation` çalışma zamanında kullanılıyor — **build'de doğrulanmadı** (editörde önizlendi).
+  - **Emote klipleri ve iki elli oynatma (7 Eki 2026):** `EmoteDefinition.clip` (sağ el) + `leftClip` (sol el) +
+    `clipSpeed` + `handsMeet`; öncelik (`PlayerEmoteReactor`): klip → `proceduralAnimation` → zıplama. Süre klipten
+    gelir (en uzun klip / hız). `ProceduralCharacterAnimator.PlayClips(sağ, sol, süre, handsMeet)`: her elin kendi
+    izi (`ClipTrack`) ve iskeleti var — sağ el `ElKlipIskeleti` (rig.001), sol el `ElKlipIskeletiSol` (rig.002;
+    `leftClipRigPrefab`). **`handsMeet`:** eller klipte buluşuyorsa (ovuşturma) konum dinlenmeye göre değil, iki
+    bileğin en yakın olduğu andaki orta noktanın jest merkezine taşınmasıyla verilir — dinlenme + yer değiştirme
+    yöntemi gövdesi geniş karakterde elleri birbirine değdirmez. Yeni dosyalarda doğru klipler
+    `rig.001|rig.001Action` (sağ) ve `rig.002|rig.002Action` (sol); çapraz adlı olanlar (`rig.001|rig.002Action`)
+    Blender'ın yan ürünü. Bağlananlar: Gözüm Üstünde (tek el, hız 1,25), Nah (iki el, 1,25), El Ovuşturma (iki el,
+    buluşan, 1,5). Editörde yalnızca sayısal karşılaştırma yapıldı (sol iskelet dinlenmede sağla aynı sapmada);
+    görsel olarak oyunda doğrulanmadı.
 - **Sayı jesti (4 Eki 2026):** `SignalValue.gestureCount` > 0 ise `PlayerSignalDisplay` →
   `ProceduralCharacterAnimator.PlayCount`: eller jest merkezinde (pencereden görünen yükseklik), avuç karşıya, sayı
   kadar parmak açık. **El modeli dört parmaklı** (işaret, orta, serçe, başparmak — `HandPose.Group`'a `Pinky`

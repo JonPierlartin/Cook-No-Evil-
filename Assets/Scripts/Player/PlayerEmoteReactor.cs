@@ -93,8 +93,15 @@ public class PlayerEmoteReactor : NetworkBehaviour
 
         StopReaction();
         var emote = availableEmotes[emoteIndex];
-        // El hareketi tanımlı emote karakterin elleriyle oynar; tanımlı değilse yer tutucu tepki (zıplama).
-        if (emote.ProceduralAnimation != null && character != null && character.Animator != null)
+        // Öncelik: artist klibi → kodla üretilen el animasyonu → yer tutucu tepki (zıplama).
+        bool hasAnimator = character != null && character.Animator != null;
+        if (emote.HasClip && hasAnimator)
+        {
+            character.Animator.PlayClips(emote.Clip, emote.LeftClip, emote.Duration, emote.HandsMeet);
+            return;
+        }
+
+        if (emote.ProceduralAnimation != null && hasAnimator)
         {
             character.Animator.Play(emote.ProceduralAnimation, emote.Duration);
             return;

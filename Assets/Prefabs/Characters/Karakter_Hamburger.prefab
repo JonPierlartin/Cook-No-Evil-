@@ -9562,6 +9562,7 @@ MonoBehaviour:
   gestureBlendTime: 0.18
   browPoint: {x: 0.28, y: 1.42, z: 0.5}
   clipRigPrefab: {fileID: 2950936791678831011, guid: 7e6d97a4478c71d4f9fd78bc1dc7cb10, type: 3}
+  leftClipRigPrefab: {fileID: 6285877855763195508, guid: 7c1b0574f8075264e98493af6614bf03, type: 3}
   clipWristBone: DEF-hand.L
   clipKnuckleBone: DEF-f_middle.01.L
   clipThumbBone: DEF-thumb.01.L
