@@ -19,8 +19,12 @@ public class CustomerDirector : MonoBehaviour
     [SerializeField, Min(1)] private int maxConcurrentCustomers = 3;
 
     [Header("Noktalar (sahne)")]
-    [Tooltip("Müşterinin doğduğu ve ayrılırken yürüdüğü nokta.")]
+    [Tooltip("Müşterinin doğduğu nokta (giriş kapısı). Çıkış noktası boşsa ayrılırken de buraya yürür.")]
     [SerializeField] private Transform entrancePoint;
+    [Tooltip("Müşterinin ayrılırken yürüdüğü nokta (çıkış kapısı). Boşsa giriş noktası kullanılır.")]
+    [SerializeField] private Transform exitPoint;
+    [Tooltip("Ayrılırken çıkışa varmadan sırayla geçilen noktalar (eşyaların arasından dolaşmak için). Boş olabilir.")]
+    [SerializeField] private Transform[] leaveWaypoints;
     [Tooltip("Sipariş Penceresi'ndeki SIRA: ilk eleman pencerenin önü (siparişi alınan yer), sonrakiler arka arkaya. En az eşzamanlı sınır kadar olmalı.")]
     [SerializeField] private Transform[] orderSpots;
     [Tooltip("Teslim Penceresi'ndeki yerler (yan yana; kuyruk değil — GDD 5.3). En az eşzamanlı sınır kadar olmalı.")]
@@ -278,11 +282,12 @@ public class CustomerDirector : MonoBehaviour
         customer.ServerOrderTimeExpired -= HandleOrderTimeExpired;
         customer.ServerDeliveryRequested -= HandleDeliveryRequested;
         customer.ServerStartLeaving(mood);
-        customer.ServerMoveTo(entrancePoint.position, entrancePoint.rotation, gone =>
+        var door = exitPoint != null ? exitPoint : entrancePoint;
+        customer.ServerMoveTo(door.position, door.rotation, gone =>
         {
             if (gone != null && gone.IsSpawned)
                 gone.NetworkObject.Despawn();
-        });
+        }, leaveWaypoints);
 
         CheckFinished();
     }

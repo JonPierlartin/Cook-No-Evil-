@@ -75,7 +75,7 @@ public class CNEToonShaderGUI : ShaderGUI
         {
             Draw(editor, properties, "_PatternType", "Tür", "Fayans = şaşırtmalı derz, Kare = düz derz, Şerit = yalnızca düşey derz, Dama = iki renkli kareler.");
             Draw(editor, properties, "_PatternColor", "Desen rengi", "Derzin (damada ikinci karenin) rengi. Alfa = desenin gücü.");
-            Draw(editor, properties, "_PatternSize", "Ölçü (m)", "X = karonun eni, Y = boyu (metre).");
+            Draw(editor, properties, "_PatternSize", "Ölçü (m)", "X = karonun eni, Y = boyu (metre). Z ve W = zeminde desenin başladığı dünya noktası (x, z); harita kurulumu yazar.");
             Draw(editor, properties, "_PatternLine", "Derz kalınlığı", "Metre. Dama türünde kullanılmaz.");
         }
 

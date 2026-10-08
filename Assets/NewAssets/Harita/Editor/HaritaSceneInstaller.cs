@@ -10,8 +10,9 @@ using UnityEngine.SceneManagement;
 
 // Haritanın tamamını AÇIK sahneye kurar: CNE → Harita → Install In Scene. Yeniden çalıştırılabilir (kendi kurduğu
 // mimariyi silip yeniden kurar; yerleşim köklerini varsa yerinde bırakır; işlevsel kökleri yalnızca taşır).
-//  1. Yerleşimler: C1 mutfak (Mutfak_C1), İstasyon ve Kasa prefab'ları paketlerdeki ortak eksene göre konur. Üç
-//     paket aynı planı paylaşır: İstasyon kökü = mutfak kökü + 4,20 m (x), Kasa kökü = İstasyon kökü − 3,20 m (z).
+//  1. Yerleşimler: C1 mutfak (Mutfak_C1), İstasyon, Kasa ve Salon prefab'ları paketlerdeki ortak eksene göre konur.
+//     Paketler aynı planı paylaşır: İstasyon kökü = mutfak kökü + 4,20 m (x), Kasa kökü = İstasyon kökü − 3,20 m (z),
+//     Salon kökü = Kasa kökü + 2,10 m (x) − 8,20 m (z).
 //  2. Mimari (paketlerde yalnızca referans olarak var): duvarlar, zeminler ve tavanlar burada mesh olarak üretilir.
 //     Desenler (fayans, lambri, dama) materyalde, dünya uzayında. Eski blockout harita ve yer tutucu mimari SİLİNİR.
 //  3. İşlev taşınır: yuvalar, kaplar, çöp kovaları, panolar, hata panelleri, tarif kitapçığı, müşteri noktaları ve
@@ -37,14 +38,23 @@ public static class HaritaSceneInstaller
     private const float SkirtingHeight = 0.10f;
     private const float WainscotHeight = 1.0f;
     private const float TrimHeight = 0.035f;
-    // Müşteri alanı (şimdilik düz zemin): müşteri duvarının dışında.
-    private const float OutsideDepth = 9f;
-    private const float OutsideMargin = 5f;
+    // Salon (müşteri alanı): Kasa'nın müşteri duvarının önünde, Kasa'dan iki yana 2,10 m taşar.
+    private const float HallWidth = 14f;
+    private const float HallLength = 8f;
+    private const float HallOverhang = 2.1f;
+    // Vitrin: cam bantlarının ve kapıların duvardaki boşluğu (zeminden).
+    private const float StorefrontSill = 0.9f;
+    private const float StorefrontTop = 2.3f;
+    private const float FacadeBandHeight = 0.035f;
+    // Vitrinin dışındaki sokak (camdan görünen düz zemin).
+    private const float OutsideDepth = 6f;
+    private const float OutsideMargin = 4f;
     private const float FloorThickness = 0.3f;
 
     private const string KitchenRootName = "Mutfak_C1";
     private const string StationRootName = "Istasyon";
     private const string CounterRootName = "Kasa";
+    private const string HallRootName = "Salon";
     private const string ArchitectureRootName = "Harita_Mimari";
     private const string MeshFolder = "Assets/NewAssets/Harita/Meshes";
     private const string PanelPrefabPath = "Assets/Prefabs/Mutfak/HataPaneli_C1.prefab";
@@ -70,6 +80,8 @@ public static class HaritaSceneInstaller
         var counterOrigin = stationOrigin + new Vector3(0f, 0f, -WallThickness - CounterLength);
         var station = PlaceLayout(StationRootName, HaritaBuilder.StationPrefabPath, stationOrigin);
         var counter = PlaceLayout(CounterRootName, HaritaBuilder.CounterPrefabPath, counterOrigin);
+        var hallOrigin = counterOrigin + new Vector3(HallOverhang, 0f, -WallThickness - HallLength);
+        var hall = PlaceLayout(HallRootName, HaritaBuilder.HallPrefabPath, hallOrigin);
 
         // Paketler arası sahiplik: mutfak penceresinin güncel modeli İstasyon paketinde; malzeme panolarının işlevli
         // (veriden dolan) hâli sahnede ayrıca durur.
@@ -78,11 +90,12 @@ public static class HaritaSceneInstaller
         Disable(counter, "SM_IngredientBoard");
 
         RemoveObsolete();
-        BuildArchitecture(kitchen, station, counter);
+        BuildArchitecture(kitchen, station, counter, hall);
         MoveKitchenFunction(kitchen, station);
         MoveStationFunction(station);
         MoveCounterFunction(counter, station);
-        PlaceCustomers(counter);
+        PlaceCustomers(counter, hall);
+        OpenDoors(hall);
         VerifyNetworkHashes();
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -199,30 +212,22 @@ public static class HaritaSceneInstaller
 
         public GameObject Build(Transform parent, string name)
         {
-            var mesh = new Mesh { name = name };
-            mesh.SetVertices(_vertices);
-            mesh.SetNormals(_normals);
-            mesh.subMeshCount = _materials.Count;
-            for (int i = 0; i < _materials.Count; i++)
-                mesh.SetTriangles(_triangles[i], i);
-            mesh.RecalculateBounds();
-
-            // Mesh sahneye gömülmez, asset olarak durur; yeniden kurulumda aynı dosyanın içeriği değişir.
+            // Mesh sahneye gömülmez, asset olarak durur. Yeniden kurulumda eski dosya silinip yenisi yazılır: var olan
+            // mesh asset'ini yerinde güncellemek (CopySerialized ya da Clear + Set) çizilen veriyi yenilemiyordu —
+            // sahne eski geometriyi yeni materyal sırasıyla çiziyordu.
             MutfakC1Builder.EnsureFolder(MeshFolder);
             string path = $"{MeshFolder}/{name}.asset";
-            var asset = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-            if (asset == null)
-            {
-                AssetDatabase.CreateAsset(mesh, path);
-                asset = mesh;
-            }
-            else
-            {
-                EditorUtility.CopySerialized(mesh, asset);
-                asset.name = name;
-                Object.DestroyImmediate(mesh);
-                EditorUtility.SetDirty(asset);
-            }
+            if (AssetDatabase.LoadAssetAtPath<Mesh>(path) != null)
+                AssetDatabase.DeleteAsset(path);
+
+            var asset = new Mesh { name = name };
+            asset.SetVertices(_vertices);
+            asset.SetNormals(_normals);
+            asset.subMeshCount = _materials.Count;
+            for (int i = 0; i < _materials.Count; i++)
+                asset.SetTriangles(_triangles[i], i);
+            asset.RecalculateBounds();
+            AssetDatabase.CreateAsset(asset, path);
 
             var gameObject = new GameObject(name);
             gameObject.transform.SetParent(parent, false);
@@ -235,7 +240,7 @@ public static class HaritaSceneInstaller
         }
     }
 
-    private static void BuildArchitecture(Transform kitchen, Transform station, Transform counter)
+    private static void BuildArchitecture(Transform kitchen, Transform station, Transform counter, Transform hall)
     {
         var existing = GameObject.Find(ArchitectureRootName);
         if (existing != null)
@@ -254,6 +259,9 @@ public static class HaritaSceneInstaller
         float counterX0 = kitchenX0, counterX1 = stationX1;
         float counterZ1 = kitchenZ0 - WallThickness, counterZ0 = counterZ1 - CounterLength;
         float westOuter = kitchenX0 - WallThickness, eastOuter = stationX1 + WallThickness;
+        float hallX1 = counterX1 + HallOverhang, hallX0 = hallX1 - HallWidth;
+        float hallZ1 = counterZ0 - WallThickness, hallZ0 = hallZ1 - HallLength;
+        float hallWest = hallX0 - WallThickness, hallEast = hallX1 + WallThickness;
 
         var skirting = materials["MI_Arch_Supurgelik"];
         var kitchenFinish = new Finish((SkirtingHeight, skirting), (CeilingHeight, materials["MI_Arch_Mutfak_Duvar"]));
@@ -262,6 +270,11 @@ public static class HaritaSceneInstaller
             (SkirtingHeight, skirting), (WainscotHeight, materials["MI_Arch_Kasa_Lambri"]),
             (WainscotHeight + TrimHeight, materials["MI_Arch_Kasa_Bordur"]), (CeilingHeight, materials["MI_Arch_Kasa_Duvar"]));
         var outside = new Finish((CeilingHeight, materials["MI_Arch_Dis"]));
+        // Salonun iç yüzü Kasa'yla aynı kaplama; dış cephe: plint, turkuaz kuşak, krom bant, krem.
+        var hallFinish = counterFinish;
+        var facade = new Finish(
+            (SkirtingHeight, materials["MI_Arch_Dis_Plint"]), (StorefrontSill, materials["MI_Arch_Dis_Turkuaz"]),
+            (StorefrontSill + FacadeBandHeight, materials["MI_Arch_Kasa_Bordur"]), (CeilingHeight, materials["MI_Arch_Dis_Krem"]));
 
         // Açıklıklar yerleşimdeki modellerin yerinden.
         float orderX = Asset(counter, "SM_StationWindow_Order").position.x;
@@ -273,12 +286,13 @@ public static class HaritaSceneInstaller
 
         var walls = new List<Wall>();
 
-        // Müşteri duvarı (Kasa'nın dışa bakan duvarı): sipariş ve teslimat pencereleri.
+        // Müşteri duvarı (Kasa ile salon arası; salon Kasa'dan iki yana taşar): sipariş ve teslimat pencereleri.
         var customerWall = new Wall
         {
             Name = "Musteri", AlongX = true, SlabMin = counterZ0 - WallThickness, SlabMax = counterZ0,
-            UMin = westOuter, UMax = eastOuter,
-            LowFace = new[] { (eastOuter, outside) }, HighFace = new[] { (eastOuter, counterFinish) },
+            UMin = hallWest, UMax = hallEast,
+            LowFace = new[] { (hallEast, hallFinish) },
+            HighFace = new[] { (westOuter, facade), (eastOuter, counterFinish), (hallEast, facade) },
         };
         customerWall.Openings.Add(Window(orderX));
         customerWall.Openings.Add(Window(deliveryX));
@@ -337,6 +351,40 @@ public static class HaritaSceneInstaller
             LowFace = new[] { (eastOuter, stationFinish) }, HighFace = new[] { (eastOuter, outside) },
         });
 
+        // Salonun yan duvarları ve vitrin duvarı (cam bantları ve iki kapı; boşluklar modellerin yerinden).
+        walls.Add(new Wall
+        {
+            Name = "SalonBati", AlongX = false, SlabMin = hallWest, SlabMax = hallX0, UMin = hallZ0 - WallThickness, UMax = hallZ1,
+            LowFace = new[] { (hallZ1, facade) }, HighFace = new[] { (hallZ1, hallFinish) },
+        });
+        walls.Add(new Wall
+        {
+            Name = "SalonDogu", AlongX = false, SlabMin = hallX1, SlabMax = hallEast, UMin = hallZ0 - WallThickness, UMax = hallZ1,
+            LowFace = new[] { (hallZ1, hallFinish) }, HighFace = new[] { (hallZ1, facade) },
+        });
+        var storefront = new Wall
+        {
+            Name = "Vitrin", AlongX = true, SlabMin = hallZ0 - WallThickness, SlabMax = hallZ0, UMin = hallWest, UMax = hallEast,
+            LowFace = new[] { (hallEast, facade) }, HighFace = new[] { (hallEast, hallFinish) },
+        };
+        var doors = new List<Bounds>();
+        foreach (Transform asset in hall)
+        {
+            bool isDoor = asset.name.StartsWith("SM_StorefrontDoor");
+            if (!isDoor && !asset.name.StartsWith("SM_StorefrontBay"))
+                continue;
+
+            var bounds = WorldBounds(asset);
+            storefront.Openings.Add(new Opening
+            {
+                U0 = Snap(bounds.min.x), U1 = Snap(bounds.max.x), Y0 = isDoor ? 0f : StorefrontSill, Y1 = StorefrontTop,
+            });
+            if (isDoor)
+                doors.Add(bounds);
+        }
+
+        walls.Add(storefront);
+
         var wallMesh = new MeshBuilder();
         var colliders = new GameObject("Carpisma").transform;
         colliders.SetParent(root, false);
@@ -356,19 +404,27 @@ public static class HaritaSceneInstaller
         Horizontal(floors, materials["MI_Arch_Mutfak_Zemin"], door.min.x, door.max.x, counterZ1, kitchenZ0, 0f, Vector3.up);
         Horizontal(floors, materials["MI_Arch_Istasyon_Zemin"], stationX0, stationX1, stationZ0, stationZ1, 0f, Vector3.up);
         Horizontal(floors, materials["MI_Arch_Kasa_Zemin"], counterX0, counterX1, counterZ0, counterZ1, 0f, Vector3.up);
-        float outsideZ1 = counterZ0 - WallThickness, outsideZ0 = outsideZ1 - OutsideDepth;
-        Horizontal(floors, materials["MI_Arch_Dis_Zemin"], westOuter - OutsideMargin, eastOuter + OutsideMargin, outsideZ0, outsideZ1, 0f, Vector3.up);
+        Horizontal(floors, materials["MI_Arch_Salon_Zemin"], hallX0, hallX1, hallZ0, hallZ1, 0f, Vector3.up);
+        foreach (var doorBounds in doors)
+            Horizontal(floors, materials["MI_Arch_Esik"], Snap(doorBounds.min.x), Snap(doorBounds.max.x), hallZ0 - WallThickness, hallZ0, 0f, Vector3.up);
+        float outsideZ1 = hallZ0 - WallThickness, outsideZ0 = outsideZ1 - OutsideDepth;
+        Horizontal(floors, materials["MI_Arch_Dis_Zemin"], hallWest - OutsideMargin, hallEast + OutsideMargin, outsideZ0, outsideZ1, 0f, Vector3.up);
         floors.Build(root, "Harita_Zemin");
+
+        // Dama karoları odanın köşesinden başlar (desen dünya uzayında; başlangıç noktası materyale yazılır).
+        SetPatternOrigin(materials["MI_Arch_Kasa_Zemin"], counterX1, counterZ0);
+        SetPatternOrigin(materials["MI_Arch_Salon_Zemin"], hallX1, hallZ0);
 
         var ceilings = new MeshBuilder();
         Horizontal(ceilings, materials["MI_Arch_Tavan"], kitchenX0, kitchenX1, kitchenZ0, kitchenZ1, CeilingHeight, Vector3.down);
         Horizontal(ceilings, materials["MI_Arch_Tavan"], stationX0, stationX1, stationZ0, stationZ1, CeilingHeight, Vector3.down);
         Horizontal(ceilings, materials["MI_Arch_Kasa_Tavan"], counterX0, counterX1, counterZ0, counterZ1, CeilingHeight, Vector3.down);
+        Horizontal(ceilings, materials["MI_Arch_Kasa_Tavan"], hallX0, hallX1, hallZ0, hallZ1, CeilingHeight, Vector3.down);
         ceilings.Build(root, "Harita_Tavan");
 
         Blocker(colliders, "Zemin",
-            new Vector3(westOuter - OutsideMargin, floorY - FloorThickness, outsideZ0),
-            new Vector3(eastOuter + OutsideMargin, floorY, kitchenZ1 + WallThickness));
+            new Vector3(hallWest - OutsideMargin, floorY - FloorThickness, outsideZ0),
+            new Vector3(hallEast + OutsideMargin, floorY, kitchenZ1 + WallThickness));
 
         // Kapı kapalıdır (GDD 5.2.3: yalnızca yangında açılır — Faz 1): açıklık görünmez bir engelle kapatılır.
         Blocker(colliders, "Engel_Kapi", new Vector3(door.min.x, floorY, counterZ1), new Vector3(door.max.x, door.max.y, kitchenZ0));
@@ -400,6 +456,23 @@ public static class HaritaSceneInstaller
 
             Blocker(colliders, "Engel_" + assetName, min, max);
         }
+    }
+
+    // Komşu boşlukların kenarları (cam bandı ile kapı) aynı sayıya otursun diye milimetreye yuvarlanır.
+    private static float Snap(float value)
+    {
+        return Mathf.Round(value * 1000f) / 1000f;
+    }
+
+    private static void SetPatternOrigin(Material material, float x, float z)
+    {
+        var size = material.GetVector("_PatternSize");
+        var updated = new Vector4(size.x, size.y, x, z);
+        if (size == updated)
+            return;
+
+        material.SetVector("_PatternSize", updated);
+        EditorUtility.SetDirty(material);
     }
 
     private static Opening Window(float center)
@@ -771,9 +844,10 @@ public static class HaritaSceneInstaller
         }
     }
 
-    // Müşteri noktaları (müşteri duvarının dışı; müşteriler pencereye, +Z'ye bakar). Sipariş penceresinin önünde
-    // arka arkaya sıra, teslimat penceresinin önünde yuvaların hizasında yan yana.
-    private static void PlaceCustomers(Transform counter)
+    // Müşteri noktaları (salon; müşteriler pencereye, +Z'ye bakar). Sipariş penceresinin önünde arka arkaya sıra,
+    // teslimat penceresinin önünde yuvaların hizasında yan yana. Giriş kapısı sipariş penceresinin, çıkış kapısı
+    // teslimat penceresinin tam karşısındadır: müşteri girişten doğar, çıkıştan ayrılır.
+    private static void PlaceCustomers(Transform counter, Transform hall)
     {
         const float standOff = 0.55f;       // pervazın dış ucundan müşterinin merkezine
         const float queueSpacing = 0.8f;
@@ -798,15 +872,66 @@ public static class HaritaSceneInstaller
                 spot.SetPositionAndRotation(new Vector3(socket.position.x, floorY, frontZ), facing);
         }
 
-        // Giriş iki pencerenin ortasında, uzakta; sipariş → teslimat yürüyüşü sıranın arkasından dolaşır.
-        float middleX = (order.position.x + delivery.position.x) * 0.5f;
+        // Kapıların dışı (sokak): müşteri orada doğar ve orada yok olur.
+        const float outsideDoor = 1.2f;
+        var entranceDoor = Asset(hall, "SM_StorefrontDoor_1").position;
+        var exitDoor = Asset(hall, "SM_StorefrontDoor_2").position;
         var entrance = Find("Giris");
         if (entrance != null)
-            entrance.SetPositionAndRotation(new Vector3(middleX, floorY, frontZ - OutsideDepth * 0.75f), facing);
+            entrance.SetPositionAndRotation(new Vector3(entranceDoor.x, floorY, entranceDoor.z - WallThickness - outsideDoor), facing);
 
+        var director = Object.FindAnyObjectByType<CustomerDirector>();
+        var exit = EnsurePoint(director.transform, "Cikis");
+        exit.SetPositionAndRotation(new Vector3(exitDoor.x, floorY, exitDoor.z - WallThickness - outsideDoor), Quaternion.Euler(0f, 180f, 0f));
+
+        // Sipariş → teslimat yürüyüşü sıranın arkasından dolaşır; ayrılan müşteri önce çıkış kapısının hizasına gelir
+        // (salonun ortasındaki akvaryumun içinden geçmesin).
+        float aisleZ = frontZ - queueSpacing * 1.5f;
         var corner = Find("RotaKosesi");
         if (corner != null)
-            corner.SetPositionAndRotation(new Vector3(middleX, floorY, frontZ - queueSpacing * 1.5f), facing);
+            corner.SetPositionAndRotation(new Vector3((order.position.x + delivery.position.x) * 0.5f, floorY, aisleZ), facing);
+
+        var leaveLane = EnsurePoint(director.transform, "CikisYolu");
+        leaveLane.SetPositionAndRotation(new Vector3(exitDoor.x, floorY, aisleZ), facing);
+
+        var serialized = new SerializedObject(director);
+        serialized.FindProperty("exitPoint").objectReferenceValue = exit;
+        var lane = serialized.FindProperty("leaveWaypoints");
+        lane.arraySize = 1;
+        lane.GetArrayElementAtIndex(0).objectReferenceValue = leaveLane;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static Transform EnsurePoint(Transform parent, string name)
+    {
+        var point = parent.Find(name);
+        if (point == null)
+        {
+            point = new GameObject(name).transform;
+            point.SetParent(parent, false);
+        }
+
+        return point;
+    }
+
+    // Vitrin kapıları açık durur (müşteriler içinden yürür; kapı animasyonu yok): giriş salona doğru, çıkış sokağa
+    // doğru açılır. Kanatların pivotu menteşe eksenidir.
+    private static void OpenDoors(Transform hall)
+    {
+        SetLeaves(Asset(hall, "SM_StorefrontDoor_1"), inward: true);
+        SetLeaves(Asset(hall, "SM_StorefrontDoor_2"), inward: false);
+    }
+
+    private static void SetLeaves(Transform door, bool inward)
+    {
+        // Paket: giriş Leaf_L Y −90°, Leaf_R Y +90° (plan ekseni); glTFast Y dönüşlerinin işaretini çevirir.
+        float sign = inward ? 1f : -1f;
+        var left = door.Find("Leaf_L");
+        var right = door.Find("Leaf_R");
+        if (left != null)
+            left.localRotation = Quaternion.Euler(0f, 90f * sign, 0f);
+        if (right != null)
+            right.localRotation = Quaternion.Euler(0f, -90f * sign, 0f);
     }
 
     // ---------- yerleştirme yardımcıları ----------

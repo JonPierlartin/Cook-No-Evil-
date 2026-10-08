@@ -1,0 +1,2690 @@
+{
+  "paket": "CNE_Salon_Modeller",
+  "tarih": "2026-10-08",
+  "kapsam": "Salon A2 (14 × 8 m) müşteri alanı: oturma, dekor, çöpler, lambalar, tabelalar, vitrin ve kapılar",
+  "birim": "metre",
+  "eksen": {
+    "yukari": "+Y",
+    "on": "+Z",
+    "genislik": "X",
+    "not": "glTFast içe alırken X'i ters çevirir: plan (x; y; z) → Unity (−x; y; z); Y dönüşleri işaret değiştirir."
+  },
+  "yerlesim_koku": "Salon iç kuzeybatı köşesi, zemin. X doğu, Z güney. Kasa kökü (iç kuzeybatı köşesi) salon köküne göre (+2,10; 0; +8,20); İstasyon kökü (+2,10; 0; +11,40); C1 mutfak kökü (+6,30; 0; +11,40).",
+  "oda": {
+    "ic_olcu": "14,00 × 8,00",
+    "tavan": 2.75,
+    "duvar": 0.2
+  },
+  "palet": {
+    "dosya": "textures/cook_no_evil_palet_256.png",
+    "hucre": 16,
+    "not": "renk-paleti.md + C1 S10 satırı; salon için yeni hücre yok"
+  },
+  "materyaller": {
+    "MI_Palette": "Düz palet",
+    "MI_Palette_Steel": "Paslanmaz",
+    "MI_Palette_Chrome": "Krom (matcap)",
+    "MI_Palette_Emission": "Emission ×2,5 (lamba beyazı S10·K2, lila neon S9·K1, cyan S9·K2)",
+    "MI_Palette_Glass": "Şeffaf cam S7·K2, %25 opak",
+    "MI_Palette_GlassStreak": "Cam parıltı çizgisi, beyaz S6·K4, %60 opak (cam shader kendi çizgisini çiziyorsa silinebilir)",
+    "MI_Palette_Water": "Akvaryum suyu S1·K6, %45 opak, emission 0,3",
+    "MI_Wood_Mese": "T_Wood_Mese (1 tekrar = 0,5 m, kutu izdüşümü)",
+    "MI_Decal_*": "Tabela/tablo yüzleri: T_Decal_*.png, tabelalarda _E emission dokusu",
+    "MI_Arch_*": "Mimari, düz renk, UV yok"
+  },
+  "assets": [
+    {
+      "dosya": "glb/SM_Booth_2.glb",
+      "asset": "SM_Booth_2",
+      "ad": "Separe (2 kişilik)",
+      "boyut_cm": {
+        "G": 200.8,
+        "D": 110,
+        "Y": 115
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -1.004,
+          0,
+          0
+        ],
+        "max": [
+          1.004,
+          1.15,
+          1.1
+        ]
+      },
+      "ucgen": 5228,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban arka kenar ortası (duvar çizgisi); masa ucu duvarda, açık uç +Z",
+      "soketler": [
+        {
+          "ad": "Socket_Seat_1",
+          "konum": [
+            -0.63,
+            0.46,
+            0.55
+          ],
+          "donus_y": 90,
+          "not": "Müşteri oturma noktası, masaya bakar"
+        },
+        {
+          "ad": "Socket_Seat_2",
+          "konum": [
+            0.63,
+            0.46,
+            0.55
+          ],
+          "donus_y": -90,
+          "not": "Müşteri oturma noktası, masaya bakar"
+        },
+        {
+          "ad": "Socket_Table_1",
+          "konum": [
+            -0.22,
+            0.765,
+            0.55
+          ],
+          "donus_y": -90,
+          "not": "Seat_1 önündeki tepsi yeri"
+        },
+        {
+          "ad": "Socket_Table_2",
+          "konum": [
+            0.22,
+            0.765,
+            0.55
+          ],
+          "donus_y": 90,
+          "not": "Seat_2 önündeki tepsi yeri"
+        },
+        {
+          "ad": "Socket_Napkin",
+          "konum": [
+            0,
+            0.765,
+            0.12
+          ],
+          "donus_y": 0,
+          "not": "Peçetelik"
+        }
+      ],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome"
+      ],
+      "not": "",
+      "bayt": 127944
+    },
+    {
+      "dosya": "glb/SM_RoundTable.glb",
+      "asset": "SM_RoundTable",
+      "ad": "Yuvarlak masa ø100",
+      "boyut_cm": {
+        "G": 100,
+        "D": 100,
+        "Y": 76.5
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.5,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          0.765,
+          0.5
+        ]
+      },
+      "ucgen": 768,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası",
+      "soketler": [
+        {
+          "ad": "Socket_Table_1",
+          "konum": [
+            0,
+            0.765,
+            -0.22
+          ],
+          "donus_y": 180,
+          "not": "−Z sandalyesinin tepsi yeri"
+        },
+        {
+          "ad": "Socket_Table_2",
+          "konum": [
+            0,
+            0.765,
+            0.22
+          ],
+          "donus_y": 0,
+          "not": "+Z sandalyesinin tepsi yeri"
+        },
+        {
+          "ad": "Socket_Napkin",
+          "konum": [
+            0,
+            0.765,
+            0
+          ],
+          "donus_y": 0,
+          "not": "Peçetelik"
+        }
+      ],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome"
+      ],
+      "not": "",
+      "bayt": 27956
+    },
+    {
+      "dosya": "glb/SM_DinerChair.glb",
+      "asset": "SM_DinerChair",
+      "ad": "Sandalye (krom ayaklı, vinil)",
+      "boyut_cm": {
+        "G": 44,
+        "D": 48,
+        "Y": 90
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.22,
+          0,
+          -0.27
+        ],
+        "max": [
+          0.22,
+          0.9,
+          0.21
+        ]
+      },
+      "ucgen": 2628,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası; oturan +Z'ye bakar",
+      "soketler": [
+        {
+          "ad": "Socket_Seat",
+          "konum": [
+            0,
+            0.48,
+            0
+          ],
+          "donus_y": 0,
+          "not": "Oturma noktası"
+        }
+      ],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome"
+      ],
+      "not": "",
+      "bayt": 67852
+    },
+    {
+      "dosya": "glb/SM_NapkinHolder.glb",
+      "asset": "SM_NapkinHolder",
+      "ad": "Peçetelik (krom)",
+      "boyut_cm": {
+        "G": 10,
+        "D": 14,
+        "Y": 14.5
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.05,
+          0,
+          -0.07
+        ],
+        "max": [
+          0.05,
+          0.145,
+          0.07
+        ]
+      },
+      "ucgen": 312,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome"
+      ],
+      "not": "",
+      "bayt": 10988
+    },
+    {
+      "dosya": "glb/SM_Aquarium.glb",
+      "asset": "SM_Aquarium",
+      "ad": "Akvaryum (çift yüzlü, dolaplı)",
+      "boyut_cm": {
+        "G": 201,
+        "D": 61.6,
+        "Y": 158
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -1.005,
+          0,
+          -0.308
+        ],
+        "max": [
+          1.005,
+          1.58,
+          0.308
+        ]
+      },
+      "ucgen": 2834,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası; uzun yüz +Z",
+      "soketler": [],
+      "hareketli": [
+        {
+          "node": "Fish_1",
+          "pivot_konum": [
+            -0.65,
+            1.1,
+            -0.08
+          ],
+          "pivot": "",
+          "hareket": "Yüzme animasyonu (yerel +X burun yönü)"
+        },
+        {
+          "node": "Fish_2",
+          "pivot_konum": [
+            -0.3,
+            1.25,
+            0.06
+          ],
+          "pivot": "",
+          "hareket": "Yüzme animasyonu (yerel +X burun yönü)"
+        },
+        {
+          "node": "Fish_3",
+          "pivot_konum": [
+            0.1,
+            1.05,
+            -0.02
+          ],
+          "pivot": "",
+          "hareket": "Yüzme animasyonu (yerel +X burun yönü)"
+        },
+        {
+          "node": "Fish_4",
+          "pivot_konum": [
+            0.4,
+            1.3,
+            0.1
+          ],
+          "pivot": "",
+          "hareket": "Yüzme animasyonu (yerel +X burun yönü)"
+        },
+        {
+          "node": "Fish_5",
+          "pivot_konum": [
+            0.7,
+            1.15,
+            -0.1
+          ],
+          "pivot": "",
+          "hareket": "Yüzme animasyonu (yerel +X burun yönü)"
+        },
+        {
+          "node": "Fish_6",
+          "pivot_konum": [
+            -0.05,
+            1.33,
+            -0.12
+          ],
+          "pivot": "",
+          "hareket": "Yüzme animasyonu (yerel +X burun yönü)"
+        }
+      ],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome",
+        "MI_Palette_Glass",
+        "MI_Palette_GlassStreak",
+        "MI_Palette_Water"
+      ],
+      "not": "Su ve cam saydam (MI_Palette_Water, MI_Palette_Glass); gölge düşürmemeli.",
+      "bayt": 93692
+    },
+    {
+      "dosya": "glb/SM_PlantBush.glb",
+      "asset": "SM_PlantBush",
+      "ad": "Saksı bitkisi (çalı)",
+      "boyut_cm": {
+        "G": 63.1,
+        "D": 59.5,
+        "Y": 120.1
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.316,
+          0,
+          -0.282
+        ],
+        "max": [
+          0.315,
+          1.201,
+          0.313
+        ]
+      },
+      "ucgen": 1512,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 41732
+    },
+    {
+      "dosya": "glb/SM_PlantTall.glb",
+      "asset": "SM_PlantTall",
+      "ad": "Köşe bitkisi (uzun)",
+      "boyut_cm": {
+        "G": 74.9,
+        "D": 59.3,
+        "Y": 183.5
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.374,
+          0,
+          -0.282
+        ],
+        "max": [
+          0.374,
+          1.835,
+          0.311
+        ]
+      },
+      "ucgen": 1560,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 43360
+    },
+    {
+      "dosya": "glb/SM_Jukebox.glb",
+      "asset": "SM_Jukebox",
+      "ad": "Jukebox",
+      "boyut_cm": {
+        "G": 80,
+        "D": 58.1,
+        "Y": 158
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.4,
+          0,
+          0
+        ],
+        "max": [
+          0.4,
+          1.58,
+          0.581
+        ]
+      },
+      "ucgen": 2078,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban arka kenar ortası (duvar yüzü)",
+      "soketler": [
+        {
+          "ad": "Socket_Light",
+          "konum": [
+            0,
+            1.2,
+            0.65
+          ],
+          "donus_y": 0,
+          "not": "Neon için isteğe bağlı nokta ışık"
+        }
+      ],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_JukePanel",
+        "MI_Palette",
+        "MI_Palette_Chrome",
+        "MI_Palette_Emission"
+      ],
+      "not": "Neon tüpler MI_Palette_Emission (lila neon S9·K1, cyan S9·K2).",
+      "bayt": 63608
+    },
+    {
+      "dosya": "glb/SM_Painting_Milkshake.glb",
+      "asset": "SM_Painting_Milkshake",
+      "ad": "Tablo · milkshake",
+      "boyut_cm": {
+        "G": 77,
+        "D": 3,
+        "Y": 62
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.385,
+          -0.31,
+          0
+        ],
+        "max": [
+          0.385,
+          0.31,
+          0.03
+        ]
+      },
+      "ucgen": 62,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Tablo_Milkshake",
+        "MI_Palette",
+        "MI_Wood_Mese"
+      ],
+      "not": "",
+      "bayt": 78876
+    },
+    {
+      "dosya": "glb/SM_Painting_Plak.glb",
+      "asset": "SM_Painting_Plak",
+      "ad": "Tablo · plak",
+      "boyut_cm": {
+        "G": 87,
+        "D": 3,
+        "Y": 67
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.435,
+          -0.335,
+          0
+        ],
+        "max": [
+          0.435,
+          0.335,
+          0.03
+        ]
+      },
+      "ucgen": 62,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Tablo_Plak",
+        "MI_Palette",
+        "MI_Wood_Mese"
+      ],
+      "not": "",
+      "bayt": 103048
+    },
+    {
+      "dosya": "glb/SM_Painting_Atom.glb",
+      "asset": "SM_Painting_Atom",
+      "ad": "Tablo · atom yıldızı",
+      "boyut_cm": {
+        "G": 57,
+        "D": 3,
+        "Y": 72
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.285,
+          -0.36,
+          0
+        ],
+        "max": [
+          0.285,
+          0.36,
+          0.03
+        ]
+      },
+      "ucgen": 62,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Tablo_Atom",
+        "MI_Palette",
+        "MI_Wood_Mese"
+      ],
+      "not": "",
+      "bayt": 89676
+    },
+    {
+      "dosya": "glb/SM_Painting_Araba.glb",
+      "asset": "SM_Painting_Araba",
+      "ad": "Tablo · 50'ler arabası",
+      "boyut_cm": {
+        "G": 127,
+        "D": 3,
+        "Y": 72
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.635,
+          -0.36,
+          0
+        ],
+        "max": [
+          0.635,
+          0.36,
+          0.03
+        ]
+      },
+      "ucgen": 62,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Tablo_Araba",
+        "MI_Palette",
+        "MI_Wood_Mese"
+      ],
+      "not": "",
+      "bayt": 81288
+    },
+    {
+      "dosya": "glb/SM_BinCabinet.glb",
+      "asset": "SM_BinCabinet",
+      "ad": "Ç1 · Tepsi iade + çöp dolabı (meşe)",
+      "boyut_cm": {
+        "G": 102,
+        "D": 58,
+        "Y": 123
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.51,
+          0,
+          0
+        ],
+        "max": [
+          0.51,
+          1.23,
+          0.58
+        ]
+      },
+      "ucgen": 3624,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban arka kenar ortası (duvar yüzü)",
+      "soketler": [
+        {
+          "ad": "Socket_Drop",
+          "konum": [
+            0.235,
+            0.87,
+            0.61
+          ],
+          "donus_y": 0,
+          "not": "Atma noktası"
+        },
+        {
+          "ad": "Socket_TrayReturn",
+          "konum": [
+            -0.215,
+            1.232,
+            0.285
+          ],
+          "donus_y": 0,
+          "not": "Tepsi bırakma"
+        }
+      ],
+      "hareketli": [
+        {
+          "node": "Flap",
+          "pivot_konum": [
+            0.235,
+            0.96,
+            0.572
+          ],
+          "pivot": "Kapağın üst kenarı (menteşe)",
+          "hareket": "X +70° içe itilir"
+        }
+      ],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome",
+        "MI_Palette_Steel",
+        "MI_Wood_Mese"
+      ],
+      "not": "",
+      "bayt": 151784
+    },
+    {
+      "dosya": "glb/SM_BinDome.glb",
+      "asset": "SM_BinDome",
+      "ad": "Ç2 · Kubbe kapaklı krom çöp",
+      "boyut_cm": {
+        "G": 47,
+        "D": 47,
+        "Y": 89
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.235,
+          0,
+          -0.235
+        ],
+        "max": [
+          0.235,
+          0.89,
+          0.235
+        ]
+      },
+      "ucgen": 880,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası; kapak +Z",
+      "soketler": [
+        {
+          "ad": "Socket_Drop",
+          "konum": [
+            0,
+            0.8,
+            0.26
+          ],
+          "donus_y": 0,
+          "not": "Atma noktası"
+        }
+      ],
+      "hareketli": [
+        {
+          "node": "Flap",
+          "pivot_konum": [
+            0,
+            0.847,
+            0.166
+          ],
+          "pivot": "Kapağın üst kenarı (menteşe)",
+          "hareket": "X +60° içe itilir"
+        }
+      ],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome"
+      ],
+      "not": "",
+      "bayt": 31008
+    },
+    {
+      "dosya": "glb/SM_BinSquare.glb",
+      "asset": "SM_BinSquare",
+      "ad": "Ç3 · Kare itme kapaklı çöp (turkuaz)",
+      "boyut_cm": {
+        "G": 43,
+        "D": 43.7,
+        "Y": 80
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.215,
+          0,
+          -0.215
+        ],
+        "max": [
+          0.215,
+          0.8,
+          0.222
+        ]
+      },
+      "ucgen": 900,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası; kapak +Z",
+      "soketler": [
+        {
+          "ad": "Socket_Drop",
+          "konum": [
+            0,
+            0.765,
+            0.28
+          ],
+          "donus_y": 0,
+          "not": "Atma noktası"
+        }
+      ],
+      "hareketli": [
+        {
+          "node": "Flap",
+          "pivot_konum": [
+            0,
+            0.79,
+            0.214
+          ],
+          "pivot": "Kapağın üst kenarı (menteşe)",
+          "hareket": "X +70° içe itilir"
+        }
+      ],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome"
+      ],
+      "not": "",
+      "bayt": 23716
+    },
+    {
+      "dosya": "glb/SM_CoatRack.glb",
+      "asset": "SM_CoatRack",
+      "ad": "Askılık",
+      "boyut_cm": {
+        "G": 42,
+        "D": 42,
+        "Y": 181
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.21,
+          0,
+          -0.21
+        ],
+        "max": [
+          0.21,
+          1.81,
+          0.21
+        ]
+      },
+      "ucgen": 664,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome"
+      ],
+      "not": "",
+      "bayt": 24408
+    },
+    {
+      "dosya": "glb/SM_GumballMachine.glb",
+      "asset": "SM_GumballMachine",
+      "ad": "Sakız makinesi",
+      "boyut_cm": {
+        "G": 30,
+        "D": 30,
+        "Y": 114
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.15,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.15,
+          1.14,
+          0.15
+        ]
+      },
+      "ucgen": 1696,
+      "kontur": false,
+      "golge": true,
+      "pivot": "Taban ortası; para yuvası +Z",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome",
+        "MI_Palette_Glass"
+      ],
+      "not": "",
+      "bayt": 46960
+    },
+    {
+      "dosya": "glb/SM_DoorMat.glb",
+      "asset": "SM_DoorMat",
+      "ad": "Paspas 150 × 55",
+      "boyut_cm": {
+        "G": 150,
+        "D": 55,
+        "Y": 1.2
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.75,
+          0,
+          -0.275
+        ],
+        "max": [
+          0.75,
+          0.012,
+          0.275
+        ]
+      },
+      "ucgen": 300,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Taban ortası",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 9200
+    },
+    {
+      "dosya": "glb/SM_PendantLight.glb",
+      "asset": "SM_PendantLight",
+      "ad": "Sarkıt lamba (lila şapka)",
+      "boyut_cm": {
+        "G": 39,
+        "D": 39,
+        "Y": 72
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.195,
+          -0.72,
+          -0.195
+        ],
+        "max": [
+          0.195,
+          0,
+          0.195
+        ]
+      },
+      "ucgen": 600,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Üst yüz ortası (tavan)",
+      "soketler": [
+        {
+          "ad": "Socket_Light",
+          "konum": [
+            0,
+            -0.62,
+            0
+          ],
+          "donus_y": 0,
+          "not": "Point ışık #FFE7C2, 0,30, gölgesiz"
+        }
+      ],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette",
+        "MI_Palette_Chrome",
+        "MI_Palette_Emission"
+      ],
+      "not": "",
+      "bayt": 25528
+    },
+    {
+      "dosya": "glb/SM_CeilingLight.glb",
+      "asset": "SM_CeilingLight",
+      "ad": "Tavan lambası (Kasa/İstasyon ile aynı)",
+      "boyut_cm": {
+        "G": 39.2,
+        "D": 39.2,
+        "Y": 8.5
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.196,
+          -0.085,
+          -0.196
+        ],
+        "max": [
+          0.196,
+          0,
+          0.196
+        ]
+      },
+      "ucgen": 288,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Üst yüz ortası (tavan)",
+      "soketler": [
+        {
+          "ad": "Socket_Light",
+          "konum": [
+            0,
+            -0.085,
+            0
+          ],
+          "donus_y": 0,
+          "not": "Point ışık"
+        }
+      ],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette_Chrome",
+        "MI_Palette_Emission"
+      ],
+      "not": "",
+      "bayt": 13684
+    },
+    {
+      "dosya": "glb/SM_MenuBoard.glb",
+      "asset": "SM_MenuBoard",
+      "ad": "Menü panosu (sipariş penceresinin üstü)",
+      "boyut_cm": {
+        "G": 250,
+        "D": 4.7,
+        "Y": 55
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -1.25,
+          -0.275,
+          0
+        ],
+        "max": [
+          1.25,
+          0.275,
+          0.047
+        ]
+      },
+      "ucgen": 302,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Menu",
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 84848
+    },
+    {
+      "dosya": "glb/SM_LogoSign.glb",
+      "asset": "SM_LogoSign",
+      "ad": "Logo tabelası “Cook No Evil!”",
+      "boyut_cm": {
+        "G": 260,
+        "D": 5.2,
+        "Y": 80
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -1.3,
+          -0.4,
+          0
+        ],
+        "max": [
+          1.3,
+          0.4,
+          0.052
+        ]
+      },
+      "ucgen": 302,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Logo",
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 155604
+    },
+    {
+      "dosya": "glb/SM_DeliverySign.glb",
+      "asset": "SM_DeliverySign",
+      "ad": "TESLİM tabelası (teslim penceresinin üstü)",
+      "boyut_cm": {
+        "G": 150,
+        "D": 4.2,
+        "Y": 30
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.75,
+          -0.15,
+          0
+        ],
+        "max": [
+          0.75,
+          0.15,
+          0.042
+        ]
+      },
+      "ucgen": 302,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Teslim",
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 30312
+    },
+    {
+      "dosya": "glb/SM_DoorSign_Giris.glb",
+      "asset": "SM_DoorSign_Giris",
+      "ad": "GİRİŞ tabelası",
+      "boyut_cm": {
+        "G": 124,
+        "D": 3.7,
+        "Y": 32
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.62,
+          -0.16,
+          0
+        ],
+        "max": [
+          0.62,
+          0.16,
+          0.037
+        ]
+      },
+      "ucgen": 302,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Giris",
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 38256
+    },
+    {
+      "dosya": "glb/SM_DoorSign_Cikis.glb",
+      "asset": "SM_DoorSign_Cikis",
+      "ad": "ÇIKIŞ tabelası",
+      "boyut_cm": {
+        "G": 124,
+        "D": 3.7,
+        "Y": 32
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.62,
+          -0.16,
+          0
+        ],
+        "max": [
+          0.62,
+          0.16,
+          0.037
+        ]
+      },
+      "ucgen": 302,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Arka yüz ortası (duvar yüzü)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Decal_Cikis",
+        "MI_Palette"
+      ],
+      "not": "",
+      "bayt": 38408
+    },
+    {
+      "dosya": "glb/SM_OpenNeon.glb",
+      "asset": "SM_OpenNeon",
+      "ad": "OPEN neonu (camın içinde asılı)",
+      "boyut_cm": {
+        "G": 84.8,
+        "D": 1.8,
+        "Y": 75.9
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.419,
+          -0.759,
+          -0.009
+        ],
+        "max": [
+          0.429,
+          0,
+          0.009
+        ]
+      },
+      "ucgen": 1776,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Zincirlerin tavan/kuşak bağlantısı ortası; yazı +Z'den okunur",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette_Chrome",
+        "MI_Palette_Emission"
+      ],
+      "not": "",
+      "bayt": 48368
+    },
+    {
+      "dosya": "glb/SM_StorefrontBay_A.glb",
+      "asset": "SM_StorefrontBay_A",
+      "ad": "Vitrin bölmesi A (2 cam, 275 cm)",
+      "boyut_cm": {
+        "G": 275,
+        "D": 26.5,
+        "Y": 140
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -1.375,
+          0,
+          -0.22
+        ],
+        "max": [
+          1.375,
+          1.4,
+          0.045
+        ]
+      },
+      "ucgen": 84,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Bant açıklığının alt kenarı ortası, salon tarafı duvar yüzü (pivot = 0,90 m)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette_Chrome",
+        "MI_Palette_Glass",
+        "MI_Palette_GlassStreak"
+      ],
+      "not": "",
+      "bayt": 9904
+    },
+    {
+      "dosya": "glb/SM_StorefrontBay_B.glb",
+      "asset": "SM_StorefrontBay_B",
+      "ad": "Vitrin bölmesi B (4 cam, 490 cm)",
+      "boyut_cm": {
+        "G": 490,
+        "D": 26.5,
+        "Y": 140
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -2.45,
+          0,
+          -0.22
+        ],
+        "max": [
+          2.45,
+          1.4,
+          0.045
+        ]
+      },
+      "ucgen": 120,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Bant açıklığının alt kenarı ortası, salon tarafı duvar yüzü (pivot = 0,90 m)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette_Chrome",
+        "MI_Palette_Glass",
+        "MI_Palette_GlassStreak"
+      ],
+      "not": "",
+      "bayt": 12456
+    },
+    {
+      "dosya": "glb/SM_StorefrontBay_C.glb",
+      "asset": "SM_StorefrontBay_C",
+      "ad": "Vitrin bölmesi C (2 cam, 255 cm)",
+      "boyut_cm": {
+        "G": 255,
+        "D": 26.5,
+        "Y": 140
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -1.275,
+          0,
+          -0.22
+        ],
+        "max": [
+          1.275,
+          1.4,
+          0.045
+        ]
+      },
+      "ucgen": 84,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Bant açıklığının alt kenarı ortası, salon tarafı duvar yüzü (pivot = 0,90 m)",
+      "soketler": [],
+      "hareketli": [],
+      "materyaller": [
+        "MI_Palette_Chrome",
+        "MI_Palette_Glass",
+        "MI_Palette_GlassStreak"
+      ],
+      "not": "",
+      "bayt": 9928
+    },
+    {
+      "dosya": "glb/SM_StorefrontDoor.glb",
+      "asset": "SM_StorefrontDoor",
+      "ad": "Vitrin çift kapısı 2 × 0,75 + vasistas",
+      "boyut_cm": {
+        "G": 170,
+        "D": 16,
+        "Y": 230
+      },
+      "sinir_kutusu_m": {
+        "min": [
+          -0.85,
+          0,
+          -0.18
+        ],
+        "max": [
+          0.85,
+          2.3,
+          -0.02
+        ]
+      },
+      "ucgen": 574,
+      "kontur": false,
+      "golge": false,
+      "pivot": "Kapı açıklığının alt kenarı ortası, salon tarafı duvar yüzü",
+      "soketler": [],
+      "hareketli": [
+        {
+          "node": "Leaf_L",
+          "pivot_konum": [
+            -0.75,
+            0,
+            -0.1
+          ],
+          "pivot": "Sol menteşe ekseni",
+          "hareket": "Y −90° içe (+Z) · çıkışta Y +90° dışa"
+        },
+        {
+          "node": "Leaf_R",
+          "pivot_konum": [
+            0.75,
+            0,
+            -0.1
+          ],
+          "pivot": "Sağ menteşe ekseni",
+          "hareket": "Y +90° içe (+Z) · çıkışta Y −90° dışa"
+        }
+      ],
+      "materyaller": [
+        "MI_Palette_Chrome",
+        "MI_Palette_Glass",
+        "MI_Palette_GlassStreak",
+        "MI_Palette_Steel"
+      ],
+      "not": "Giriş içe (salona, +Z), çıkış dışa (−Z) açılır; iki kapı da bu asset.",
+      "bayt": 37308
+    }
+  ],
+  "yerlesim": [
+    {
+      "node": "SM_Booth_2_1",
+      "asset": "SM_Booth_2",
+      "plan": [
+        0,
+        0,
+        6.6
+      ],
+      "plan_y_donusu": 90,
+      "unity": [
+        0,
+        0,
+        6.6
+      ],
+      "unity_y_donusu": -90,
+      "kasa_plani": [
+        -2.1,
+        0,
+        -1.6
+      ],
+      "not": "Batı, güney"
+    },
+    {
+      "node": "SM_Booth_2_2",
+      "asset": "SM_Booth_2",
+      "plan": [
+        0,
+        0,
+        3.8
+      ],
+      "plan_y_donusu": 90,
+      "unity": [
+        0,
+        0,
+        3.8
+      ],
+      "unity_y_donusu": -90,
+      "kasa_plani": [
+        -2.1,
+        0,
+        -4.4
+      ],
+      "not": "Batı, kuzey"
+    },
+    {
+      "node": "SM_Booth_2_3",
+      "asset": "SM_Booth_2",
+      "plan": [
+        14,
+        0,
+        4.5
+      ],
+      "plan_y_donusu": -90,
+      "unity": [
+        -14,
+        0,
+        4.5
+      ],
+      "unity_y_donusu": 90,
+      "kasa_plani": [
+        11.9,
+        0,
+        -3.7
+      ],
+      "not": "Doğu, güney"
+    },
+    {
+      "node": "SM_Booth_2_4",
+      "asset": "SM_Booth_2",
+      "plan": [
+        14,
+        0,
+        1.8
+      ],
+      "plan_y_donusu": -90,
+      "unity": [
+        -14,
+        0,
+        1.8
+      ],
+      "unity_y_donusu": 90,
+      "kasa_plani": [
+        11.9,
+        0,
+        -6.4
+      ],
+      "not": "Doğu, kuzey"
+    },
+    {
+      "node": "SM_RoundTable_1",
+      "asset": "SM_RoundTable",
+      "plan": [
+        6.2,
+        0,
+        1.7
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -6.2,
+        0,
+        1.7
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        4.1,
+        0,
+        -6.5
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_RoundTable_2",
+      "asset": "SM_RoundTable",
+      "plan": [
+        8,
+        0,
+        1.7
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -8,
+        0,
+        1.7
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        5.9,
+        0,
+        -6.5
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_DinerChair_1",
+      "asset": "SM_DinerChair",
+      "plan": [
+        6.2,
+        0,
+        0.82
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -6.2,
+        0,
+        0.82
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        4.1,
+        0,
+        -7.38
+      ],
+      "not": "Kuzey, salona bakar"
+    },
+    {
+      "node": "SM_DinerChair_2",
+      "asset": "SM_DinerChair",
+      "plan": [
+        6.2,
+        0,
+        2.58
+      ],
+      "plan_y_donusu": 180,
+      "unity": [
+        -6.2,
+        0,
+        2.58
+      ],
+      "unity_y_donusu": -180,
+      "kasa_plani": [
+        4.1,
+        0,
+        -5.62
+      ],
+      "not": "Güney, cama bakar"
+    },
+    {
+      "node": "SM_DinerChair_3",
+      "asset": "SM_DinerChair",
+      "plan": [
+        8,
+        0,
+        0.82
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -8,
+        0,
+        0.82
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        5.9,
+        0,
+        -7.38
+      ],
+      "not": "Kuzey, salona bakar"
+    },
+    {
+      "node": "SM_DinerChair_4",
+      "asset": "SM_DinerChair",
+      "plan": [
+        8,
+        0,
+        2.58
+      ],
+      "plan_y_donusu": 180,
+      "unity": [
+        -8,
+        0,
+        2.58
+      ],
+      "unity_y_donusu": -180,
+      "kasa_plani": [
+        5.9,
+        0,
+        -5.62
+      ],
+      "not": "Güney, cama bakar"
+    },
+    {
+      "node": "SM_NapkinHolder_1",
+      "asset": "SM_NapkinHolder",
+      "plan": [
+        0.12,
+        0.765,
+        6.6
+      ],
+      "plan_y_donusu": 90,
+      "unity": [
+        -0.12,
+        0.765,
+        6.6
+      ],
+      "unity_y_donusu": -90,
+      "kasa_plani": [
+        -1.98,
+        0.765,
+        -1.6
+      ],
+      "not": "Separe masası"
+    },
+    {
+      "node": "SM_NapkinHolder_2",
+      "asset": "SM_NapkinHolder",
+      "plan": [
+        0.12,
+        0.765,
+        3.8
+      ],
+      "plan_y_donusu": 90,
+      "unity": [
+        -0.12,
+        0.765,
+        3.8
+      ],
+      "unity_y_donusu": -90,
+      "kasa_plani": [
+        -1.98,
+        0.765,
+        -4.4
+      ],
+      "not": "Separe masası"
+    },
+    {
+      "node": "SM_NapkinHolder_3",
+      "asset": "SM_NapkinHolder",
+      "plan": [
+        13.88,
+        0.765,
+        4.5
+      ],
+      "plan_y_donusu": -90,
+      "unity": [
+        -13.88,
+        0.765,
+        4.5
+      ],
+      "unity_y_donusu": 90,
+      "kasa_plani": [
+        11.78,
+        0.765,
+        -3.7
+      ],
+      "not": "Separe masası"
+    },
+    {
+      "node": "SM_NapkinHolder_4",
+      "asset": "SM_NapkinHolder",
+      "plan": [
+        13.88,
+        0.765,
+        1.8
+      ],
+      "plan_y_donusu": -90,
+      "unity": [
+        -13.88,
+        0.765,
+        1.8
+      ],
+      "unity_y_donusu": 90,
+      "kasa_plani": [
+        11.78,
+        0.765,
+        -6.4
+      ],
+      "not": "Separe masası"
+    },
+    {
+      "node": "SM_NapkinHolder_5",
+      "asset": "SM_NapkinHolder",
+      "plan": [
+        6.2,
+        0.765,
+        1.7
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -6.2,
+        0.765,
+        1.7
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        4.1,
+        0.765,
+        -6.5
+      ],
+      "not": "Yuvarlak masa"
+    },
+    {
+      "node": "SM_NapkinHolder_6",
+      "asset": "SM_NapkinHolder",
+      "plan": [
+        8,
+        0.765,
+        1.7
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -8,
+        0.765,
+        1.7
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        5.9,
+        0.765,
+        -6.5
+      ],
+      "not": "Yuvarlak masa"
+    },
+    {
+      "node": "SM_Aquarium",
+      "asset": "SM_Aquarium",
+      "plan": [
+        6.25,
+        0,
+        4.6
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -6.25,
+        0,
+        4.6
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        4.15,
+        0,
+        -3.6
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_PlantBush",
+      "asset": "SM_PlantBush",
+      "plan": [
+        7.7,
+        0,
+        4.6
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -7.7,
+        0,
+        4.6
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        5.6,
+        0,
+        -3.6
+      ],
+      "not": "Akvaryumun doğusu"
+    },
+    {
+      "node": "SM_PlantTall_1",
+      "asset": "SM_PlantTall",
+      "plan": [
+        0.35,
+        0,
+        0.38
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -0.35,
+        0,
+        0.38
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        -1.75,
+        0,
+        -7.82
+      ],
+      "not": "Kuzeybatı köşesi"
+    },
+    {
+      "node": "SM_PlantTall_2",
+      "asset": "SM_PlantTall",
+      "plan": [
+        13.65,
+        0,
+        0.35
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -13.65,
+        0,
+        0.35
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        11.55,
+        0,
+        -7.85
+      ],
+      "not": "Kuzeydoğu köşesi"
+    },
+    {
+      "node": "SM_Jukebox",
+      "asset": "SM_Jukebox",
+      "plan": [
+        0,
+        0,
+        2
+      ],
+      "plan_y_donusu": 90,
+      "unity": [
+        0,
+        0,
+        2
+      ],
+      "unity_y_donusu": -90,
+      "kasa_plani": [
+        -2.1,
+        0,
+        -6.2
+      ],
+      "not": "Batı duvarı"
+    },
+    {
+      "node": "SM_Painting_Milkshake",
+      "asset": "SM_Painting_Milkshake",
+      "plan": [
+        0,
+        1.76,
+        5.2
+      ],
+      "plan_y_donusu": 90,
+      "unity": [
+        0,
+        1.76,
+        5.2
+      ],
+      "unity_y_donusu": -90,
+      "kasa_plani": [
+        -2.1,
+        1.76,
+        -3
+      ],
+      "not": "Batı duvarı"
+    },
+    {
+      "node": "SM_Painting_Plak",
+      "asset": "SM_Painting_Plak",
+      "plan": [
+        0,
+        1.76,
+        1
+      ],
+      "plan_y_donusu": 90,
+      "unity": [
+        0,
+        1.76,
+        1
+      ],
+      "unity_y_donusu": -90,
+      "kasa_plani": [
+        -2.1,
+        1.76,
+        -7.2
+      ],
+      "not": "Batı duvarı"
+    },
+    {
+      "node": "SM_Painting_Atom",
+      "asset": "SM_Painting_Atom",
+      "plan": [
+        14,
+        1.76,
+        3.15
+      ],
+      "plan_y_donusu": -90,
+      "unity": [
+        -14,
+        1.76,
+        3.15
+      ],
+      "unity_y_donusu": 90,
+      "kasa_plani": [
+        11.9,
+        1.76,
+        -5.05
+      ],
+      "not": "Doğu duvarı"
+    },
+    {
+      "node": "SM_Painting_Araba",
+      "asset": "SM_Painting_Araba",
+      "plan": [
+        14,
+        1.76,
+        6.25
+      ],
+      "plan_y_donusu": -90,
+      "unity": [
+        -14,
+        1.76,
+        6.25
+      ],
+      "unity_y_donusu": 90,
+      "kasa_plani": [
+        11.9,
+        1.76,
+        -1.95
+      ],
+      "not": "Doğu duvarı"
+    },
+    {
+      "node": "SM_BinCabinet",
+      "asset": "SM_BinCabinet",
+      "plan": [
+        11.9,
+        0,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -11.9,
+        0,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        9.8,
+        0,
+        -8.2
+      ],
+      "not": "Çıkışın doğusu, vitrin duvarına yaslı"
+    },
+    {
+      "node": "SM_BinDome_1",
+      "asset": "SM_BinDome",
+      "plan": [
+        5.45,
+        0,
+        2.65
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -5.45,
+        0,
+        2.65
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        3.35,
+        0,
+        -5.55
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_BinDome_2",
+      "asset": "SM_BinDome",
+      "plan": [
+        12.05,
+        0,
+        4.6
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -12.05,
+        0,
+        4.6
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        9.95,
+        0,
+        -3.6
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_BinSquare_1",
+      "asset": "SM_BinSquare",
+      "plan": [
+        2.3,
+        0,
+        5.45
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -2.3,
+        0,
+        5.45
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        0.2,
+        0,
+        -2.75
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_BinSquare_2",
+      "asset": "SM_BinSquare",
+      "plan": [
+        1.5,
+        0,
+        0.45
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -1.5,
+        0,
+        0.45
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        -0.6,
+        0,
+        -7.75
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_CoatRack",
+      "asset": "SM_CoatRack",
+      "plan": [
+        2.35,
+        0,
+        0.6
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -2.35,
+        0,
+        0.6
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        0.25,
+        0,
+        -7.6
+      ],
+      "not": "Girişin batısı"
+    },
+    {
+      "node": "SM_GumballMachine",
+      "asset": "SM_GumballMachine",
+      "plan": [
+        5.3,
+        0,
+        0.45
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -5.3,
+        0,
+        0.45
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        3.2,
+        0,
+        -7.75
+      ],
+      "not": "Girişin doğusu"
+    },
+    {
+      "node": "SM_DoorMat_1",
+      "asset": "SM_DoorMat",
+      "plan": [
+        3.8,
+        0,
+        0.275
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -3.8,
+        0,
+        0.275
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        1.7,
+        0,
+        -7.925
+      ],
+      "not": "Giriş"
+    },
+    {
+      "node": "SM_DoorMat_2",
+      "asset": "SM_DoorMat",
+      "plan": [
+        10.4,
+        0,
+        0.275
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -10.4,
+        0,
+        0.275
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        8.3,
+        0,
+        -7.925
+      ],
+      "not": "Çıkış"
+    },
+    {
+      "node": "SM_PendantLight_1",
+      "asset": "SM_PendantLight",
+      "plan": [
+        0.52,
+        2.75,
+        6.6
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -0.52,
+        2.75,
+        6.6
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        -1.58,
+        2.75,
+        -1.6
+      ],
+      "not": "Separe masasının üstü"
+    },
+    {
+      "node": "SM_PendantLight_2",
+      "asset": "SM_PendantLight",
+      "plan": [
+        0.52,
+        2.75,
+        3.8
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -0.52,
+        2.75,
+        3.8
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        -1.58,
+        2.75,
+        -4.4
+      ],
+      "not": "Separe masasının üstü"
+    },
+    {
+      "node": "SM_PendantLight_3",
+      "asset": "SM_PendantLight",
+      "plan": [
+        13.48,
+        2.75,
+        4.5
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -13.48,
+        2.75,
+        4.5
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        11.38,
+        2.75,
+        -3.7
+      ],
+      "not": "Separe masasının üstü"
+    },
+    {
+      "node": "SM_PendantLight_4",
+      "asset": "SM_PendantLight",
+      "plan": [
+        13.48,
+        2.75,
+        1.8
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -13.48,
+        2.75,
+        1.8
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        11.38,
+        2.75,
+        -6.4
+      ],
+      "not": "Separe masasının üstü"
+    },
+    {
+      "node": "SM_PendantLight_5",
+      "asset": "SM_PendantLight",
+      "plan": [
+        6.2,
+        2.75,
+        1.7
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -6.2,
+        2.75,
+        1.7
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        4.1,
+        2.75,
+        -6.5
+      ],
+      "not": "Yuvarlak masanın üstü"
+    },
+    {
+      "node": "SM_PendantLight_6",
+      "asset": "SM_PendantLight",
+      "plan": [
+        8,
+        2.75,
+        1.7
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -8,
+        2.75,
+        1.7
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        5.9,
+        2.75,
+        -6.5
+      ],
+      "not": "Yuvarlak masanın üstü"
+    },
+    {
+      "node": "SM_CeilingLight_1",
+      "asset": "SM_CeilingLight",
+      "plan": [
+        3.8,
+        2.75,
+        5.6
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -3.8,
+        2.75,
+        5.6
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        1.7,
+        2.75,
+        -2.6
+      ],
+      "not": "Dolaşım hattı"
+    },
+    {
+      "node": "SM_CeilingLight_2",
+      "asset": "SM_CeilingLight",
+      "plan": [
+        3.8,
+        2.75,
+        2.4
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -3.8,
+        2.75,
+        2.4
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        1.7,
+        2.75,
+        -5.8
+      ],
+      "not": "Dolaşım hattı"
+    },
+    {
+      "node": "SM_CeilingLight_3",
+      "asset": "SM_CeilingLight",
+      "plan": [
+        10.4,
+        2.75,
+        5.6
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -10.4,
+        2.75,
+        5.6
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        8.3,
+        2.75,
+        -2.6
+      ],
+      "not": "Dolaşım hattı"
+    },
+    {
+      "node": "SM_CeilingLight_4",
+      "asset": "SM_CeilingLight",
+      "plan": [
+        10.4,
+        2.75,
+        2.4
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -10.4,
+        2.75,
+        2.4
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        8.3,
+        2.75,
+        -5.8
+      ],
+      "not": "Dolaşım hattı"
+    },
+    {
+      "node": "SM_MenuBoard",
+      "asset": "SM_MenuBoard",
+      "plan": [
+        3.8,
+        2.325,
+        8
+      ],
+      "plan_y_donusu": 180,
+      "unity": [
+        -3.8,
+        2.325,
+        8
+      ],
+      "unity_y_donusu": -180,
+      "kasa_plani": [
+        1.7,
+        2.325,
+        -0.2
+      ],
+      "not": "Kasa duvarı salon yüzü, sipariş penceresinin üstü"
+    },
+    {
+      "node": "SM_DeliverySign",
+      "asset": "SM_DeliverySign",
+      "plan": [
+        10.4,
+        2.25,
+        8
+      ],
+      "plan_y_donusu": 180,
+      "unity": [
+        -10.4,
+        2.25,
+        8
+      ],
+      "unity_y_donusu": -180,
+      "kasa_plani": [
+        8.3,
+        2.25,
+        -0.2
+      ],
+      "not": "Teslim penceresinin üstü"
+    },
+    {
+      "node": "SM_LogoSign",
+      "asset": "SM_LogoSign",
+      "plan": [
+        7.1,
+        1.85,
+        8
+      ],
+      "plan_y_donusu": 180,
+      "unity": [
+        -7.1,
+        1.85,
+        8
+      ],
+      "unity_y_donusu": -180,
+      "kasa_plani": [
+        5,
+        1.85,
+        -0.2
+      ],
+      "not": "İki pencerenin arası"
+    },
+    {
+      "node": "SM_DoorSign_Giris",
+      "asset": "SM_DoorSign_Giris",
+      "plan": [
+        3.8,
+        2.51,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -3.8,
+        2.51,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        1.7,
+        2.51,
+        -8.2
+      ],
+      "not": "Vitrin kuşağı iç yüzü"
+    },
+    {
+      "node": "SM_DoorSign_Cikis",
+      "asset": "SM_DoorSign_Cikis",
+      "plan": [
+        10.4,
+        2.51,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -10.4,
+        2.51,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        8.3,
+        2.51,
+        -8.2
+      ],
+      "not": "Vitrin kuşağı iç yüzü"
+    },
+    {
+      "node": "SM_OpenNeon",
+      "asset": "SM_OpenNeon",
+      "plan": [
+        6,
+        2.3,
+        -0.015
+      ],
+      "plan_y_donusu": 180,
+      "unity": [
+        -6,
+        2.3,
+        -0.015
+      ],
+      "unity_y_donusu": -180,
+      "kasa_plani": [
+        3.9,
+        2.3,
+        -8.215
+      ],
+      "not": "Camın içinde, sokağa dönük"
+    },
+    {
+      "node": "SM_StorefrontBay_A",
+      "asset": "SM_StorefrontBay_A",
+      "plan": [
+        1.575,
+        0.9,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -1.575,
+        0.9,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        -0.525,
+        0.9,
+        -8.2
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_StorefrontBay_B",
+      "asset": "SM_StorefrontBay_B",
+      "plan": [
+        7.1,
+        0.9,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -7.1,
+        0.9,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        5,
+        0.9,
+        -8.2
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_StorefrontBay_C",
+      "asset": "SM_StorefrontBay_C",
+      "plan": [
+        12.525,
+        0.9,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -12.525,
+        0.9,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        10.425,
+        0.9,
+        -8.2
+      ],
+      "not": ""
+    },
+    {
+      "node": "SM_StorefrontDoor_1",
+      "asset": "SM_StorefrontDoor",
+      "plan": [
+        3.8,
+        0,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -3.8,
+        0,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        1.7,
+        0,
+        -8.2
+      ],
+      "not": "Giriş · içe açılır"
+    },
+    {
+      "node": "SM_StorefrontDoor_2",
+      "asset": "SM_StorefrontDoor",
+      "plan": [
+        10.4,
+        0,
+        0
+      ],
+      "plan_y_donusu": 0,
+      "unity": [
+        -10.4,
+        0,
+        0
+      ],
+      "unity_y_donusu": 0,
+      "kasa_plani": [
+        8.3,
+        0,
+        -8.2
+      ],
+      "not": "Çıkış · dışa açılır"
+    }
+  ],
+  "dis_referanslar": [
+    {
+      "node": "Ext_SM_StationWindow_Order",
+      "paket": "Kasa",
+      "plan": [
+        3.8,
+        1,
+        8.2
+      ]
+    },
+    {
+      "node": "Ext_SM_StationWindow_Delivery",
+      "paket": "Kasa",
+      "plan": [
+        10.4,
+        1,
+        8.2
+      ]
+    }
+  ],
+  "mimari": {
+    "dosya": "glb/ARCH_Salon.glb",
+    "duvarlar": {
+      "Duvar_Bati": "X −0,20…0",
+      "Duvar_Dogu": "X 14,00…14,20",
+      "Duvar_Kuzey_Vitrin": "Z −0,20…0",
+      "Duvar_Guney_Ortak_Kasa": "Z 8,00…8,20, X 1,90…12,10 (Kasa kuzey duvarı; Kasa yüzü yer tutucu)",
+      "Duvar_Guney_Dis_Bati": "Z 8,00…8,20, X −0,20…1,90",
+      "Duvar_Guney_Dis_Dogu": "Z 8,00…8,20, X 12,10…14,20"
+    },
+    "bosluklar": {
+      "vitrin_bantlari": [
+        {
+          "X": [
+            0.2,
+            2.95
+          ],
+          "Y": [
+            0.9,
+            2.3
+          ]
+        },
+        {
+          "X": [
+            4.65,
+            9.55
+          ],
+          "Y": [
+            0.9,
+            2.3
+          ]
+        },
+        {
+          "X": [
+            11.25,
+            13.8
+          ],
+          "Y": [
+            0.9,
+            2.3
+          ]
+        }
+      ],
+      "kapilar": [
+        {
+          "X": [
+            2.95,
+            4.65
+          ],
+          "Y": [
+            0,
+            2.3
+          ]
+        },
+        {
+          "X": [
+            9.55,
+            11.25
+          ],
+          "Y": [
+            0,
+            2.3
+          ]
+        }
+      ],
+      "siparis_penceresi_kaba": {
+        "X": [
+          2.535,
+          5.065
+        ],
+        "Y": [
+          0.954,
+          1.965
+        ]
+      },
+      "teslim_penceresi_kaba": {
+        "X": [
+          9.135,
+          11.665
+        ],
+        "Y": [
+          0.954,
+          1.965
+        ]
+      }
+    },
+    "renkler": {
+      "duvar_ust": "#F2E4C4",
+      "lambri": "#A8DCCB (0,10–1,00)",
+      "bordur": "#C3CCD2 (1,00–1,035)",
+      "supurgelik": "#5C4A40 (0–0,10)",
+      "tavan": "#F7F1E3",
+      "zemin": "#2A2C35 / #E2DDD0 dama 50 cm (kuzeybatı karesi koyu)",
+      "dis_cephe": "plint #4A535B, turkuaz #2E9E98 (0,10–0,90), krom bant, krem"
+    }
+  },
+  "toplam": {
+    "asset": 30,
+    "asset_ucgen": 30268,
+    "mimari_ucgen": 1966,
+    "yerlesim_ornek": 55
+  }
+}

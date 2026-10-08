@@ -173,7 +173,8 @@ half CNEHatch(float3 positionOS, half3 normalOS)
 half CNESurfacePattern(float3 positionWS, half3 normalWS)
 {
     half3 axis = abs(normalWS);
-    float2 p = axis.y > max(axis.x, axis.z) ? positionWS.xz
+    // Zeminde desen _PatternSize.zw noktasından başlar (karolar odanın köşesine otursun diye).
+    float2 p = axis.y > max(axis.x, axis.z) ? positionWS.xz - _PatternSize.zw
         : (axis.x > axis.z ? positionWS.zy : positionWS.xy);
     float2 cell = p / max(_PatternSize.xy, 1e-4);
 

@@ -86,7 +86,7 @@ göre). Yalnızca rengi değiştirir: normale ve derinliğe dokunmaz, Şef'in ko
 | Yüzey deseni (`_SURFACEPATTERN_ON`) | Deseni açar. Varsayılan kapalı. |
 | Tür (`_PatternType`) | Fayans = şaşırtmalı derz · Kare = düz derz · Şerit = yalnızca düşey derz (lambri) · Dama = iki renkli kareler. |
 | Desen rengi (`_PatternColor`) | Derzin (damada ikinci karenin) rengi. Alfa = desenin gücü. |
-| Ölçü (`_PatternSize`) | X = karonun eni, Y = boyu (metre). |
+| Ölçü (`_PatternSize`) | X = karonun eni, Y = boyu (metre). Z, W = zeminde desenin başladığı dünya noktası (x, z): karolar odanın köşesine otursun diye harita kurulumu yazar. |
 | Derz kalınlığı (`_PatternLine`) | Metre. Uzakta derz bir pikselden inceyken kırpışmasın diye solar. Damada kullanılmaz. |
 
 **Işık renginin etkisi (`_LightTint`)** — Işık bölümünde. 1 = ışığın rengi yüzeye olduğu gibi yansır (eşyalar).

@@ -1068,7 +1068,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     kökü → `Harita_Duvarlar`, `Harita_Zemin`, `Harita_Tavan` (mesh asset'leri `Assets/NewAssets/Harita/Meshes/`) +
     `Carpisma` (duvar / zemin kutuları, kapı engeli, eşya engelleri). Ortak duvarların iki yüzü ayrı kaplanır (her oda
     kendi kaplamasını görür). Mimari **gölge atmaz** (paket kuralı; odalar tavanlı, güneş içeriyi yine aydınlatır) ve
-    **çizgi katmanında değildir**. Müşteri alanı şimdilik düz zemin (masa / sandalye yok).
+    **çizgi katmanında değildir**. Müşteri alanı salondur (aşağıda).
   - **Desenler materyalde, dünya uzayında** (mimaride UV yok): `CNE/Toon` → *Yüzey deseni* (`_SURFACEPATTERN_ON`;
     Fayans / Kare / Şerit / Dama, ölçü metre). Yalnızca RENK değiştirir — Şef'in kontur görüşüne girmez (K2).
     Mutfak: koyu petrol fayans `#2F5D63`, zemin `#45484C` kare · İstasyon: açık mavi fayans `#A7CFE6` (derz
@@ -1100,6 +1100,30 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - Ölçüldü (editörde, göz 1,98; oyuncunun durabildiği her noktadan tarama): 31 hedefin hepsi kendi rolünün odasından
     menzilde (en uzak çöp kovası 1,30 m); Kasiyer sipariş ve teslimat müşterilerine 1,47–1,53 m. 27 ağ nesnesi,
     kimlik çakışması yok; sahnede silinmiş nesneye kalan referans yok.
+  - **SALON eklendi (8 Eki 2026, dördüncü paket `Assets/NewAssets/Salon/`):** müşteri alanı artık düz zemin değil,
+    14 × 8 m salon. Kök `Salon` (10,8 / 0,30 / −14,98) = Kasa kökü + 2,10 (x) − 8,20 (z); iç yüzler x −3,2…10,8 /
+    z −14,98…−6,98. Kasa'nın müşteri duvarı salonun arka duvarıdır (salon iki yana 2,10 m taşar). Vitrin duvarı
+    z −14,98'de: üç cam bandı + iki çift kapı; **giriş kapısı sipariş penceresinin (x 7,0), çıkış kapısı teslimat
+    penceresinin (x 0,4) tam karşısında.** İç kaplama Kasa'yla aynı (krem + nane lambri + bordür, dama zemin); dış
+    cephe plint / turkuaz kuşak / krom bant / krem. Vitrinin dışında 6 m düz "sokak" zemini.
+    - 55 örnek (separeler, masalar, sandalyeler, akvaryum, bitkiler, jukebox, tablolar, çöpler, lambalar, tabelalar,
+      vitrin, kapılar) **yalnızca dekor**: paket kuralı gereği salonda **çizgi yok** (oyuncu etkileşmez), çarpışma da
+      eklenmedi (oyuncu salona giremez; müşteriler fizik kullanmaz). Koltuk / tepsi / çöp soketleri kullanılmıyor.
+    - Yeni materyaller `Assets/NewAssets/Salon/Materials/`: tabela yüzleri (`MI_Decal_*`: doku + `_E` dokusu özellik
+      maskesi olarak, yüzey kendi renginde ışır), tablolar, cam parıltısı ve akvaryum suyu (URP Lit saydam).
+    - **Müşteri yolu:** `Giris` giriş kapısının dışında (7,0 / −16,4): müşteri orada doğar, düz yürüyüp sıraya girer.
+      `CustomerDirector`'a `exitPoint` + `leaveWaypoints` eklendi (boşsa eski davranış): ayrılan müşteri önce
+      `CikisYolu`'na (0,4 / −8,8), sonra çıkış kapısının dışındaki `Cikis`'e (0,4 / −16,4) yürür — sıradan ayrılan
+      müşteri salonun ortasındaki akvaryumun içinden geçmesin diye. Bu iki nokta dışında yollar düz ve boş (plandan
+      kontrol edildi). **Vitrin kapıları açık durur** (giriş içe, çıkış dışa); kapı animasyonu yok.
+    - Dama karoları odanın köşesinden başlar: `_PatternSize.zw` = zeminde desenin başlangıç noktası; kurulum yazar
+      (Kasa ve Salon ayrı zemin materyali: `MI_Arch_Kasa_Zemin`, `MI_Arch_Salon_Zemin`).
+    - *Tuzak:* var olan mesh asset'ini yerinde güncellemek (`EditorUtility.CopySerialized` ya da `Clear` + `Set…`)
+      çizilen veriyi yenilemedi — sahne ESKİ geometriyi YENİ materyal sırasıyla çizdi (duvarlar yanlış renkte, yeni
+      duvarlar yok; `mesh.vertices` doğru veriyi döndürüyordu). Kurulum eski dosyayı silip yenisini yazar.
+    - Tavan lambalarına ve sarkıtlara ışık kaynağı eklenmedi (diğer odalarla aynı). Eşyaların nane / krom tonları
+      referanstan sarımsı / koyu duruyor: sahne güneşinin sıcak rengi ve krom matcap'i (mimari `_LightTint` ile
+      korunuyor, eşyalar değil) — istenirse eşya materyallerinde de düşürülür.
   - **Palet:** `Mutfak_C1/Palettes/cook_no_evil_palet_256.png` İstasyon paketindekiyle değiştirildi (yalnızca iki
     yeni hücre: S10·K3 `#6F4E37`, S10·K4 `#F2B23A`; diğer 254 hücre birebir aynı — karşılaştırıldı).
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
@@ -1478,7 +1502,7 @@ Dersler "Unity / Editor" tuzaklarında.)*
   ekranda hiçbir şey değişmez ve mekanik test edilemez hale gelir. Her yeni türe ikon atanır.)*
 - `steam_appid.txt` = `480` (Spacewar) ve sahnedeki `FacepunchTransport.steamAppId` = 480 —
   gerçek AppID alınınca ikisi de güncellenmeli
-- Yeni haritada (8 Eki) tavan lambalarında ışık kaynağı yok; müşteri alanı düz zemin (masa / sandalye gelecek);
+- Yeni haritada (8 Eki) tavan lambalarında ışık kaynağı yok; salondaki müşteriler oturmuyor (koltuk soketleri boş);
   cam (`MI_Palette_Glass`) ve İstasyon panosunun ölçeği açık konular.
 - *(Eski harita, 8 Eki'de kaldırıldı:)* Haritada collider'sız dekor: `PF_Frier`, sepetler, müşteri masa/sandalyeleri, kesme tahtaları,
   servis tepsileri — içinden geçilir. Fritöz Faz 0 dışı; müşteri alanı müşteri adımında ele alınır.

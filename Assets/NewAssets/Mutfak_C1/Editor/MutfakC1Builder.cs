@@ -255,7 +255,7 @@ public static class MutfakC1Builder
                             continue;
                         }
 
-                        glass |= shared[i].name == "MI_Palette_Glass";
+                        glass |= IsTransparent(shared[i].name);
                         shared[i] = replacement;
                     }
 
@@ -274,6 +274,12 @@ public static class MutfakC1Builder
         {
             UnityEngine.Object.DestroyImmediate(instance);
         }
+    }
+
+    // Saydam yüzeyler (cam, cam parıltısı, su) gölge atmaz.
+    private static bool IsTransparent(string materialName)
+    {
+        return materialName.StartsWith("MI_Palette_Glass") || materialName == "MI_Palette_Water";
     }
 
     // Yerleşimdeki ad "SM_Grill_01" → asset "SM_Grill" (sondaki sıra numarası atılır).
