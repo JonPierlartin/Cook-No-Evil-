@@ -943,14 +943,18 @@ public static class HaritaSceneInstaller
     // GİRİŞ / ÇIKIŞ tabelaları: paketteki yüz dokusunda yazı basılı (dile göre değişemez). Yüz düz zemine çevrilir,
     // yazı tabelanın önüne dünya uzayında bir Canvas olarak konur ve Localization tablosundan gelir.
     private const string StringTable = "UIStrings";
-    private const string SignFontPath = "Assets/Fonts/Bangers-Regular.ttf";
+    // Arayüz kitinin (Assets/CNE_UI) tabela yazı tipi, ok görseli ve palet renkleri: tabelalar arayüzle aynı dili konuşur.
+    private const string SignFontPath = "Assets/CNE_UI/Fonts/Righteous-Regular.ttf";
+    private const string SignArrowPath = "Assets/CNE_UI/Art/Kit/ui_arrow.png";
+    private static readonly Color32 SignEntranceColor = new(0x74, 0xBF, 0x4A, 0xFF);   // marul yeşili (devam / giriş)
+    private static readonly Color32 SignExitColor = new(0xF2, 0x8C, 0x1E, 0xFF);       // peynir turuncusu (ayrıl / çıkış)
     private const string SignTextName = "Yazi";
     private const float SignCanvasScale = 0.001f;
 
     private static void InstallDoorSigns(Transform hall)
     {
-        InstallDoorSign(Asset(hall, "SM_DoorSign_Giris"), "MI_Decal_Giris", "sign.entrance", "GİRİŞ", new Color32(0x8B, 0xE0, 0x4E, 0xFF));
-        InstallDoorSign(Asset(hall, "SM_DoorSign_Cikis"), "MI_Decal_Cikis", "sign.exit", "ÇIKIŞ", new Color32(0xFF, 0x9A, 0x2E, 0xFF));
+        InstallDoorSign(Asset(hall, "SM_DoorSign_Giris"), "MI_Decal_Giris", "sign.entrance", "GİRİŞ", SignEntranceColor);
+        InstallDoorSign(Asset(hall, "SM_DoorSign_Cikis"), "MI_Decal_Cikis", "sign.exit", "ÇIKIŞ", SignExitColor);
     }
 
     private static void InstallDoorSign(Transform sign, string faceMaterialName, string key, string turkish, Color color)
@@ -984,16 +988,23 @@ public static class HaritaSceneInstaller
         canvasObject.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
 
         float height = rect.sizeDelta.y;
-        var arrow = SignText(rect, "Ok", "→", Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"), color, height * 0.8f);
-        arrow.fontStyle = FontStyle.Bold;
-        arrow.rectTransform.anchorMin = new Vector2(0.06f, 0f);
-        arrow.rectTransform.anchorMax = new Vector2(0.30f, 1f);
+        // Ok ve yazı birlikte ortalanır: ok kare, yazı kalan genişlikte.
+        var arrowObject = new GameObject("Ok", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        var arrowRect = (RectTransform)arrowObject.transform;
+        arrowRect.SetParent(rect, false);
+        arrowRect.anchorMin = arrowRect.anchorMax = new Vector2(0.17f, 0.5f);
+        arrowRect.sizeDelta = Vector2.one * (height * 0.46f);
+        var arrowImage = arrowObject.GetComponent<Image>();
+        arrowImage.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SignArrowPath);
+        arrowImage.color = color;
+        arrowImage.preserveAspect = true;
+        arrowImage.raycastTarget = false;
 
-        var label = SignText(rect, "Metin", turkish, AssetDatabase.LoadAssetAtPath<Font>(SignFontPath), color, height * 0.8f);
-        label.rectTransform.anchorMin = new Vector2(0.30f, 0f);
+        var label = SignText(rect, "Metin", turkish, AssetDatabase.LoadAssetAtPath<Font>(SignFontPath), color, height * 0.58f);
+        label.rectTransform.anchorMin = new Vector2(0.28f, 0f);
         label.rectTransform.anchorMax = new Vector2(0.96f, 1f);
         label.resizeTextForBestFit = true;
-        label.resizeTextMaxSize = Mathf.RoundToInt(height * 0.8f);
+        label.resizeTextMaxSize = Mathf.RoundToInt(height * 0.58f);
         label.resizeTextMinSize = 20;
 
         var localize = label.gameObject.AddComponent<LocalizeStringEvent>();

@@ -1122,7 +1122,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
       yakın plan önizlemeyle doğrulandı). Editörde hareket önizlenmedi (yalnızca Play'de çalışır).
     - **GİRİŞ / ÇIKIŞ tabelaları dile göre değişir:** paketteki yüz dokusunda yazı basılıydı; yüz düz zemine
       (`MI_Tabela_Zemin`) çevrildi, yazı tabelanın önünde dünya uzayı Canvas + `LocalizeStringEvent` (tablo
-      `UIStrings`, anahtarlar `sign.entrance`, `sign.exit`; Bangers). **Projede yalnızca Türkçe dil var**: başka dil
+      `UIStrings`, anahtarlar `sign.entrance`, `sign.exit`). Yazı tipi, ok ve renkler arayüz kitinden (`Assets/CNE_UI`: Righteous, `ui_arrow`, marul yeşili `#74BF4A` / peynir turuncusu `#F28C1E`) — kitten şimdilik YALNIZCA bu iki dosya alındı (paketteki GUID'leriyle; kit tam içe alınınca üstüne oturur). **Projede yalnızca Türkçe dil var**: başka dil
       tablosu eklenip bu iki anahtar çevrilince tabela o dilde görünür. Yazı UI olduğu için ışımaz (bloom almaz).
       Menü, TESLİM ve logo tabelalarının yazısı hâlâ dokuya basılı (istenmedi).
     - Yeni materyaller `Assets/NewAssets/Salon/Materials/`: tabela yüzleri (`MI_Decal_*`: doku + `_E` dokusu özellik
