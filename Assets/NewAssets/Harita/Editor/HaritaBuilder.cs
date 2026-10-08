@@ -15,6 +15,8 @@ public static class HaritaBuilder
     public const string CounterModelFolder = "Assets/NewAssets/Kasa/Models";
     public const string HallPrefabPath = PrefabFolder + "/Salon_Yerlesim.prefab";
     public const string HallModelFolder = "Assets/NewAssets/Salon/Models";
+    public const string SignFaceMaterialName = "MI_Tabela_Zemin";
+    public const string SignFaceMaterialPath = "Assets/NewAssets/Salon/Materials/MI_Tabela_Zemin.mat";
     private const string HallTextureFolder = "Assets/NewAssets/Salon/Textures";
     private const string HallMaterialFolder = "Assets/NewAssets/Salon/Materials";
     private const string PalettePath = "Assets/NewAssets/Mutfak_C1/Palettes/cook_no_evil_palet_256.png";
@@ -40,8 +42,11 @@ public static class HaritaBuilder
             CounterPrefabPath, "Kasa_Yerlesim", materials);
         foreach (var pair in CreateHallMaterials())
             materials[pair.Key] = pair.Value;
+        // Salon paketi hiçbir asset'e çizgi vermiyor ("oyuncu etkileşmez"); Ersel (8 Eki): salon da projenin çizgi
+        // kuralına uysun. Eşyalar (zemine / masaya oturanlar) Outline katmanına girer; tablo, tabela, lamba, vitrin
+        // ve kapılar girmez (diğer odalardaki pano ve lambalarla aynı).
         MutfakC1Builder.BuildLayoutPrefab(HallModelFolder + "/Salon_Yerlesim.glb", HallModelFolder,
-            HallPrefabPath, "Salon_Yerlesim", materials);
+            HallPrefabPath, "Salon_Yerlesim", materials, outlineFollowsShadow: true);
         CreateArchitectureMaterials();
         AssetDatabase.SaveAssets();
         Debug.Log("[CNE] Harita prefab'ları ve mimari materyalleri hazır.");
@@ -102,6 +107,10 @@ public static class HaritaBuilder
                 material.SetFloat("_EmissionBaseTint", 1f);
             });
         }
+
+        // Yazısı dile göre değişen tabelaların boş yüzü (yazı sahnede, Localization tablosundan gelir).
+        result[SignFaceMaterialName] = HallMaterial(SignFaceMaterialName, toon,
+            material => material.SetColor("_BaseColor", Parse("#2C3237")));
 
         foreach (string name in new[] { "Araba", "Atom", "Milkshake", "Plak" })
         {

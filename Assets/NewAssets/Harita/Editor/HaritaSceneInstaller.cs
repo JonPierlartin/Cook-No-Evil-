@@ -4,8 +4,12 @@ using System.Text;
 using Unity.Netcode;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Events;
+using UnityEditor.Localization;
 using UnityEngine;
+using UnityEngine.Localization.Components;
 using UnityEngine.Rendering;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 // Haritanın tamamını AÇIK sahneye kurar: CNE → Harita → Install In Scene. Yeniden çalıştırılabilir (kendi kurduğu
@@ -96,6 +100,8 @@ public static class HaritaSceneInstaller
         MoveCounterFunction(counter, station);
         PlaceCustomers(counter, hall);
         OpenDoors(hall);
+        InstallAquarium(hall);
+        InstallDoorSigns(hall);
         VerifyNetworkHashes();
 
         EditorSceneManager.MarkSceneDirty(scene);
@@ -920,6 +926,127 @@ public static class HaritaSceneInstaller
     {
         SetLeaves(Asset(hall, "SM_StorefrontDoor_1"), inward: true);
         SetLeaves(Asset(hall, "SM_StorefrontDoor_2"), inward: false);
+    }
+
+    // Akvaryum: balıkları yüzdüren bileşen (yalnızca görsel, yerel).
+    private static void InstallAquarium(Transform hall)
+    {
+        var aquarium = Asset(hall, "SM_Aquarium");
+        if (!aquarium.TryGetComponent<AquariumFish>(out var fish))
+            fish = aquarium.gameObject.AddComponent<AquariumFish>();
+
+        var serialized = new SerializedObject(fish);
+        serialized.FindProperty("water").objectReferenceValue = aquarium.Find("Water").GetComponent<Renderer>();
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // GİRİŞ / ÇIKIŞ tabelaları: paketteki yüz dokusunda yazı basılı (dile göre değişemez). Yüz düz zemine çevrilir,
+    // yazı tabelanın önüne dünya uzayında bir Canvas olarak konur ve Localization tablosundan gelir.
+    private const string StringTable = "UIStrings";
+    private const string SignFontPath = "Assets/Fonts/Bangers-Regular.ttf";
+    private const string SignTextName = "Yazi";
+    private const float SignCanvasScale = 0.001f;
+
+    private static void InstallDoorSigns(Transform hall)
+    {
+        InstallDoorSign(Asset(hall, "SM_DoorSign_Giris"), "MI_Decal_Giris", "sign.entrance", "GİRİŞ", new Color32(0x8B, 0xE0, 0x4E, 0xFF));
+        InstallDoorSign(Asset(hall, "SM_DoorSign_Cikis"), "MI_Decal_Cikis", "sign.exit", "ÇIKIŞ", new Color32(0xFF, 0x9A, 0x2E, 0xFF));
+    }
+
+    private static void InstallDoorSign(Transform sign, string faceMaterialName, string key, string turkish, Color color)
+    {
+        EnsureString(key, turkish);
+
+        var renderer = sign.GetComponent<Renderer>();
+        var blank = AssetDatabase.LoadAssetAtPath<Material>(HaritaBuilder.SignFaceMaterialPath);
+        var shared = renderer.sharedMaterials;
+        for (int i = 0; i < shared.Length; i++)
+        {
+            if (shared[i] != null && shared[i].name == faceMaterialName)
+                shared[i] = blank;
+        }
+
+        renderer.sharedMaterials = shared;
+
+        var old = sign.Find(SignTextName);
+        if (old != null)
+            Object.DestroyImmediate(old.gameObject);
+
+        // Tabelanın önü +Z; Canvas ön yüzün hemen önünde, öne bakar.
+        var bounds = renderer.localBounds;
+        var canvasObject = new GameObject(SignTextName, typeof(RectTransform), typeof(Canvas));
+        var rect = (RectTransform)canvasObject.transform;
+        rect.SetParent(sign, false);
+        rect.localPosition = new Vector3(bounds.center.x, bounds.center.y, bounds.max.z + 0.003f);
+        rect.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        rect.localScale = Vector3.one * SignCanvasScale;
+        rect.sizeDelta = new Vector2(bounds.size.x, bounds.size.y) / SignCanvasScale;
+        canvasObject.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+
+        float height = rect.sizeDelta.y;
+        var arrow = SignText(rect, "Ok", "→", Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"), color, height * 0.8f);
+        arrow.fontStyle = FontStyle.Bold;
+        arrow.rectTransform.anchorMin = new Vector2(0.06f, 0f);
+        arrow.rectTransform.anchorMax = new Vector2(0.30f, 1f);
+
+        var label = SignText(rect, "Metin", turkish, AssetDatabase.LoadAssetAtPath<Font>(SignFontPath), color, height * 0.8f);
+        label.rectTransform.anchorMin = new Vector2(0.30f, 0f);
+        label.rectTransform.anchorMax = new Vector2(0.96f, 1f);
+        label.resizeTextForBestFit = true;
+        label.resizeTextMaxSize = Mathf.RoundToInt(height * 0.8f);
+        label.resizeTextMinSize = 20;
+
+        var localize = label.gameObject.AddComponent<LocalizeStringEvent>();
+        localize.StringReference.SetReference(StringTable, key);
+        var setter = (UnityEngine.Events.UnityAction<string>)System.Delegate.CreateDelegate(
+            typeof(UnityEngine.Events.UnityAction<string>), label, "set_text");
+        UnityEventTools.AddPersistentListener(localize.OnUpdateString, setter);
+    }
+
+    private static Text SignText(RectTransform parent, string name, string content, Font font, Color color, float fontSize)
+    {
+        var textObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        var rect = (RectTransform)textObject.transform;
+        rect.SetParent(parent, false);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        var text = textObject.GetComponent<Text>();
+        text.text = content;
+        text.font = font;
+        text.color = color;
+        text.fontSize = Mathf.RoundToInt(fontSize);
+        text.alignment = TextAnchor.MiddleCenter;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    // Anahtar tabloda yoksa eklenir; Türkçe tabloda değeri yoksa yazılır. Başka dil tablosu eklendiğinde çevirisi
+    // oraya girilir, tabela kendiliğinden o dilde görünür.
+    private static void EnsureString(string key, string turkish)
+    {
+        var collection = LocalizationEditorSettings.GetStringTableCollection(StringTable);
+        if (collection == null)
+        {
+            _log.AppendLine($"UYARI: '{StringTable}' tablosu bulunamadı; '{key}' eklenemedi.");
+            return;
+        }
+
+        if (!collection.SharedData.Contains(key))
+        {
+            collection.SharedData.AddKey(key);
+            EditorUtility.SetDirty(collection.SharedData);
+        }
+
+        foreach (var table in collection.StringTables)
+        {
+            if (table.LocaleIdentifier.Code != "tr" || table.GetEntry(key) != null)
+                continue;
+
+            table.AddEntry(key, turkish);
+            EditorUtility.SetDirty(table);
+        }
     }
 
     private static void SetLeaves(Transform door, bool inward)

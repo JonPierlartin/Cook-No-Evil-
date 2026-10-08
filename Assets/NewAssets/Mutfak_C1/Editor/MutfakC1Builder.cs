@@ -214,8 +214,10 @@ public static class MutfakC1Builder
 
     // Yerleşim GLB'sinden prefab: materyaller proje materyalleriyle değişir, çizgi ve gölge bayrakları her asset'in
     // kendi GLB dosyasından okunur (modelFolder).
+    // outlineFollowsShadow: paketin çizgi bayrağı yerine gölge bayrağı kullanılır (zemine / masaya oturan eşya çizgi
+    // alır, duvara ve tavana monte olan almaz) — çizgi bayrağını hiç vermeyen paketler için (salon).
     public static void BuildLayoutPrefab(string layoutModel, string modelFolder, string prefabPath, string prefabName,
-        Dictionary<string, Material> materials)
+        Dictionary<string, Material> materials, bool outlineFollowsShadow = false)
     {
         EnsureFolder(Path.GetDirectoryName(prefabPath).Replace((char)92, (char)47));
         var model = AssetDatabase.LoadAssetAtPath<GameObject>(layoutModel);
@@ -243,6 +245,8 @@ public static class MutfakC1Builder
                 // Eşyalar tam çizgi katmanındadır: kalın dış hat + ince, soluk iç çizgi (ağırlıklar CNEOutline
                 // feature'ında). Yalnızca-siluet katmanı karakterler içindir.
                 var flags = ReadFlags(modelFolder, AssetNameOf(asset.name));
+                if (outlineFollowsShadow)
+                    flags.Outline = flags.CastShadow;
                 foreach (var renderer in asset.GetComponentsInChildren<Renderer>(true))
                 {
                     var shared = renderer.sharedMaterials;

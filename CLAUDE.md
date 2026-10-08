@@ -1036,6 +1036,10 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Yalnızca dekor (Faz 0 dışı):** fritöz ×2, patates istasyonu, interkom, stok kapağı, sos yuvası, kapı kanatları,
     davlumbaz, tavan lambaları (ışık kaynağı eklenmedi), pervazdaki `Side_*` soketleri.
   - Sahne kaydının gürültüsü yine temizlendi (`cleanscene.py`): yalnızca eklenen bloklar ve bu işin değiştirdikleri.
+  - **Karakterlerde parça sınırı ve küçük kademe çizilmez (8 Eki):** nesne kimliği (maskenin B kanalı) yalnızca tam
+    çizgi alan nesnelere yazılır ve yalnızca-siluet nesnelerde derinlik kademesi eşiği 4 katıdır
+    (`SILHOUETTE_DEPTH_SCALE`). Kalın dış hat her ayrı parçayı (göz, göz bebeği) ve yüzeyden birkaç santim çıkan
+    ayrıntıyı çevirip Kasiyer'in gözlerini karartıyordu; gövdenin önündeki el / kol hâlâ çizilir.
   - **ÇİZGİ KURALI — yeni gelen her asset'e de uygulanır (7 Eki 2026, Ersel):** eşyalar **kalın, tam koyu dış hat +
     ince, soluk iç çizgi** alır. Çok çizgi de (ızgara çubukları, fritöz sepetleri yüzeyi karartıyor, et seçilmiyordu)
     çizgisizlik de (yalnızca-siluet denendi: "çok boş") reddedildi; ortası bu. Uygulama: eşya `Outline` katmanına
@@ -1107,8 +1111,20 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     penceresinin (x 0,4) tam karşısında.** İç kaplama Kasa'yla aynı (krem + nane lambri + bordür, dama zemin); dış
     cephe plint / turkuaz kuşak / krom bant / krem. Vitrinin dışında 6 m düz "sokak" zemini.
     - 55 örnek (separeler, masalar, sandalyeler, akvaryum, bitkiler, jukebox, tablolar, çöpler, lambalar, tabelalar,
-      vitrin, kapılar) **yalnızca dekor**: paket kuralı gereği salonda **çizgi yok** (oyuncu etkileşmez), çarpışma da
-      eklenmedi (oyuncu salona giremez; müşteriler fizik kullanmaz). Koltuk / tepsi / çöp soketleri kullanılmıyor.
+      vitrin, kapılar) **yalnızca dekor**; çarpışma eklenmedi (oyuncu salona giremez; müşteriler fizik kullanmaz).
+      Koltuk / tepsi / çöp soketleri kullanılmıyor.
+    - **Salon da çizgi kuralına uyar (Ersel, 8 Eki):** paket hiçbir asset'e çizgi vermiyordu; zemine / masaya oturan
+      eşyalar `Outline` katmanında (paketin gölge bayrağı ölçüt: `BuildLayoutPrefab(..., outlineFollowsShadow: true)`),
+      tablo / tabela / lamba / paspas / vitrin / kapılar değil (diğer odalardaki pano ve lambalar gibi).
+    - **Akvaryum balıkları yüzer:** `AquariumFish` (sahnede `Salon/…/SM_Aquarium` üstünde; kurulum ekler). Yalnızca
+      görsel, her istemcide yerel ve rastgele (ağ yok): balıklar suyun hacmi içinde rastgele hedefe yüzer, yumuşak
+      döner, ara sıra süzülür, gövde hıza bağlı kıvrılır. Balığın burnu Unity'de yerel **−X** (glTFast çevirisi;
+      yakın plan önizlemeyle doğrulandı). Editörde hareket önizlenmedi (yalnızca Play'de çalışır).
+    - **GİRİŞ / ÇIKIŞ tabelaları dile göre değişir:** paketteki yüz dokusunda yazı basılıydı; yüz düz zemine
+      (`MI_Tabela_Zemin`) çevrildi, yazı tabelanın önünde dünya uzayı Canvas + `LocalizeStringEvent` (tablo
+      `UIStrings`, anahtarlar `sign.entrance`, `sign.exit`; Bangers). **Projede yalnızca Türkçe dil var**: başka dil
+      tablosu eklenip bu iki anahtar çevrilince tabela o dilde görünür. Yazı UI olduğu için ışımaz (bloom almaz).
+      Menü, TESLİM ve logo tabelalarının yazısı hâlâ dokuya basılı (istenmedi).
     - Yeni materyaller `Assets/NewAssets/Salon/Materials/`: tabela yüzleri (`MI_Decal_*`: doku + `_E` dokusu özellik
       maskesi olarak, yüzey kendi renginde ışır), tablolar, cam parıltısı ve akvaryum suyu (URP Lit saydam).
     - **Müşteri yolu:** `Giris` giriş kapısının dışında (7,0 / −16,4): müşteri orada doğar, düz yürüyüp sıraya girer.

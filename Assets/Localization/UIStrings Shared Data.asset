@@ -123,6 +123,14 @@ MonoBehaviour:
     m_Key: error.session_timeout
     m_Metadata:
       m_Items: []
+  - m_Id: 22147229925662720
+    m_Key: sign.entrance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22147230106017792
+    m_Key: sign.exit
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
