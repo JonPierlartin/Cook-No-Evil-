@@ -64,6 +64,10 @@ public static class AnaMenuInstaller
     private const float MenuFieldOfView = 45f;
     private const float DriftSeconds = 55f;
 
+    // Ana menüdeki jukebox şeridinin eni (kitte 460): "ad · atıf" en küçük yazı boyunda sığacak kadar.
+    private const float MenuJukeboxWidth = 640f;
+    private const float DeveloperButtonScale = 0.8f;
+
     // "Kapanış saati": yalnızca birkaç lamba yanar (salon yerleşimindeki adlar).
     private static readonly string[] LitLamps = { "SM_PendantLight_5", "SM_PendantLight_6", "SM_PendantLight_3", "SM_CeilingLight_1" };
 
@@ -144,6 +148,23 @@ public static class AnaMenuInstaller
         Rebind(menu.onBrowseLobbies, browser.OpenList);
         EditorUtility.SetDirty(menu);
         PrefabUtility.RecordPrefabInstancePropertyModifications(menu);
+
+        // Kit kartın boyunu alt nesneler etkinleşmeden ölçüyor (hep en kısa boy): ölçümü kare sonunda yineleyen
+        // proje bileşeni sahne örneğine eklenir (kit dosyasına dokunulmaz).
+        var settingsPanel = menu.GetComponentInChildren<CNESettingsPanel>(true);
+        if (settingsPanel != null && settingsPanel.GetComponent<SettingsCardLayoutRefresh>() == null)
+            settingsPanel.gameObject.AddComponent<SettingsCardLayoutRefresh>();
+
+        // Ana menünün jukebox şeridi: parça adı + lisans atfı sığsın diye sahne örneğinde genişletilir.
+        foreach (var strip in menu.GetComponentsInChildren<CNEJukeboxStrip>(true))
+        {
+            if (strip.GetComponentInParent<CNESettingsPanel>(true) != null)
+                continue;
+
+            var rect = (RectTransform)strip.transform;
+            rect.sizeDelta = new Vector2(MenuJukeboxWidth, rect.sizeDelta.y);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(rect);
+        }
     }
 
     // Kalıcı (Inspector'da görünen) dinleyici: yeniden kurulumda çiftlenmesin diye önce eskiler kaldırılır.
@@ -232,11 +253,13 @@ public static class AnaMenuInstaller
         buttonsRect.SetParent(overlay, false);
         buttonsRect.anchorMin = buttonsRect.anchorMax = buttonsRect.pivot = Vector2.one;
         buttonsRect.anchoredPosition = new Vector2(-24f, -24f);
-        buttonsRect.localScale = Vector3.one * 0.7f;
+        buttonsRect.localScale = Vector3.one * DeveloperButtonScale;
         var layout = buttons.GetComponent<VerticalLayoutGroup>();
         layout.spacing = 8f;
         layout.childAlignment = TextAnchor.UpperRight;
-        layout.childControlWidth = layout.childControlHeight = true;
+        // Düğmeler şablonun kendi ölçüsünü korur: düzen grubu ölçüyü yönetirse dilimli zemin sprite'ının en küçük
+        // boyuna (yuvarlak bir nokta) çöker ve yazı kesilir.
+        layout.childControlWidth = layout.childControlHeight = false;
         layout.childForceExpandWidth = layout.childForceExpandHeight = false;
         var fitter = buttons.GetComponent<ContentSizeFitter>();
         fitter.horizontalFit = fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;

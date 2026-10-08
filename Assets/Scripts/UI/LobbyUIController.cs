@@ -192,6 +192,11 @@ public class LobbyUIController : MonoBehaviour
 
     private void Start()
     {
+        // Oyun arayüzü (hotbar, çarklar) sahnede açık kayıtlıdır; oturum yokken görünmemelidir. Eskiden ilk ekranın
+        // opak zemini onu örtüyordu; ana menü saydam olduğu için açılışta açıkça kapatılır (oturumdan ayrılınca
+        // varılan durumla aynı).
+        SetGameplayCanvasVisible(false);
+
         // SteamLobbyManager.Instance kendi Awake'inde atanir; sira garantisi olmadigi icin
         // aboneligi Start'a erteliyoruz (butun Awake'ler tamamlandiktan sonra calisir).
         var lobby = SteamLobbyManager.Instance;
