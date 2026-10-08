@@ -31,6 +31,9 @@ Shader "Hidden/CNE/OutlineComposite"
 
             TEXTURE2D(_CNEOutlineMask);
 
+            // Yalnızca-siluet nesnelerde derinlik kademesi eşiğinin katı.
+            #define SILHOUETTE_DEPTH_SCALE 4.0
+
             half4 _OutlineColor;
             half _OutlineDarken;
             half _OutlineColorBlend;
@@ -132,8 +135,12 @@ Shader "Hidden/CNE/OutlineComposite"
                     min(mBR.b > 0 ? mBR.b : maskMax.b, mTL.b > 0 ? mTL.b : maskMax.b)), mC.b > 0 ? mC.b : maskMax.b);
                 outer = max(outer, step(0.5 / 255.0, maskMax.b - idMin));
 
-                // Dış hat 3: derinlik kademesi (nesnenin kendi içinde öne çıkan parça, kapak, raf).
-                outer = max(outer, silhouette * max(maskMax.r, maskMax.g));
+                // Dış hat 3: derinlik kademesi (nesnenin kendi içinde öne çıkan parça, kapak, raf). Yalnızca-siluet
+                // nesnelerde (karakterler) eşik katlanır: gövdenin önündeki el / kol çizilir, yüzeyden birkaç santim
+                // çıkan küçük ayrıntı (Kasiyer'in gözleri) çizilmez — kalın çizgi gözleri tamamen karartıyordu.
+                float characterThreshold = depthThreshold * SILHOUETTE_DEPTH_SCALE;
+                float characterStep = smoothstep(characterThreshold, characterThreshold * (1.0 + _EdgeSoftness), depthEdge);
+                outer = max(outer, max(silhouette * maskMax.r, characterStep * maskMax.g));
 
                 // İç çizgi: yalnızca tam çizgi alan nesnelerde, kendi (ince) kalınlığında, soluk ve yakında.
                 float innerStep = max(1.0, round(_InnerWidthPx * _ScaledScreenParams.y / _ReferenceHeight));

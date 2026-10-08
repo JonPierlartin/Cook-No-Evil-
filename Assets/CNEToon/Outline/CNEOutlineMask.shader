@@ -4,6 +4,8 @@
 // yazmaz. Kanallar birbirini ezmesin diye Max ile karışır. Hangi kanala yazılacağını CNEOutlineFeature verir.
 // B kanalına NESNE KİMLİĞİ yazılır (renderer'ın dünya konumundan türetilen 1–255 arası bir değer): yan yana duran
 // iki nesnenin, ya da bir eşyanın ayrı parçasının (kapak, sepet, kapı kanadı) sınırı buradan bulunur.
+// Kimlik YALNIZCA tam çizgi alan nesnelere yazılır. Yalnızca-siluet nesnelerde (karakterler) parçalar arası sınır
+// çizilmez: göz, göz bebeği, el gibi küçük ayrı parçaların her biri kalın çizgiyle çevrilip kararıyordu.
 Shader "Hidden/CNE/OutlineMask"
 {
     Properties
@@ -64,7 +66,7 @@ Shader "Hidden/CNE/OutlineMask"
 
             half4 Frag(Varyings input) : SV_Target
             {
-                return half4(_MaskChannels.rg, input.objectId, 0);
+                return half4(_MaskChannels.rg, input.objectId * _MaskChannels.r, 0);
             }
             ENDHLSL
         }
