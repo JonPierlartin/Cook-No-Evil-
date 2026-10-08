@@ -105,7 +105,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 427590405301660616}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0.36}
   m_LocalScale: {x: 0.001, y: 0.001, z: 0.001}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -116,7 +116,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 2.2}
+  m_AnchoredPosition: {x: 0, y: 1.28}
   m_SizeDelta: {x: 500, y: 360}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &5515916804556512233
@@ -663,6 +663,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Customer
   ShowTopMostFoldoutHeaderGroup: 1
   orderTakerRoles: 01000000
+  deliveryRoles: 01000000
   moveSpeed: 2.5
 --- !u!114 &4323527319380798409
 MonoBehaviour:
@@ -682,6 +683,8 @@ MonoBehaviour:
   waitingColor: {r: 0.95, g: 0.8, b: 0.3, a: 1}
   orderedColor: {r: 0.35, g: 0.6, b: 0.95, a: 1}
   leavingColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
+  happyColor: {r: 0.25, g: 0.85, b: 0.3, a: 1}
+  angryColor: {r: 0.9, g: 0.15, b: 0.1, a: 1}
 --- !u!114 &8317039637624117116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -720,6 +723,7 @@ MonoBehaviour:
   variantImage: {fileID: 2835952594878575674}
   missingContainer: {fileID: 3284837098901098524}
   missingEntryTemplate: {fileID: 1854845079699360609}
+  visibleToRoles: 01000000
 --- !u!1 &4376533531440255094
 GameObject:
   m_ObjectHideFlags: 0

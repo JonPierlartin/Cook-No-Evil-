@@ -5,230 +5,554 @@ using Unity.Netcode;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
-// C1 mutfağını AÇIK sahneye kurar: CNE → Mutfak C1 → Install In Scene. Yeniden çalıştırılabilir (kendi kurduğu kökleri
-// silip yeniden kurar; işlevsel kökleri yalnızca taşır).
-//  1. Yerleşim prefab'ı mutfağın güneydoğu iç köşesine konur (dönüş yok).
-//  2. Mimari (pakette yok): mutfak kuzeye büyütülür; pencere ve kapı açıklıkları yerleşimdeki yerlerine göre yer
-//     tutucu kutularla yeniden kurulur. Eski duvar parçaları ve eski mutfak eşyaları KAPATILIR (silinmez).
-//  3. İşlev taşınır: ızgara yuvaları, birleştirme tezgahları, ekmek kabı, malzeme kapları, buzdolabı, çöp kovaları,
-//     pencere yuvaları ve hata paneli yeni modellerin soketlerine oturtulur. Kodları ve ağ kimlikleri değişmez.
-// Sayılar yerleşimden ve modellerin sınırlarından okunur; elle girilenler aşağıdaki sabitlerdir (mevcut harita).
-public static class MutfakC1SceneInstaller
+// Haritanın tamamını AÇIK sahneye kurar: CNE → Harita → Install In Scene. Yeniden çalıştırılabilir (kendi kurduğu
+// mimariyi silip yeniden kurar; yerleşim köklerini varsa yerinde bırakır; işlevsel kökleri yalnızca taşır).
+//  1. Yerleşimler: C1 mutfak (Mutfak_C1), İstasyon ve Kasa prefab'ları paketlerdeki ortak eksene göre konur. Üç
+//     paket aynı planı paylaşır: İstasyon kökü = mutfak kökü + 4,20 m (x), Kasa kökü = İstasyon kökü − 3,20 m (z).
+//  2. Mimari (paketlerde yalnızca referans olarak var): duvarlar, zeminler ve tavanlar burada mesh olarak üretilir.
+//     Desenler (fayans, lambri, dama) materyalde, dünya uzayında. Eski blockout harita ve yer tutucu mimari SİLİNİR.
+//  3. İşlev taşınır: yuvalar, kaplar, çöp kovaları, panolar, hata panelleri, tarif kitapçığı, müşteri noktaları ve
+//     doğma noktaları yeni modellerin soketlerine oturtulur. Kodları ve ağ kimlikleri değişmez.
+// Sayılar yerleşimlerden ve modellerin sınırlarından okunur; elle girilenler aşağıdaki sabitlerdir (paket planları).
+public static class HaritaSceneInstaller
 {
-    // Mevcut harita: mutfağın güneydoğu iç köşesi (doğu duvarının iç yüzü, güney duvarının iç yüzü, zemin üstü).
-    private static readonly Vector3 Origin = new(4.5f, 0.30f, -3.58f);
-    private const float WallThickness = 0.3f;
-    private const float WallTop = 3.3f;
-    private const float FloorThickness = 0.3f;
-    // Oda: yerleşim 5,60 × 6,00 m. Batı duvarı yerinde kalır (iç yüzü x = −1,2).
-    private const float RoomLength = 6f;
-    private const float WestInnerFace = -1.2f;
-    private const float OldNorthInnerFace = 1.2f;
+    // C1 mutfak yerleşiminin kökü: mutfağın İstasyon duvarının iç yüzü (x) ve Kasa duvarının iç yüzü (z), zemin üstü.
+    private static readonly Vector3 KitchenOrigin = new(4.5f, 0.30f, -3.58f);
 
-    private const string LayoutRootName = "Mutfak_C1";
-    private const string ArchitectureRootName = "Mutfak_C1_Mimari";
+    // Paket planları (metre).
+    private const float WallThickness = 0.2f;
+    private const float CeilingHeight = 2.75f;
+    private const float KitchenWidth = 5.6f;
+    private const float KitchenLength = 6f;
+    private const float StationWidth = 4f;
+    private const float StationLength = 4.45f;
+    private const float CounterLength = 3f;
+    // Pencerelerin duvardaki kaba boşluğu (kasa + söve bunu doldurur): pivot = net açıklığın alt kenarı ortası.
+    private const float WindowHalfWidth = 1.265f;
+    private const float WindowBottom = 0.954f;
+    private const float WindowTop = 1.965f;
+    private const float SkirtingHeight = 0.10f;
+    private const float WainscotHeight = 1.0f;
+    private const float TrimHeight = 0.035f;
+    // Müşteri alanı (şimdilik düz zemin): müşteri duvarının dışında.
+    private const float OutsideDepth = 9f;
+    private const float OutsideMargin = 5f;
+    private const float FloorThickness = 0.3f;
+
+    private const string KitchenRootName = "Mutfak_C1";
+    private const string StationRootName = "Istasyon";
+    private const string CounterRootName = "Kasa";
+    private const string ArchitectureRootName = "Harita_Mimari";
+    private const string MeshFolder = "Assets/NewAssets/Harita/Meshes";
     private const string PanelPrefabPath = "Assets/Prefabs/Mutfak/HataPaneli_C1.prefab";
     private const string OldPanelPrefabPath = "Assets/Prefabs/HataPaneli.prefab";
     private const string LitMaterialPath = "Assets/NewAssets/Mutfak_C1/Materials/MI_XPanel_Yanan.mat";
+    private const string KitchenModelFolder = "Assets/NewAssets/Mutfak_C1/Models";
 
-    private static readonly string[] OldWallNames =
-    {
-        "PF_Wall_3x3", "PF_Wall_3x3 (1)", "PF_Wall_3x3 (23)", "Pf_StationWindow", "PF_Wall_3x3 (12)", "PF_DoorCase",
-    };
-
-    // Kimlik bileşeni taşıdığı için genel taramaya girmeyen eski dekor (adıyla kapatılır).
-    private static readonly string[] OldDecorNames = { "PF_Frier" };
+    // Eski harita: blockout kökü, mutfağın yer tutucu mimarisi ve daha önce kapatılmış eski eşyalar.
+    private static readonly string[] ObsoleteRoots = { "Harita", "Mutfak_C1_Mimari", "SM_Table_02", "SM_KitchenDoor", "SM_KitchenDoor (1)" };
 
     private static StringBuilder _log;
 
-    [MenuItem("CNE/Mutfak C1/Install In Scene")]
+    public static string LastLog => _log != null ? _log.ToString() : string.Empty;
+
+    [MenuItem("CNE/Harita/Install In Scene")]
     public static void Install()
     {
         _log = new StringBuilder();
         var scene = SceneManager.GetActiveScene();
 
-        var layout = PlaceLayout();
-        BuildArchitecture(layout);
-        DisableOldKitchen(layout);
-        MoveFunction(layout);
-        InstallErrorPanel(layout);
+        var kitchen = PlaceLayout(KitchenRootName, MutfakC1Builder.LayoutPrefabPath, KitchenOrigin);
+        var stationOrigin = KitchenOrigin + new Vector3(WallThickness + StationWidth, 0f, 0f);
+        var counterOrigin = stationOrigin + new Vector3(0f, 0f, -WallThickness - CounterLength);
+        var station = PlaceLayout(StationRootName, HaritaBuilder.StationPrefabPath, stationOrigin);
+        var counter = PlaceLayout(CounterRootName, HaritaBuilder.CounterPrefabPath, counterOrigin);
+
+        // Paketler arası sahiplik: mutfak penceresinin güncel modeli İstasyon paketinde; malzeme panolarının işlevli
+        // (veriden dolan) hâli sahnede ayrıca durur.
+        Disable(kitchen, "SM_StationWindow_23");
+        Disable(station, "SM_IngredientBoard");
+        Disable(counter, "SM_IngredientBoard");
+
+        RemoveObsolete();
+        BuildArchitecture(kitchen, station, counter);
+        MoveKitchenFunction(kitchen, station);
+        MoveStationFunction(station);
+        MoveCounterFunction(counter, station);
+        PlaceCustomers(counter);
+        VerifyNetworkHashes();
 
         EditorSceneManager.MarkSceneDirty(scene);
-        Debug.Log("[CNE] Mutfak C1 sahneye kuruldu.\n" + _log);
+        Debug.Log("[CNE] Harita sahneye kuruldu.\n" + _log);
     }
 
-    public static string LastLog => _log != null ? _log.ToString() : string.Empty;
-
-    private static Transform PlaceLayout()
+    // Kök varsa yerinde bırakılır (sahnede eklenen parçalar kaybolmasın), yoksa prefab'dan kurulur.
+    private static Transform PlaceLayout(string rootName, string prefabPath, Vector3 origin)
     {
-        var existing = GameObject.Find(LayoutRootName);
-        if (existing != null)
-            Object.DestroyImmediate(existing);
+        var existing = GameObject.Find(rootName);
+        if (existing == null)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+                throw new System.InvalidOperationException($"Prefab yok: {prefabPath} (önce CNE → Harita → Build).");
 
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(MutfakC1Builder.LayoutPrefabPath);
-        var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-        instance.name = LayoutRootName;
-        instance.transform.SetPositionAndRotation(Origin, Quaternion.identity);
-        return instance.transform;
+            existing = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            existing.name = rootName;
+        }
+
+        existing.transform.SetPositionAndRotation(origin, Quaternion.identity);
+        return MutfakC1Builder.AssetContainer(existing.transform);
     }
 
-    // ---------- eski mutfak ----------
-
-    private static void DisableOldKitchen(Transform layout)
+    private static void Disable(Transform layout, string assetName)
     {
-        var harita = GameObject.Find("Harita").transform;
-        var walls = harita.Find("Walls");
-        foreach (string wallName in OldWallNames)
-        {
-            var wall = walls.Find(wallName);
-            if (wall == null)
-            {
-                _log.AppendLine($"UYARI: eski duvar bulunamadı: {wallName}");
-                continue;
-            }
+        var asset = layout.Find(assetName);
+        if (asset != null)
+            asset.gameObject.SetActive(false);
+    }
 
-            wall.gameObject.SetActive(false);
-        }
-
-        foreach (string decorName in OldDecorNames)
-        {
-            var decor = harita.Find(decorName);
-            if (decor != null && decor.gameObject.activeSelf)
-            {
-                decor.gameObject.SetActive(false);
-                _log.AppendLine($"kapatıldı (eski dekor): {decorName}");
-            }
-        }
-
-        // Eski mutfak hacmindeki dekor: Harita'nın doğrudan çocukları ve sahne kökleri (ağ nesnesi olmayanlar).
-        var volume = new Bounds();
-        // Duvarların içinde duran parçalar da (eski kapı kanatları, duvara yaslı fritöz) alınsın diye hacim duvar
-        // kalınlığı kadar genişletilir.
-        volume.SetMinMax(
-            new Vector3(WestInnerFace - WallThickness, Origin.y - FloorThickness, Origin.z - WallThickness),
-            new Vector3(Origin.x, WallTop, OldNorthInnerFace + WallThickness));
-
-        var candidates = new List<GameObject>();
-        foreach (Transform child in harita)
-        {
-            if (child.name != "Floor" && child.name != "Walls")
-                candidates.Add(child.gameObject);
-        }
-
+    private static void RemoveObsolete()
+    {
         foreach (var root in SceneManager.GetActiveScene().GetRootGameObjects())
         {
-            if (root.transform != harita && root.transform != layout && root.name != ArchitectureRootName)
-                candidates.Add(root);
-        }
-
-        foreach (var candidate in candidates)
-        {
-            if (!candidate.activeSelf || candidate.GetComponentInChildren<NetworkObject>(true) != null
-                || candidate.GetComponentInChildren<MonoBehaviour>(true) != null)
+            if (System.Array.IndexOf(ObsoleteRoots, root.name) < 0)
                 continue;
 
-            var renderers = candidate.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
+            if (root.GetComponentInChildren<NetworkObject>(true) != null)
+            {
+                _log.AppendLine($"UYARI: '{root.name}' ağ nesnesi taşıyor, silinmedi.");
                 continue;
+            }
 
-            var bounds = renderers[0].bounds;
-            foreach (var renderer in renderers)
-                bounds.Encapsulate(renderer.bounds);
-
-            if (!volume.Contains(bounds.center))
-                continue;
-
-            candidate.SetActive(false);
-            _log.AppendLine($"kapatıldı (eski dekor): {candidate.name}");
+            _log.AppendLine($"silindi: {root.name}");
+            Object.DestroyImmediate(root);
         }
     }
 
     // ---------- mimari ----------
 
-    private static void BuildArchitecture(Transform layout)
+    // Bir duvar yüzünün kaplaması: aşağıdan yukarı bantlar (üst sınır, materyal).
+    private sealed class Finish
+    {
+        public readonly (float top, Material material)[] Bands;
+
+        public Finish(params (float top, Material material)[] bands)
+        {
+            Bands = bands;
+        }
+    }
+
+    private struct Opening
+    {
+        public float U0, U1, Y0, Y1;
+    }
+
+    // Eksenlere hizalı duvar: kalınlık ekseninde [slabMin, slabMax], uzunluk ekseninde [uMin, uMax]. Her yüzün
+    // kaplaması uzunluk boyunca değişebilir (ortak duvarlar): (şu u'ya kadar, kaplama) parçaları; null = çizilmez.
+    private sealed class Wall
+    {
+        public string Name;
+        public bool AlongX;
+        public float SlabMin, SlabMax, UMin, UMax;
+        public (float uEnd, Finish finish)[] LowFace, HighFace;
+        public readonly List<Opening> Openings = new();
+
+        public Vector3 Point(float u, float y, float slab)
+        {
+            return AlongX ? new Vector3(u, y, slab) : new Vector3(slab, y, u);
+        }
+    }
+
+    private sealed class MeshBuilder
+    {
+        private readonly List<Vector3> _vertices = new();
+        private readonly List<Vector3> _normals = new();
+        private readonly List<Material> _materials = new();
+        private readonly List<List<int>> _triangles = new();
+
+        public void Quad(Material material, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal)
+        {
+            int submesh = _materials.IndexOf(material);
+            if (submesh < 0)
+            {
+                submesh = _materials.Count;
+                _materials.Add(material);
+                _triangles.Add(new List<int>());
+            }
+
+            int first = _vertices.Count;
+            _vertices.AddRange(new[] { a, b, c, d });
+            for (int i = 0; i < 4; i++)
+                _normals.Add(normal);
+
+            // Unity'de ön yüz: köşeler önden bakınca saat yönünde (cross(b−a, c−a) öne bakar).
+            bool forward = Vector3.Dot(Vector3.Cross(b - a, c - a), normal) > 0f;
+            var triangles = _triangles[submesh];
+            if (forward)
+                triangles.AddRange(new[] { first, first + 1, first + 2, first, first + 2, first + 3 });
+            else
+                triangles.AddRange(new[] { first, first + 2, first + 1, first, first + 3, first + 2 });
+        }
+
+        public GameObject Build(Transform parent, string name)
+        {
+            var mesh = new Mesh { name = name };
+            mesh.SetVertices(_vertices);
+            mesh.SetNormals(_normals);
+            mesh.subMeshCount = _materials.Count;
+            for (int i = 0; i < _materials.Count; i++)
+                mesh.SetTriangles(_triangles[i], i);
+            mesh.RecalculateBounds();
+
+            // Mesh sahneye gömülmez, asset olarak durur; yeniden kurulumda aynı dosyanın içeriği değişir.
+            MutfakC1Builder.EnsureFolder(MeshFolder);
+            string path = $"{MeshFolder}/{name}.asset";
+            var asset = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (asset == null)
+            {
+                AssetDatabase.CreateAsset(mesh, path);
+                asset = mesh;
+            }
+            else
+            {
+                EditorUtility.CopySerialized(mesh, asset);
+                asset.name = name;
+                Object.DestroyImmediate(mesh);
+                EditorUtility.SetDirty(asset);
+            }
+
+            var gameObject = new GameObject(name);
+            gameObject.transform.SetParent(parent, false);
+            gameObject.AddComponent<MeshFilter>().sharedMesh = asset;
+            var renderer = gameObject.AddComponent<MeshRenderer>();
+            renderer.sharedMaterials = _materials.ToArray();
+            // Mimari ana ışığa gölge düşürmez (paket kuralı): odalar tavanlı, güneş içeriyi yine aydınlatır.
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            return gameObject;
+        }
+    }
+
+    private static void BuildArchitecture(Transform kitchen, Transform station, Transform counter)
     {
         var existing = GameObject.Find(ArchitectureRootName);
         if (existing != null)
             Object.DestroyImmediate(existing);
 
+        var materials = HaritaBuilder.CreateArchitectureMaterials();
+        float floorY = KitchenOrigin.y;
         var root = new GameObject(ArchitectureRootName).transform;
-        var harita = GameObject.Find("Harita").transform;
-        var wallMaterial = harita.Find("Walls").GetComponentInChildren<Renderer>(true).sharedMaterial;
-        var floorMaterial = harita.Find("Floor").GetComponentInChildren<Renderer>(true).sharedMaterial;
+        root.position = new Vector3(0f, floorY, 0f);
 
-        float south = Origin.z;                         // güney duvarının iç yüzü
-        float north = Origin.z + RoomLength;            // kuzey duvarının iç yüzü
-        float east = Origin.x;                          // doğu duvarının iç yüzü
-        float westOuter = WestInnerFace - WallThickness;
-        float eastOuter = east + WallThickness;
-        float floorTop = Origin.y;
+        // Odaların iç yüzleri (dünya x / z).
+        float kitchenX1 = KitchenOrigin.x, kitchenX0 = kitchenX1 - KitchenWidth;
+        float kitchenZ0 = KitchenOrigin.z, kitchenZ1 = kitchenZ0 + KitchenLength;
+        float stationX0 = kitchenX1 + WallThickness, stationX1 = stationX0 + StationWidth;
+        float stationZ0 = kitchenZ0, stationZ1 = stationZ0 + StationLength;
+        float counterX0 = kitchenX0, counterX1 = stationX1;
+        float counterZ1 = kitchenZ0 - WallThickness, counterZ0 = counterZ1 - CounterLength;
+        float westOuter = kitchenX0 - WallThickness, eastOuter = stationX1 + WallThickness;
 
-        // Zemin: eski kuzey duvarının altından yeni kuzey duvarının dışına.
-        Box(root, "Zemin_Uzanti", floorMaterial,
-            new Vector3(westOuter, floorTop - FloorThickness, OldNorthInnerFace),
-            new Vector3(eastOuter, floorTop, north + WallThickness));
+        var skirting = materials["MI_Arch_Supurgelik"];
+        var kitchenFinish = new Finish((SkirtingHeight, skirting), (CeilingHeight, materials["MI_Arch_Mutfak_Duvar"]));
+        var stationFinish = new Finish((SkirtingHeight, skirting), (CeilingHeight, materials["MI_Arch_Istasyon_Duvar"]));
+        var counterFinish = new Finish(
+            (SkirtingHeight, skirting), (WainscotHeight, materials["MI_Arch_Kasa_Lambri"]),
+            (WainscotHeight + TrimHeight, materials["MI_Arch_Kasa_Bordur"]), (CeilingHeight, materials["MI_Arch_Kasa_Duvar"]));
+        var outside = new Finish((CeilingHeight, materials["MI_Arch_Dis"]));
 
-        // Kuzey duvarı ve batı duvarının uzantısı.
-        Box(root, "Duvar_Kuzey", wallMaterial,
-            new Vector3(westOuter, floorTop, north), new Vector3(eastOuter, WallTop, north + WallThickness));
-        Box(root, "Duvar_Bati_Uzanti", wallMaterial,
-            new Vector3(westOuter, floorTop, OldNorthInnerFace + WallThickness), new Vector3(WestInnerFace, WallTop, north));
+        // Açıklıklar yerleşimdeki modellerin yerinden.
+        float orderX = Asset(counter, "SM_StationWindow_Order").position.x;
+        float deliveryX = Asset(counter, "SM_StationWindow_Delivery").position.x;
+        float counterWindowX = Asset(station, "SM_StationWindow_Kasa").position.x;
+        float kitchenWindowZ = Asset(station, "SM_StationWindow_Kitchen").position.z;
+        var door = WorldBounds(Asset(kitchen, "SM_SwingDoorFrame_27"));
+        const float frameOverlap = 0.03f;   // duvar kapı kasasının altına biraz girer (arada boşluk kalmasın)
 
-        // Doğu duvarı (İstasyon'la ortak): pencere açıklığı yerleşimdeki pencere modelinin sınırlarından.
-        var window = WorldBounds(Asset(layout, "SM_StationWindow_23"));
-        Box(root, "Duvar_Dogu_Guney", wallMaterial,
-            new Vector3(east, floorTop, south), new Vector3(eastOuter, WallTop, window.min.z));
-        Box(root, "Duvar_Dogu_Kuzey", wallMaterial,
-            new Vector3(east, floorTop, window.max.z), new Vector3(eastOuter, WallTop, north));
-        Box(root, "Duvar_Dogu_PencereAlti", wallMaterial,
-            new Vector3(east, floorTop, window.min.z), new Vector3(eastOuter, window.min.y, window.max.z));
-        Box(root, "Duvar_Dogu_PencereUstu", wallMaterial,
-            new Vector3(east, window.max.y, window.min.z), new Vector3(eastOuter, WallTop, window.max.z));
+        var walls = new List<Wall>();
 
-        // Güney duvarı (Kasa'yla ortak): kapı açıklığı kasa modelinin sınırlarından. Doğudaki parça eski kapı
-        // kasasının bittiği yere kadar (oradan sonrası mevcut duvar).
-        var door = WorldBounds(Asset(layout, "SM_SwingDoorFrame_27"));
-        float southOuter = south - WallThickness;
-        var oldDoorCase = harita.Find("Walls/PF_DoorCase");
-        float oldDoorCaseEast = oldDoorCase != null ? MaxWorldX(oldDoorCase.GetComponent<Renderer>()) : door.max.x;
-        Box(root, "Duvar_Guney_Bati", wallMaterial,
-            new Vector3(westOuter, floorTop, southOuter), new Vector3(door.min.x, WallTop, south));
-        Box(root, "Duvar_Guney_Dogu", wallMaterial,
-            new Vector3(door.max.x, floorTop, southOuter), new Vector3(oldDoorCaseEast, WallTop, south));
-        Box(root, "Duvar_Guney_KapiUstu", wallMaterial,
-            new Vector3(door.min.x, door.max.y, southOuter), new Vector3(door.max.x, WallTop, south));
+        // Müşteri duvarı (Kasa'nın dışa bakan duvarı): sipariş ve teslimat pencereleri.
+        var customerWall = new Wall
+        {
+            Name = "Musteri", AlongX = true, SlabMin = counterZ0 - WallThickness, SlabMax = counterZ0,
+            UMin = westOuter, UMax = eastOuter,
+            LowFace = new[] { (eastOuter, outside) }, HighFace = new[] { (eastOuter, counterFinish) },
+        };
+        customerWall.Openings.Add(Window(orderX));
+        customerWall.Openings.Add(Window(deliveryX));
+        walls.Add(customerWall);
+
+        // Kasa ile mutfak + İstasyon arasındaki duvar: mutfak kapısı ve Kasa penceresi.
+        var middleWall = new Wall
+        {
+            Name = "Orta", AlongX = true, SlabMin = counterZ1, SlabMax = kitchenZ0, UMin = westOuter, UMax = eastOuter,
+            LowFace = new[] { (eastOuter, counterFinish) },
+            HighFace = new[] { (kitchenX1, kitchenFinish), (stationX0, (Finish)null), (eastOuter, stationFinish) },
+        };
+        middleWall.Openings.Add(new Opening
+        {
+            U0 = door.min.x + frameOverlap, U1 = door.max.x - frameOverlap, Y0 = 0f, Y1 = door.max.y - floorY - frameOverlap,
+        });
+        middleWall.Openings.Add(Window(counterWindowX));
+        walls.Add(middleWall);
+
+        // Mutfak ile İstasyon arasındaki duvar: mutfak penceresi. İstasyon'un bittiği yerden sonrası dış yüz.
+        var kitchenStationWall = new Wall
+        {
+            Name = "MutfakIstasyon", AlongX = false, SlabMin = kitchenX1, SlabMax = stationX0,
+            UMin = kitchenZ0, UMax = kitchenZ1 + WallThickness,
+            LowFace = new[] { (kitchenZ1 + WallThickness, kitchenFinish) },
+            HighFace = new[] { (stationZ1, stationFinish), (stationZ1 + WallThickness, (Finish)null), (kitchenZ1 + WallThickness, outside) },
+        };
+        kitchenStationWall.Openings.Add(Window(kitchenWindowZ));
+        walls.Add(kitchenStationWall);
+
+        // Dış duvarlar.
+        walls.Add(new Wall
+        {
+            Name = "Bati", AlongX = false, SlabMin = westOuter, SlabMax = kitchenX0,
+            UMin = counterZ0 - WallThickness, UMax = kitchenZ1 + WallThickness,
+            LowFace = new[] { (kitchenZ1 + WallThickness, outside) },
+            HighFace = new[] { (counterZ1, counterFinish), (kitchenZ0, (Finish)null), (kitchenZ1 + WallThickness, kitchenFinish) },
+        });
+        walls.Add(new Wall
+        {
+            Name = "Dogu", AlongX = false, SlabMin = stationX1, SlabMax = eastOuter,
+            UMin = counterZ0 - WallThickness, UMax = stationZ1 + WallThickness,
+            LowFace = new[] { (counterZ1, counterFinish), (stationZ0, (Finish)null), (stationZ1 + WallThickness, stationFinish) },
+            HighFace = new[] { (stationZ1 + WallThickness, outside) },
+        });
+        walls.Add(new Wall
+        {
+            Name = "MutfakArka", AlongX = true, SlabMin = kitchenZ1, SlabMax = kitchenZ1 + WallThickness,
+            UMin = westOuter, UMax = stationX0,
+            LowFace = new[] { (stationX0, kitchenFinish) }, HighFace = new[] { (stationX0, outside) },
+        });
+        walls.Add(new Wall
+        {
+            Name = "IstasyonArka", AlongX = true, SlabMin = stationZ1, SlabMax = stationZ1 + WallThickness,
+            UMin = stationX0, UMax = eastOuter,
+            LowFace = new[] { (eastOuter, stationFinish) }, HighFace = new[] { (eastOuter, outside) },
+        });
+
+        var wallMesh = new MeshBuilder();
+        var colliders = new GameObject("Carpisma").transform;
+        colliders.SetParent(root, false);
+        foreach (var wall in walls)
+        {
+            EmitFace(wallMesh, wall, low: true);
+            EmitFace(wallMesh, wall, low: false);
+            EmitReveals(wallMesh, wall, materials["MI_Arch_Dis"]);
+            EmitColliders(colliders, wall);
+        }
+
+        wallMesh.Build(root, "Harita_Duvarlar");
+
+        // Zeminler ve tavanlar. Kapı eşiği mutfak zeminiyle kaplanır; müşteri alanı şimdilik düz bir zemin.
+        var floors = new MeshBuilder();
+        Horizontal(floors, materials["MI_Arch_Mutfak_Zemin"], kitchenX0, kitchenX1, kitchenZ0, kitchenZ1, 0f, Vector3.up);
+        Horizontal(floors, materials["MI_Arch_Mutfak_Zemin"], door.min.x, door.max.x, counterZ1, kitchenZ0, 0f, Vector3.up);
+        Horizontal(floors, materials["MI_Arch_Istasyon_Zemin"], stationX0, stationX1, stationZ0, stationZ1, 0f, Vector3.up);
+        Horizontal(floors, materials["MI_Arch_Kasa_Zemin"], counterX0, counterX1, counterZ0, counterZ1, 0f, Vector3.up);
+        float outsideZ1 = counterZ0 - WallThickness, outsideZ0 = outsideZ1 - OutsideDepth;
+        Horizontal(floors, materials["MI_Arch_Dis_Zemin"], westOuter - OutsideMargin, eastOuter + OutsideMargin, outsideZ0, outsideZ1, 0f, Vector3.up);
+        floors.Build(root, "Harita_Zemin");
+
+        var ceilings = new MeshBuilder();
+        Horizontal(ceilings, materials["MI_Arch_Tavan"], kitchenX0, kitchenX1, kitchenZ0, kitchenZ1, CeilingHeight, Vector3.down);
+        Horizontal(ceilings, materials["MI_Arch_Tavan"], stationX0, stationX1, stationZ0, stationZ1, CeilingHeight, Vector3.down);
+        Horizontal(ceilings, materials["MI_Arch_Kasa_Tavan"], counterX0, counterX1, counterZ0, counterZ1, CeilingHeight, Vector3.down);
+        ceilings.Build(root, "Harita_Tavan");
+
+        Blocker(colliders, "Zemin",
+            new Vector3(westOuter - OutsideMargin, floorY - FloorThickness, outsideZ0),
+            new Vector3(eastOuter + OutsideMargin, floorY, kitchenZ1 + WallThickness));
 
         // Kapı kapalıdır (GDD 5.2.3: yalnızca yangında açılır — Faz 1): açıklık görünmez bir engelle kapatılır.
-        Blocker(root, "Engel_Kapi", new Vector3(door.min.x, floorTop, southOuter), new Vector3(door.max.x, door.max.y, south));
+        Blocker(colliders, "Engel_Kapi", new Vector3(door.min.x, floorY, counterZ1), new Vector3(door.max.x, door.max.y, kitchenZ0));
 
         // Eşyaların çarpışması (dekor). Üstünde etkileşim hedefi duran eşyada engel o yüzeyin altında biter; yoksa
-        // nişan ışını engele çarpar ve hedef bulunamaz.
-        var solids = new (string asset, float topAboveFloor)[]
+        // nişan ışını engele çarpar ve hedef bulunamaz. Pencere pervazları da aynı kuralla (yuvaların altında).
+        const float belowSurface = 0.98f;
+        var solids = new (Transform layout, string asset, float topAboveFloor)[]
         {
-            ("SM_Grill_01", 0.98f), ("SM_Grill_02", 0.98f), ("SM_Fryer_03", 0f), ("SM_Fryer_04", 0f),
-            ("SM_FryStation_05", 0f), ("SM_AssemblyIsland_08", 0.98f), ("SM_PrepTable_13", 0.83f),
+            (kitchen, "SM_Grill_01", belowSurface), (kitchen, "SM_Grill_02", belowSurface), (kitchen, "SM_Fryer_03", 0f),
+            (kitchen, "SM_Fryer_04", 0f), (kitchen, "SM_FryStation_05", 0f), (kitchen, "SM_AssemblyIsland_08", belowSurface),
+            (kitchen, "SM_PrepTable_13", 0.83f),
+            (station, "SM_PackingStation", belowSurface), (station, "SM_BoxingStation", 0f),
+            (station, "SM_StationWindow_Kasa", belowSurface), (station, "SM_StationWindow_Kitchen", belowSurface),
+            (counter, "SM_DrinkIceCounter", belowSurface), (counter, "SM_DrinkMachine", 0f), (counter, "SM_IceCreamMachine", 0f),
+            (counter, "SM_ToppingBins", 0f), (counter, "SM_StationWindow_Order", belowSurface),
+            (counter, "SM_StationWindow_Delivery", belowSurface),
         };
-        foreach (var (assetName, top) in solids)
+        foreach (var (layout, assetName, top) in solids)
         {
             var bounds = WorldBounds(Asset(layout, assetName));
+            var min = bounds.min;
             var max = bounds.max;
             if (top > 0f)
-                max.y = floorTop + top;
-            Blocker(root, "Engel_" + assetName, new Vector3(bounds.min.x, floorTop, bounds.min.z), max);
+            {
+                min.y = floorY;
+                max.y = floorY + top;
+            }
+
+            Blocker(colliders, "Engel_" + assetName, min, max);
         }
     }
 
-    private static void Box(Transform parent, string name, Material material, Vector3 min, Vector3 max)
+    private static Opening Window(float center)
     {
-        var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        box.name = name;
-        box.transform.SetParent(parent, false);
-        box.transform.position = (min + max) * 0.5f;
-        box.transform.localScale = max - min;
-        box.GetComponent<Renderer>().sharedMaterial = material;
-        GameObjectUtility.SetStaticEditorFlags(box, StaticEditorFlags.ContributeGI | StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic);
+        return new Opening { U0 = center - WindowHalfWidth, U1 = center + WindowHalfWidth, Y0 = WindowBottom, Y1 = WindowTop };
+    }
+
+    private static List<float> Breaks(float min, float max, IEnumerable<float> candidates)
+    {
+        var breaks = new List<float> { min, max };
+        foreach (float candidate in candidates)
+        {
+            if (candidate > min + 1e-4f && candidate < max - 1e-4f && !breaks.Exists(b => Mathf.Abs(b - candidate) < 1e-4f))
+                breaks.Add(candidate);
+        }
+
+        breaks.Sort();
+        return breaks;
+    }
+
+    private static IEnumerable<float> OpeningEdges(Wall wall)
+    {
+        foreach (var opening in wall.Openings)
+        {
+            yield return opening.U0;
+            yield return opening.U1;
+        }
+    }
+
+    private static bool InsideOpening(Wall wall, float u, float y)
+    {
+        foreach (var opening in wall.Openings)
+        {
+            if (u > opening.U0 && u < opening.U1 && y > opening.Y0 && y < opening.Y1)
+                return true;
+        }
+
+        return false;
+    }
+
+    // Bir yüz: uzunluk ve yükseklik, açıklık kenarları ile kaplama bantlarından bölünür; açıklığa düşen hücre atlanır.
+    private static void EmitFace(MeshBuilder mesh, Wall wall, bool low)
+    {
+        var segments = low ? wall.LowFace : wall.HighFace;
+        float slab = low ? wall.SlabMin : wall.SlabMax;
+        var normal = (wall.AlongX ? Vector3.forward : Vector3.right) * (low ? -1f : 1f);
+
+        var edges = new List<float>(OpeningEdges(wall));
+        foreach (var (uEnd, _) in segments)
+            edges.Add(uEnd);
+        var uBreaks = Breaks(wall.UMin, wall.UMax, edges);
+
+        for (int i = 0; i < uBreaks.Count - 1; i++)
+        {
+            float u0 = uBreaks[i], u1 = uBreaks[i + 1], uMid = (u0 + u1) * 0.5f;
+            Finish finish = null;
+            foreach (var (uEnd, candidate) in segments)
+            {
+                if (uMid < uEnd)
+                {
+                    finish = candidate;
+                    break;
+                }
+            }
+
+            if (finish == null)
+                continue;
+
+            var heights = new List<float>();
+            foreach (var opening in wall.Openings)
+            {
+                heights.Add(opening.Y0);
+                heights.Add(opening.Y1);
+            }
+
+            foreach (var (top, _) in finish.Bands)
+                heights.Add(top);
+            var yBreaks = Breaks(0f, CeilingHeight, heights);
+
+            for (int j = 0; j < yBreaks.Count - 1; j++)
+            {
+                float y0 = yBreaks[j], y1 = yBreaks[j + 1], yMid = (y0 + y1) * 0.5f;
+                if (InsideOpening(wall, uMid, yMid))
+                    continue;
+
+                var material = finish.Bands[finish.Bands.Length - 1].material;
+                foreach (var (top, candidate) in finish.Bands)
+                {
+                    if (yMid < top)
+                    {
+                        material = candidate;
+                        break;
+                    }
+                }
+
+                mesh.Quad(material, wall.Point(u0, y0, slab), wall.Point(u0, y1, slab), wall.Point(u1, y1, slab), wall.Point(u1, y0, slab), normal);
+            }
+        }
+    }
+
+    // Açıklığın iç yüzleri (pencere kasası ve sövesi bunları örter; arada boşluk görünmesin diye çizilir).
+    private static void EmitReveals(MeshBuilder mesh, Wall wall, Material material)
+    {
+        var along = wall.AlongX ? Vector3.right : Vector3.forward;
+        foreach (var opening in wall.Openings)
+        {
+            if (opening.Y0 > 0f)
+            {
+                mesh.Quad(material, wall.Point(opening.U0, opening.Y0, wall.SlabMin), wall.Point(opening.U0, opening.Y0, wall.SlabMax),
+                    wall.Point(opening.U1, opening.Y0, wall.SlabMax), wall.Point(opening.U1, opening.Y0, wall.SlabMin), Vector3.up);
+            }
+
+            mesh.Quad(material, wall.Point(opening.U0, opening.Y1, wall.SlabMin), wall.Point(opening.U0, opening.Y1, wall.SlabMax),
+                wall.Point(opening.U1, opening.Y1, wall.SlabMax), wall.Point(opening.U1, opening.Y1, wall.SlabMin), Vector3.down);
+            mesh.Quad(material, wall.Point(opening.U0, opening.Y0, wall.SlabMin), wall.Point(opening.U0, opening.Y1, wall.SlabMin),
+                wall.Point(opening.U0, opening.Y1, wall.SlabMax), wall.Point(opening.U0, opening.Y0, wall.SlabMax), along);
+            mesh.Quad(material, wall.Point(opening.U1, opening.Y0, wall.SlabMin), wall.Point(opening.U1, opening.Y1, wall.SlabMin),
+                wall.Point(opening.U1, opening.Y1, wall.SlabMax), wall.Point(opening.U1, opening.Y0, wall.SlabMax), -along);
+        }
+    }
+
+    // Duvarın dolu kısımları kutu çarpışmalarıyla kaplanır; açıklıkların altı ve üstü ayrı kutulardır.
+    private static void EmitColliders(Transform parent, Wall wall)
+    {
+        var uBreaks = Breaks(wall.UMin, wall.UMax, OpeningEdges(wall));
+        float floorY = parent.position.y;
+        for (int i = 0; i < uBreaks.Count - 1; i++)
+        {
+            float u0 = uBreaks[i], u1 = uBreaks[i + 1], uMid = (u0 + u1) * 0.5f;
+            var spans = new List<(float y0, float y1)> { (0f, CeilingHeight) };
+            foreach (var opening in wall.Openings)
+            {
+                if (uMid > opening.U0 && uMid < opening.U1)
+                {
+                    spans.Clear();
+                    if (opening.Y0 > 0f)
+                        spans.Add((0f, opening.Y0));
+                    spans.Add((opening.Y1, CeilingHeight));
+                }
+            }
+
+            foreach (var (y0, y1) in spans)
+            {
+                var min = wall.Point(u0, y0, wall.SlabMin) + Vector3.up * floorY;
+                var max = wall.Point(u1, y1, wall.SlabMax) + Vector3.up * floorY;
+                Blocker(parent, "Duvar_" + wall.Name, min, max);
+            }
+        }
+    }
+
+    private static void Horizontal(MeshBuilder mesh, Material material, float x0, float x1, float z0, float z1, float y, Vector3 normal)
+    {
+        mesh.Quad(material, new Vector3(x0, y, z0), new Vector3(x0, y, z1), new Vector3(x1, y, z1), new Vector3(x1, y, z0), normal);
     }
 
     private static void Blocker(Transform parent, string name, Vector3 min, Vector3 max)
@@ -239,9 +563,9 @@ public static class MutfakC1SceneInstaller
         blocker.AddComponent<BoxCollider>().size = max - min;
     }
 
-    // ---------- işlev ----------
+    // ---------- işlev: mutfak ----------
 
-    private static void MoveFunction(Transform layout)
+    private static void MoveKitchenFunction(Transform layout, Transform station)
     {
         // Izgara: iki ızgara, her birinde tek yuva (iki soketin ortası).
         var grill1 = Asset(layout, "SM_Grill_01");
@@ -274,7 +598,7 @@ public static class MutfakC1SceneInstaller
 
         // Malzeme kapları: malzeme alanının soketleri (adlarıyla eşleşir).
         var prep = Asset(layout, "SM_PrepTable_13");
-        var binBounds = LocalBounds("SM_IngredientBin");
+        var binBounds = LocalBounds(KitchenModelFolder, "SM_IngredientBin");
         foreach (var (containerName, socketName) in new[]
         {
             ("Kap_Marul", "Socket_Bin_1_Marul"), ("Kap_Domates", "Socket_Bin_2_Domates"), ("Kap_Tursu", "Socket_Bin_3_Tursu"),
@@ -295,55 +619,203 @@ public static class MutfakC1SceneInstaller
         }
 
         // Buzdolabı (köfte kabı).
-        PlaceOnAsset("Buzdolabi_Et", Asset(layout, "SM_ReachInFridge_19"), LocalBounds("SM_ReachInFridge"));
+        PlaceOnAsset("Buzdolabi_Et", Asset(layout, "SM_ReachInFridge_19"), LocalBounds(KitchenModelFolder, "SM_ReachInFridge"));
 
         // Çöp kovaları: ikisi de çalışır (ikincisi ilkinin kopyası).
-        var binLocal = LocalBounds("SM_TrashBin");
+        var binLocal = LocalBounds(KitchenModelFolder, "SM_TrashBin");
         PlaceOnAsset("Cop_Mutfak", Asset(layout, "SM_TrashBin_22"), binLocal);
-        var secondBin = Find("Cop_Mutfak_2");
-        if (secondBin == null)
+        if (GameObject.Find("Cop_Mutfak_2") == null)
         {
             var first = Find("Cop_Mutfak");
-            secondBin = Object.Instantiate(first.gameObject).transform;
-            secondBin.name = "Cop_Mutfak_2";
-            RefreshNetworkHash(secondBin.GetComponent<NetworkObject>());
+            var second = Object.Instantiate(first.gameObject);
+            second.name = "Cop_Mutfak_2";
+            RefreshNetworkHash(second.GetComponent<NetworkObject>());
         }
 
         PlaceOnAsset("Cop_Mutfak_2", Asset(layout, "SM_TrashBin_21"), binLocal);
 
-        // Pencere yuvaları: pervazdaki hamburger soketleri. Yuvanın tıklanan hacmi duvarı boydan boya geçer ki iki
-        // taraftan da (Şef ve Komi) erişilsin.
-        var window = Asset(layout, "SM_StationWindow_23");
-        var windowBounds = WorldBounds(window);
-        for (int i = 1; i <= 3; i++)
-        {
-            var socket = window.Find($"Socket_Burger_{i}");
-            var slot = Find($"MutfakPencere_Yuva_{i}");
-            if (socket == null || slot == null)
-                continue;
-
-            slot.SetPositionAndRotation(socket.position, Quaternion.identity);
-            if (slot.TryGetComponent<BoxCollider>(out var collider))
-            {
-                const float slotWidth = 0.42f;
-                float centerX = windowBounds.center.x - socket.position.x;
-                collider.center = new Vector3(centerX, collider.size.y * 0.5f, 0f);
-                collider.size = new Vector3(windowBounds.size.x, collider.size.y, slotWidth);
-            }
-        }
+        // Pencere yuvaları: pervazdaki hamburger soketleri (pencerenin güncel modeli İstasyon paketinde).
+        PlaceWindowSlots("MutfakPencere_Yuva_", Asset(station, "SM_StationWindow_Kitchen"), "Socket_Burger_", 0.42f);
 
         // Doğma noktası: fritöz hattı ile yarımada arasındaki koridor.
         var island = WorldBounds(Asset(layout, "SM_AssemblyIsland_08"));
         var fryer = WorldBounds(Asset(layout, "SM_Fryer_03"));
         var spawn = Find("Dogma_Sef");
         if (spawn != null)
-            spawn.SetPositionAndRotation(new Vector3(island.center.x, Origin.y, (fryer.max.z + island.min.z) * 0.5f), Quaternion.identity);
+            spawn.SetPositionAndRotation(new Vector3(island.center.x, KitchenOrigin.y, (fryer.max.z + island.min.z) * 0.5f), Quaternion.identity);
 
         var sound = Find("Ses_Mutfak");
         if (sound != null)
             sound.position = new Vector3(island.center.x, sound.position.y, island.center.z);
 
-        VerifyNetworkHashes();
+        var panelModel = Asset(layout, "SM_XPanel_30");
+        InstallErrorPanel("HataPaneli_Mutfak", panelModel.position, panelModel.rotation);
+        // Yerleşimdeki süs kopyası kapatılır: aynı yerde işlevli panel durur.
+        panelModel.gameObject.SetActive(false);
+    }
+
+    // ---------- işlev: İstasyon ----------
+
+    private static void MoveStationFunction(Transform layout)
+    {
+        // Paketleme alanları: tepsilerin üstü. Paketin fotoğraflı yüzü (−Z) tezgahın önüne, Komi'ye bakar.
+        for (int i = 1; i <= 2; i++)
+        {
+            var tray = Asset(layout, $"SM_PackingTray_{i}");
+            var area = Find($"PaketlemeAlani_{i}");
+            if (area == null)
+                continue;
+
+            var socket = tray.Find("Socket_Pack");
+            area.SetPositionAndRotation(socket != null ? socket.position : tray.position, tray.rotation * Quaternion.Euler(0f, 180f, 0f));
+            if (area.TryGetComponent<BoxCollider>(out var collider))
+            {
+                var trayLocal = LocalBounds(HaritaBuilder.StationModelFolder, "SM_PackingTray");
+                collider.size = new Vector3(trayLocal.size.x, collider.size.y, trayLocal.size.z);
+                collider.center = new Vector3(0f, collider.size.y * 0.5f, 0f);
+            }
+        }
+
+        // Kese kağıdı kabı: kese kağıdı destesi.
+        var bags = Find("Kap_KeseKagidi");
+        if (bags != null)
+        {
+            PlaceOnAsset("Kap_KeseKagidi", Asset(layout, "SM_BagStack"), LocalBounds(HaritaBuilder.StationModelFolder, "SM_BagStack"));
+            HideChild(bags, "Gorsel");
+        }
+
+        PlaceOnAsset("Cop_Istasyon", Asset(layout, "SM_TrashBin"), LocalBounds(HaritaBuilder.StationModelFolder, "SM_TrashBin"));
+
+        // Kasa penceresi yuvaları (iki yönlü: Komi koyar, Kasiyer alır).
+        var window = Asset(layout, "SM_StationWindow_Kasa");
+        PlaceWindowSlots("KasaPencere_Yuva_", window, "Socket_Slot_", 0.6f);
+
+        // Malzeme panosu: pencerenin yanındaki duvar parçası (paketteki pano modelinin yeri). Pano oraya sığacak
+        // kadar küçültülür; kökün +Z'si duvarın içine bakar.
+        var boardModel = layout.Find("SM_IngredientBoard");
+        var board = Find("MalzemePanosu_Istasyon");
+        if (board != null && boardModel != null)
+        {
+            const float boardWidth = 1.7f;      // MalzemePanosu prefab'ının gövde eni
+            const float wallGap = 0.03f;
+            float windowEdge = WorldBounds(window).min.x;
+            float wallFace = KitchenOrigin.x + WallThickness;
+            float available = windowEdge - wallFace - wallGap * 2f;
+            board.SetPositionAndRotation(
+                new Vector3((windowEdge + wallFace) * 0.5f, boardModel.position.y, boardModel.position.z), Quaternion.Euler(0f, 180f, 0f));
+            board.localScale = Vector3.one * Mathf.Min(1f, available / boardWidth);
+        }
+
+        // Hata paneli: Kasa penceresinin üstü (Komi sinyalleri bu pencereden izler).
+        InstallErrorPanel("HataPaneli_Istasyon",
+            new Vector3(window.position.x, PanelHeight(), KitchenOrigin.z), Quaternion.identity);
+
+        var spawn = Find("Dogma_Komi");
+        if (spawn != null)
+        {
+            float centerX = KitchenOrigin.x + WallThickness + StationWidth * 0.5f;
+            spawn.SetPositionAndRotation(new Vector3(centerX, KitchenOrigin.y, KitchenOrigin.z + StationLength * 0.5f), Quaternion.Euler(0f, 270f, 0f));
+        }
+    }
+
+    // ---------- işlev: Kasa ----------
+
+    private static void MoveCounterFunction(Transform layout, Transform station)
+    {
+        PlaceOnAsset("Cop_Kasa", Asset(layout, "SM_TrashBin"), LocalBounds(HaritaBuilder.CounterModelFolder, "SM_TrashBin"));
+
+        // Tarif kitapçığı: sipariş penceresinin pervazındaki kitap modeli. İnce model tıklanabilsin diye hacim yükseltilir.
+        var book = Find("TarifKitapcigi");
+        if (book != null)
+        {
+            var bookBounds = LocalBounds(HaritaBuilder.CounterModelFolder, "SM_RecipeBook");
+            const float clickHeight = 0.08f;
+            bookBounds.SetMinMax(bookBounds.min, new Vector3(bookBounds.max.x, Mathf.Max(bookBounds.max.y, clickHeight), bookBounds.max.z));
+            PlaceOnAsset("TarifKitapcigi", Asset(layout, "SM_RecipeBook"), bookBounds);
+            HideChild(book, "Gorsel");
+        }
+
+        // Malzeme panosu: Kasa–İstasyon duvarının Kasa yüzü, pencere ile mutfak kapısı arasında (tam boy).
+        float wallZ = KitchenOrigin.z - WallThickness;
+        var boardModel = layout.Find("SM_IngredientBoard");
+        var board = Find("MalzemePanosu_Kasa");
+        if (board != null && boardModel != null)
+        {
+            const float boardHalfWidth = 0.85f;
+            const float gap = 0.08f;
+            float windowEdge = WorldBounds(Asset(station, "SM_StationWindow_Kasa")).min.x;
+            float x = Mathf.Min(boardModel.position.x, windowEdge - gap - boardHalfWidth);
+            board.SetPositionAndRotation(new Vector3(x, boardModel.position.y, wallZ), Quaternion.identity);
+            board.localScale = Vector3.one;
+        }
+
+        // Hata paneli: müşteri duvarında, iki pencerenin arası (Kasiyer müşterilere bakarken görür).
+        float customerWallZ = wallZ - CounterLength;
+        float betweenWindows = (Asset(layout, "SM_StationWindow_Order").position.x + Asset(layout, "SM_StationWindow_Delivery").position.x) * 0.5f;
+        InstallErrorPanel("HataPaneli_Kasa", new Vector3(betweenWindows, PanelHeight(), customerWallZ), Quaternion.identity);
+
+        var spawn = Find("Dogma_Kasiyer");
+        if (spawn != null)
+        {
+            // Tezgahın önü, müşteri duvarına dönük.
+            var counterBounds = WorldBounds(Asset(layout, "SM_DrinkIceCounter"));
+            spawn.SetPositionAndRotation(
+                new Vector3(counterBounds.max.x + 0.6f, KitchenOrigin.y, (counterBounds.max.z + wallZ) * 0.5f), Quaternion.Euler(0f, 180f, 0f));
+        }
+
+        var sound = Find("Ses_Kasa");
+        if (sound != null)
+        {
+            var delivery = Asset(layout, "SM_StationWindow_Delivery").position;
+            sound.position = new Vector3(delivery.x, sound.position.y, delivery.z);
+        }
+    }
+
+    // Müşteri noktaları (müşteri duvarının dışı; müşteriler pencereye, +Z'ye bakar). Sipariş penceresinin önünde
+    // arka arkaya sıra, teslimat penceresinin önünde yuvaların hizasında yan yana.
+    private static void PlaceCustomers(Transform counter)
+    {
+        const float standOff = 0.55f;       // pervazın dış ucundan müşterinin merkezine
+        const float queueSpacing = 0.8f;
+        float floorY = KitchenOrigin.y;
+        var facing = Quaternion.identity;
+
+        var order = Asset(counter, "SM_StationWindow_Order");
+        float frontZ = WorldBounds(order).min.z - standOff;
+        for (int i = 1; i <= 3; i++)
+        {
+            var spot = Find($"SiparisYeri_{i}");
+            if (spot != null)
+                spot.SetPositionAndRotation(new Vector3(order.position.x, floorY, frontZ - (i - 1) * queueSpacing), facing);
+        }
+
+        var delivery = Asset(counter, "SM_StationWindow_Delivery");
+        for (int i = 1; i <= 3; i++)
+        {
+            var spot = Find($"TeslimYeri_{i}");
+            var socket = delivery.Find($"Socket_Slot_{i}");
+            if (spot != null && socket != null)
+                spot.SetPositionAndRotation(new Vector3(socket.position.x, floorY, frontZ), facing);
+        }
+
+        // Giriş iki pencerenin ortasında, uzakta; sipariş → teslimat yürüyüşü sıranın arkasından dolaşır.
+        float middleX = (order.position.x + delivery.position.x) * 0.5f;
+        var entrance = Find("Giris");
+        if (entrance != null)
+            entrance.SetPositionAndRotation(new Vector3(middleX, floorY, frontZ - OutsideDepth * 0.75f), facing);
+
+        var corner = Find("RotaKosesi");
+        if (corner != null)
+            corner.SetPositionAndRotation(new Vector3(middleX, floorY, frontZ - queueSpacing * 1.5f), facing);
+    }
+
+    // ---------- yerleştirme yardımcıları ----------
+
+    private static float PanelHeight()
+    {
+        // Mutfaktaki panelle aynı yükseklik (kapının üstü).
+        var kitchenPanel = GameObject.Find("HataPaneli_Mutfak");
+        return kitchenPanel != null ? kitchenPanel.transform.position.y : KitchenOrigin.y + 2.41f;
     }
 
     private static void PlaceSlot(string slotName, Vector3 position, Quaternion rotation)
@@ -351,6 +823,38 @@ public static class MutfakC1SceneInstaller
         var slot = Find(slotName);
         if (slot != null)
             slot.SetPositionAndRotation(position, rotation);
+    }
+
+    // Pervazdaki yuvalar: yuva soketin üstüne oturur; tıklanan hacim duvarı boydan boya geçer ki pencerenin iki
+    // tarafından da erişilsin.
+    private static void PlaceWindowSlots(string slotPrefix, Transform window, string socketPrefix, float slotWidth)
+    {
+        var windowBounds = WorldBounds(window);
+        // Pencere duvarın içinden geçtiği eksen: pencerenin kendi +Z'si.
+        bool throughX = Mathf.Abs(window.forward.x) > Mathf.Abs(window.forward.z);
+        for (int i = 1; i <= 3; i++)
+        {
+            var socket = window.Find($"{socketPrefix}{i}");
+            var slot = Find($"{slotPrefix}{i}");
+            if (socket == null || slot == null)
+                continue;
+
+            slot.SetPositionAndRotation(socket.position, Quaternion.identity);
+            if (!slot.TryGetComponent<BoxCollider>(out var collider))
+                continue;
+
+            float height = collider.size.y;
+            if (throughX)
+            {
+                collider.center = new Vector3(windowBounds.center.x - socket.position.x, height * 0.5f, 0f);
+                collider.size = new Vector3(windowBounds.size.x, height, slotWidth);
+            }
+            else
+            {
+                collider.center = new Vector3(0f, height * 0.5f, windowBounds.center.z - socket.position.z);
+                collider.size = new Vector3(slotWidth, height, windowBounds.size.z);
+            }
+        }
     }
 
     // Tezgahın yerleştirme noktası tahtanın üst yüzüne gelecek şekilde kök konumlanır.
@@ -406,22 +910,28 @@ public static class MutfakC1SceneInstaller
         }
     }
 
+    private static void HideChild(Transform root, string childName)
+    {
+        var child = root.Find(childName);
+        if (child != null)
+            child.gameObject.SetActive(false);
+    }
+
     // ---------- hata paneli ----------
 
-    private static void InstallErrorPanel(Transform layout)
+    private static void InstallErrorPanel(string panelName, Vector3 position, Quaternion rotation)
     {
-        var model = Asset(layout, "SM_XPanel_30");
-        var prefab = BuildPanelPrefab();
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+        if (prefab == null)
+            prefab = BuildPanelPrefab();
 
-        var old = GameObject.Find("HataPaneli_Mutfak");
+        var old = GameObject.Find(panelName);
         if (old != null)
             Object.DestroyImmediate(old);
 
         var panel = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-        panel.name = "HataPaneli_Mutfak";
-        panel.transform.SetPositionAndRotation(model.position, model.rotation);
-        // Yerleşimdeki süs kopyası kapatılır: aynı yerde işlevli panel durur.
-        model.gameObject.SetActive(false);
+        panel.name = panelName;
+        panel.transform.SetPositionAndRotation(position, rotation);
     }
 
     // Panel modeli + sönük işaretlerin Canvas'ı (eski panelden) + ErrorWallPanel (modelin X düğümlerine bağlı).
@@ -452,7 +962,6 @@ public static class MutfakC1SceneInstaller
             model.SetActive(true);
 
             var slots = new List<Transform>();
-            float faceZ = 0f;
             foreach (Transform child in model.transform)
             {
                 if (!child.name.Contains(".X_"))
@@ -464,7 +973,7 @@ public static class MutfakC1SceneInstaller
 
             // Bakana göre soldan sağa: panelin önü +Z olduğu için bakanın solu +X'tir.
             slots.Sort((a, b) => b.localPosition.x.CompareTo(a.localPosition.x));
-            faceZ = model.GetComponent<Renderer>().localBounds.max.z;
+            float faceZ = model.GetComponent<Renderer>().localBounds.max.z;
 
             var oldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(OldPanelPrefabPath);
             var canvas = Object.Instantiate(oldPrefab.transform.Find("SonukIsaretler").gameObject, root.transform);
@@ -497,7 +1006,7 @@ public static class MutfakC1SceneInstaller
     {
         var asset = layout.Find(name);
         if (asset == null)
-            throw new System.InvalidOperationException($"Yerleşimde '{name}' yok.");
+            throw new System.InvalidOperationException($"Yerleşimde '{name}' yok ({layout.name}).");
 
         return asset;
     }
@@ -524,25 +1033,10 @@ public static class MutfakC1SceneInstaller
         return bounds;
     }
 
-    // Renderer kapalıyken de doğru sonuç verir (Renderer.bounds kapalı nesnede güvenilmez): yerel sınırın köşeleri
-    // dünyaya çevrilir.
-    private static float MaxWorldX(Renderer renderer)
-    {
-        var local = renderer.localBounds;
-        float max = float.MinValue;
-        for (int i = 0; i < 8; i++)
-        {
-            var corner = local.center + Vector3.Scale(local.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
-            max = Mathf.Max(max, renderer.transform.TransformPoint(corner).x);
-        }
-
-        return max;
-    }
-
     // Modelin kendi eksenindeki sınırı (model dosyası orijinde ve dönüşsüz durur).
-    private static Bounds LocalBounds(string assetName)
+    private static Bounds LocalBounds(string modelFolder, string assetName)
     {
-        var model = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/NewAssets/Mutfak_C1/Models/{assetName}.glb");
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>($"{modelFolder}/{assetName}.glb");
         return WorldBounds(model.transform);
     }
 

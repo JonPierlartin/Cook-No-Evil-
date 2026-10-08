@@ -733,7 +733,8 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     hatasında yer olur olmaz gelir. Yer, müşteri ayrılmaya **başladığı** anda açılır. Teslim adımı
     `ServerCustomerServed(customer)` çağırır. `AllCustomersFinished` / `ServerAllCustomersFinished` bölüm sonu
     altyapısıdır (kazan/kaybet kararı yok).
-  - **Sipariş Penceresi = Kasa'nın doğu duvarındaki küçük pencere** (`Pf_StationWindow (2)`, x=10,5; açıklık
+  - *(8 Eki: aşağıdaki konumlar eski haritanındır; güncel yerler "HARİTA YENİDEN KURULDU" bölümünde.)*
+    **Sipariş Penceresi = Kasa'nın doğu duvarındaki küçük pencere** (`Pf_StationWindow (2)`, x=10,5; açıklık
     z −6,5…−4,25, y 1,4…2,35). Müşteriler dışarıda **arka arkaya sıra** olur (`SiparisYeri_1-3`, x 11,1/11,8/12,5,
     z=−5,4, batıya bakar; ilk eleman pencerenin önü). Yalnızca baştakinin siparişi alınır ve **sabır yalnızca
     başa geçip pencereye varınca işler** (Ersel, 3 Eki). **Teslim Penceresi = büyük tezgah** (`PF_DeliveryCounter`,
@@ -923,7 +924,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     rozet + ad + kesik çizgi.
   - **Arayüz önizlemesi Play'siz alınabilir:** geçici bir dünya uzayı Canvas + ortografik kamera + RenderTexture
     (`Canvas.ForceUpdateCanvases` + `LayoutRebuilder` sonrası `cam.Render`); sahne kirlenmez.
-- **Harita eşyaları yenilendi (5 Eki 2026, artist):** yeni mesh'ler `NewAssets/FBX-2/`, dokular `NewAssets/Texture/`,
+- **Harita eşyaları yenilendi (5 Eki 2026, artist) — konumlar GEÇERSİZ (8 Eki), kurallar geçerli:** yeni mesh'ler `NewAssets/FBX-2/`, dokular `NewAssets/Texture/`,
   prefab'lar güncellendi; `PF_KitchenDoor` silindi → `SM_KitchenDoor` ×2; mutfakta iki kesme masası + kap masası
   yerine tek **raflı tezgah `SM_Table_02`** (`PF_Table_02`; tezgah üstü y 1,43, raflar y 1,77 ve 2,12).
   - **Mutfağın yeni yerleşimi (kuzey duvarı, batıdan doğuya):** `Cop_Mutfak` (köşe) · `SM_Table_02` (x −0,04…1,66):
@@ -1013,7 +1014,8 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Cam (`MI_Palette_Glass`) URP Lit saydam:** `CNE/Toon` yalnızca opak. Derinliğe yazmadığı için Şef'te
     görünmez (K2); paket "derinliğe yazmalı" diyor — açık iş.
   - Shader'a `_EmissionBaseTint` eklendi: 1 iken yüzey kendi palet renginde ışır (paletli ışıklı yüzeyler).
-  - **Sahne kurulumu (`MutfakC1SceneInstaller`, menü *CNE → Mutfak C1 → Install In Scene*; yeniden çalıştırılabilir):**
+  - **Sahne kurulumu (7 Eki; 8 Eki'de `HaritaSceneInstaller`'a taşındı ve mimari yeniden kuruldu — yer tutucu duvarlar,
+    `Mutfak_C1_Mimari` ve "KAPALI" bırakılan eski parçalar artık yok; bkz. "HARİTA YENİDEN KURULDU"):**
     `Mutfak_C1` (yerleşim prefab'ı; orijin 4,5 / 0,30 / −3,58) + `Mutfak_C1_Mimari` (yer tutucu kutular: kuzey duvarı
     z 2,42'ye taşındı, zemin uzantısı, pencere ve kapı açıklıklı doğu / güney duvarları, kapıyı ve eşyaları kapatan
     görünmez engeller). **Mutfak artık x −1,2…4,5 / z −3,58…2,42.** Pencere z −1,89…0,73 (eskiden −3,58…−0,58),
@@ -1044,6 +1046,62 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     konumundan — yan yana iki eşyanın ve bir eşyanın ayrı parçasının (kapak, sepet, kapı) sınırı) ve derinlik
     kademesi. **İç çizgi** normal kırımlarıdır. Asset'e özel "bu yalnızca siluet olsun" listesi TUTULMAZ; bir eşyada
     çizgi fazla geliyorsa önce feature'daki iç çizgi ağırlığına bakılır.
+- **HARİTA YENİDEN KURULDU — üç artist paketi (8 Eki 2026; güncel harita budur):** eski blockout harita (`Harita` kökü,
+  `NewAssets/` modüler parçaları) ve mutfağın yer tutucu mimarisi sahneden SİLİNDİ. Aşağıdaki eski bölümlerde geçen
+  konumlar (30 Eyl haritası, 5 Eki eşyaları, müşteri noktaları, pano / panel yerleri) artık geçerli değildir; kod ve
+  kurallar geçerlidir. Eski harita `SampleScene_EskiHarita` ve `Map.unity`'de duruyor.
+  - **Paketler:** `Assets/NewAssets/Mutfak_C1/`, `Istasyon/`, `Kasa/` (GLB + `BENIOKU.md` + `manifest.json`). Üçü aynı
+    planı paylaşır (glTFast X'i çevirir): İstasyon kökü = mutfak kökü + 4,20 (x); Kasa kökü = İstasyon kökü − 3,20 (z).
+    Sahne kökleri: `Mutfak_C1` (4,5 / 0,30 / −3,58), `Istasyon` (8,7 / 0,30 / −3,58), `Kasa` (8,7 / 0,30 / −6,78).
+  - **Odalar (iç yüzler, dünya):** Mutfak x −1,1…4,5 / z −3,58…2,42 · İstasyon x 4,7…8,7 / z −3,58…0,87 · Kasa
+    x −1,1…8,7 / z −6,78…−3,78 (mutfağın ve İstasyon'un güneyinde boydan boya). Duvar 0,20, tavan 2,75 m (dünya 3,05).
+    **Müşteriler Kasa'nın güney duvarının dışındadır** (z < −6,98).
+  - **Pencereler** (net açıklık 2,50 × 0,95; pervaz üstü zeminden 1,00 → **dünya y 1,30…2,25**): Mutfak↔İstasyon
+    (x=4,5 duvarı, z −0,58), İstasyon↔Kasa (z=−3,58 duvarı, x 7,0), Sipariş (müşteri duvarı, x 7,0), Teslimat
+    (müşteri duvarı, x 0,4). Mutfak↔Kasa kapısı x −0,05…1,45 (kapalı; görünmez engel).
+  - **Araçlar:** *CNE → Harita → Build* (`HaritaBuilder`: İstasyon ve Kasa yerleşim prefab'ları `Assets/Prefabs/Harita/`,
+    mimari materyalleri `Assets/NewAssets/Harita/Materials/`; var olan materyalin üzerine yazmaz) ve *CNE → Harita →
+    Install In Scene* (`HaritaSceneInstaller`; eski `MutfakC1SceneInstaller`'ın yerine geçti, üç odayı birden kurar,
+    yeniden çalıştırılabilir). Yerleşim kökleri varsa yerinde bırakılır (sahnede eklenen parça kaybolmaz); mimari her
+    çalıştırmada silinip yeniden üretilir. `MutfakC1Builder.BuildLayoutPrefab / CreateMaterials` üç paketin ortak yolu.
+  - **Mimari kodla üretilir** (paketlerdeki `ARCH_*.glb` yalnızca referans, içe alınıp kullanılmadı): `Harita_Mimari`
+    kökü → `Harita_Duvarlar`, `Harita_Zemin`, `Harita_Tavan` (mesh asset'leri `Assets/NewAssets/Harita/Meshes/`) +
+    `Carpisma` (duvar / zemin kutuları, kapı engeli, eşya engelleri). Ortak duvarların iki yüzü ayrı kaplanır (her oda
+    kendi kaplamasını görür). Mimari **gölge atmaz** (paket kuralı; odalar tavanlı, güneş içeriyi yine aydınlatır) ve
+    **çizgi katmanında değildir**. Müşteri alanı şimdilik düz zemin (masa / sandalye yok).
+  - **Desenler materyalde, dünya uzayında** (mimaride UV yok): `CNE/Toon` → *Yüzey deseni* (`_SURFACEPATTERN_ON`;
+    Fayans / Kare / Şerit / Dama, ölçü metre). Yalnızca RENK değiştirir — Şef'in kontur görüşüne girmez (K2).
+    Mutfak: koyu petrol fayans `#2F5D63`, zemin `#45484C` kare · İstasyon: açık mavi fayans `#A7CFE6` (derz
+    `#8DB6CF`), zemin `#5A6670` · Kasa: krem duvar `#F2E4C4`, 1 m'ye kadar nane lambri `#A8DCCB` (şerit) + bordür,
+    50 cm dama zemin `#E2DDD0` / `#2A2C35` · süpürgelik `#5C4A40` (duvarla aynı düzlemde bant, çıkıntı yok).
+    Renkler paketlerin mimari referansından; mutfak zemini ve derz tonları önizleme görsellerinden göz kararı.
+  - **Mimari palet rengini korur:** `_LightTint` (yeni; 0 = ışığın yalnızca şiddeti, 1 = rengi de) mimaride 0,15,
+    gölge gücü 0,35 (tavan 0,1). Sıcak güneş krem duvarı turuncuya çekiyordu; ölçüldü (ışık alan duvar palet renginin
+    ~%84'ü → düzeltmeden sonra tamamı). Eşyaların materyallerinde değer 1'dir (değişmedi).
+  - **İşlev → model (İstasyon):** `PaketlemeAlani_1-2` → paketleme tepsilerinin `Socket_Pack`'i (paketin fotoğraflı
+    yüzü Komi'ye bakar) · `Kap_KeseKagidi` → kese kağıdı destesi · `Cop_Istasyon` → çöp kovası · `KasaPencere_Yuva_1-3`
+    → Kasa penceresinin `Socket_Slot_*` soketleri (tıklama hacmi duvarı boydan geçer) · `MutfakPencere_Yuva_1-3` →
+    **İstasyon paketindeki** `SM_StationWindow_Kitchen` (C1'in `SM_StationWindow_23`'ü sahnede kapalı; paketler arası
+    sahiplik). **(Kasa):** `TarifKitapcigi` → sipariş penceresi pervazındaki kitap modeli · `Cop_Kasa` → çöp kovası.
+  - **Malzeme panoları** işlevli (veriden dolan) `MalzemePanosu`'dur; paketlerdeki `SM_IngredientBoard` modelleri
+    (içeriği yer tutucu) sahnede kapalı. İstasyon panosu artist'in gösterdiği yerde (Kasa penceresinin yanı) ama oraya
+    yalnızca 0,99 m sığdığı için **0,55 ölçekte**; Kasa panosu tam boy (pencere ile mutfak kapısı arası). İstasyon
+    panosu okunmuyorsa yeri değişmeli (karar Ersel'de).
+  - **Hata panelleri üçü de `HataPaneli_C1`:** mutfak kapı üstü · İstasyon: Kasa penceresinin üstü · Kasa: müşteri
+    duvarında iki pencerenin arası. y 2,71.
+  - **Müşteri noktaları** (hepsi +Z'ye, pencereye bakar): `SiparisYeri_1-3` sipariş penceresinin önünde arka arkaya
+    (x 7,0; z −7,63 / −8,43 / −9,23) · `TeslimYeri_1-3` teslimat penceresinin yuvaları hizasında yan yana (x 1,2 / 0,41 /
+    −0,4; z −7,63) · `Giris` (3,7 / −14,4) · `RotaKosesi` (3,7 / −8,8; sıranın arkasından dolaşma). Teslimat
+    penceresindeki 3 paket yuvası (`Socket_Slot_*`) DEKORDUR: teslim hâlâ müşteriye tıklamadır (GDD değişmedi).
+  - **Sipariş pop-up'ı müşterinin göğsünün önünde** (`Musteri.prefab` → `SiparisPopup` yerel 0 / 1,28 / 0,36): eski yeri
+    (başın üstü, dünya 2,32–2,68) yeni pencerelerin üst kenarının (2,25) arkasında kalıyordu. Çark yerinde (1,90–2,20).
+  - **Yalnızca dekor (Faz 0 dışı):** kutulama tezgahı ve kutu yığınları, içecek / dondurma makineleri, bardak ve kapak
+    yığınları, parçacık kutuları, yangın tüpü ve askısı, stok kapağı, tavan lambaları (ışık kaynağı eklenmedi).
+  - Ölçüldü (editörde, göz 1,98; oyuncunun durabildiği her noktadan tarama): 31 hedefin hepsi kendi rolünün odasından
+    menzilde (en uzak çöp kovası 1,30 m); Kasiyer sipariş ve teslimat müşterilerine 1,47–1,53 m. 27 ağ nesnesi,
+    kimlik çakışması yok; sahnede silinmiş nesneye kalan referans yok.
+  - **Palet:** `Mutfak_C1/Palettes/cook_no_evil_palet_256.png` İstasyon paketindekiyle değiştirildi (yalnızca iki
+    yeni hücre: S10·K3 `#6F4E37`, S10·K4 `#F2B23A`; diğer 254 hücre birebir aynı — karşılaştırıldı).
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
   konsol her kare "There are no audio listeners" yazıyordu.
@@ -1200,7 +1258,7 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   ve seviyesini daraltır (GDD §4.1.3: dar yarıçap, kısık). Yarıçap 2 m, seviye 0,3, kesim 500 Hz —
   playtest parametresi. **Yeni makine/istasyon efekti yazılırken kaynağa `RoleAwareAudioRange` konur,
   rolloff Linear olur.**
-- **Harita (30 Eyl 2026):** artist'in modüler haritası (`Assets/Scenes/Map.unity`, parçalar
+- **Harita (30 Eyl 2026) — GEÇERSİZ, 8 Eki'de kaldırıldı (bkz. "HARİTA YENİDEN KURULDU"); yalnızca geçmiş:** artist'in modüler haritası (`Assets/Scenes/Map.unity`, parçalar
   `Assets/NewAssets/`) ana sahneye `Harita` kökü altında taşındı; `Map.unity` kaynak olarak değişmeden
   duruyor. Eski gri-kutu harita **`SampleScene_EskiHarita.unity`**'de aynen saklanıyor (test için; build'de
   değil). **Zemin üst yüzeyi y=0,30.** Odalar (GDD §3.2): Mutfak x −1,35…4,65 / z −3,73…1,35 · İstasyon
@@ -1420,6 +1478,8 @@ Dersler "Unity / Editor" tuzaklarında.)*
   ekranda hiçbir şey değişmez ve mekanik test edilemez hale gelir. Her yeni türe ikon atanır.)*
 - `steam_appid.txt` = `480` (Spacewar) ve sahnedeki `FacepunchTransport.steamAppId` = 480 —
   gerçek AppID alınınca ikisi de güncellenmeli
-- Haritada collider'sız dekor: `PF_Frier`, sepetler, müşteri masa/sandalyeleri, kesme tahtaları,
+- Yeni haritada (8 Eki) tavan lambalarında ışık kaynağı yok; müşteri alanı düz zemin (masa / sandalye gelecek);
+  cam (`MI_Palette_Glass`) ve İstasyon panosunun ölçeği açık konular.
+- *(Eski harita, 8 Eki'de kaldırıldı:)* Haritada collider'sız dekor: `PF_Frier`, sepetler, müşteri masa/sandalyeleri, kesme tahtaları,
   servis tepsileri — içinden geçilir. Fritöz Faz 0 dışı; müşteri alanı müşteri adımında ele alınır.
 - Varyantlar (`Assets/Data/Variants/*_Taslak`) ve `Seviye1_Taslak` içerik taslağıdır; Ersel seviye yazarken değiştirir.

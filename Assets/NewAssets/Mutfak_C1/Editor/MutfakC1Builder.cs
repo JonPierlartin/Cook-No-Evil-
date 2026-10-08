@@ -19,11 +19,13 @@ public static class MutfakC1Builder
     private const string PalettePath = Root + "/Palettes/cook_no_evil_palet_256.png";
     private const string MaskPath = Root + "/Palettes/Mutfak_Beyaz_Prop.png";
     private const string WoodPath = Root + "/Textures/T_Mese_Damar_256.png";
+    private const string MapleWoodPath = "Assets/NewAssets/Istasyon/Textures/T_Wood_Akcaagac.png";
     private const string MatcapPath = "Assets/CNEToon/Lookdev/Textures/Lookdev_Matcap_Krom.png";
     private const string LayoutModel = ModelFolder + "/C1_Mutfak_Yerlesim.glb";
     private const string PrefabFolder = "Assets/Prefabs/Mutfak";
     public const string LayoutPrefabPath = PrefabFolder + "/Mutfak_C1_Yerlesim.prefab";
-    private const string ReferenceFloorPrefix = "REF_";
+    // Yerleşim dosyalarında yerleştirilmeyen düğümler: referans zemin ve başka paketin sahip olduğu parçalar.
+    private static readonly string[] ReferencePrefixes = { "REF_", "Ref_", "Ext_" };
     private const string OutlineLayerName = "Outline";
     private const string SilhouetteLayerName = "Outline Silhouette";
 
@@ -35,12 +37,8 @@ public static class MutfakC1Builder
     [MenuItem("CNE/Mutfak C1/Build")]
     public static void Build()
     {
-        EnsureFolder(MaterialFolder);
-        EnsureFolder(PrefabFolder);
-        ConfigureTextures();
-
         var materials = CreateMaterials();
-        BuildLayoutPrefab(materials);
+        BuildLayoutPrefab(LayoutModel, ModelFolder, LayoutPrefabPath, "Mutfak_C1_Yerlesim", materials);
         AssetDatabase.SaveAssets();
         Debug.Log($"[CNE] Mutfak C1 hazır: {LayoutPrefabPath}");
     }
@@ -60,12 +58,15 @@ public static class MutfakC1Builder
             AssetDatabase.ImportAsset(MaskPath);
         }
 
-        Configure(WoodPath, importer =>
+        foreach (string woodPath in new[] { WoodPath, MapleWoodPath })
         {
-            importer.wrapMode = TextureWrapMode.Repeat;
-            importer.mipmapEnabled = true;
-            importer.filterMode = FilterMode.Bilinear;
-        });
+            Configure(woodPath, importer =>
+            {
+                importer.wrapMode = TextureWrapMode.Repeat;
+                importer.mipmapEnabled = true;
+                importer.filterMode = FilterMode.Bilinear;
+            });
+        }
 
         foreach (string decal in new[] { "DC_FireWarning", "DC_FryerDisplay", "DC_FridgeDisplay" })
         {
@@ -78,18 +79,26 @@ public static class MutfakC1Builder
         }
     }
 
+    // Ayar zaten uygulanmışsa yeniden içe alınmaz (her çalıştırmada boşuna reimport olmasın).
     private static void Configure(string path, Action<TextureImporter> apply)
     {
         var importer = AssetImporter.GetAtPath(path) as TextureImporter;
         if (importer == null)
             return;
 
+        string before = EditorJsonUtility.ToJson(importer);
         apply(importer);
+        if (EditorJsonUtility.ToJson(importer) == before)
+            return;
+
         importer.SaveAndReimport();
     }
 
-    private static Dictionary<string, Material> CreateMaterials()
+    // Paket materyalleri (GLB'deki ad → proje materyali). İstasyon ve Kasa paketleri de aynı adları kullanır.
+    public static Dictionary<string, Material> CreateMaterials()
     {
+        EnsureFolder(MaterialFolder);
+        ConfigureTextures();
         var palette = AssetDatabase.LoadAssetAtPath<Texture2D>(PalettePath);
         var mask = AssetDatabase.LoadAssetAtPath<Texture2D>(MaskPath);
         var wood = AssetDatabase.LoadAssetAtPath<Texture2D>(WoodPath);
@@ -129,6 +138,9 @@ public static class MutfakC1Builder
         });
 
         result["MI_Wood_Mese"] = CreateMaterial("MI_Wood_Mese", toon, m => m.SetTexture("_BaseMap", wood));
+        var maple = AssetDatabase.LoadAssetAtPath<Texture2D>(MapleWoodPath);
+        if (maple != null)
+            result["MI_Wood_Akcaagac"] = CreateMaterial("MI_Wood_Akcaagac", toon, m => m.SetTexture("_BaseMap", maple));
 
         result["MI_Decal_FireWarning"] = Decal("MI_Decal_FireWarning", "DC_FireWarning", toon, mask, 0f);
         result["MI_Decal_FryerDisplay"] = Decal("MI_Decal_FryerDisplay", "DC_FryerDisplay", toon, mask, DisplayEmission);
@@ -191,12 +203,25 @@ public static class MutfakC1Builder
         material.SetFloat(toggleProperty, 1f);
     }
 
-    private static void BuildLayoutPrefab(Dictionary<string, Material> materials)
+    // Yerleşim dosyasında asset'lerin durduğu düğüm: dosyada tek kök varsa (Kasa, İstasyon) o kök, yoksa prefab'ın
+    // kendisi (C1 mutfak).
+    public static Transform AssetContainer(Transform layoutRoot)
     {
-        var model = AssetDatabase.LoadAssetAtPath<GameObject>(LayoutModel);
+        return layoutRoot.childCount == 1 && layoutRoot.GetChild(0).name.EndsWith("_Yerlesim")
+            ? layoutRoot.GetChild(0)
+            : layoutRoot;
+    }
+
+    // Yerleşim GLB'sinden prefab: materyaller proje materyalleriyle değişir, çizgi ve gölge bayrakları her asset'in
+    // kendi GLB dosyasından okunur (modelFolder).
+    public static void BuildLayoutPrefab(string layoutModel, string modelFolder, string prefabPath, string prefabName,
+        Dictionary<string, Material> materials)
+    {
+        EnsureFolder(Path.GetDirectoryName(prefabPath).Replace((char)92, (char)47));
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(layoutModel);
         if (model == null)
         {
-            Debug.LogError($"[CNE] Yerleşim modeli bulunamadı: {LayoutModel}");
+            Debug.LogError($"[CNE] Yerleşim modeli bulunamadı: {layoutModel}");
             return;
         }
 
@@ -205,11 +230,11 @@ public static class MutfakC1Builder
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
         try
         {
-            instance.name = "Mutfak_C1_Yerlesim";
-            foreach (Transform asset in instance.transform)
+            instance.name = prefabName;
+            foreach (Transform asset in AssetContainer(instance.transform))
             {
                 // Referans zemin yalnızca ölçü içindir.
-                if (asset.name.StartsWith(ReferenceFloorPrefix))
+                if (Array.Exists(ReferencePrefixes, prefix => asset.name.StartsWith(prefix)))
                 {
                     asset.gameObject.SetActive(false);
                     continue;
@@ -217,7 +242,7 @@ public static class MutfakC1Builder
 
                 // Eşyalar tam çizgi katmanındadır: kalın dış hat + ince, soluk iç çizgi (ağırlıklar CNEOutline
                 // feature'ında). Yalnızca-siluet katmanı karakterler içindir.
-                var flags = ReadFlags(AssetNameOf(asset.name));
+                var flags = ReadFlags(modelFolder, AssetNameOf(asset.name));
                 foreach (var renderer in asset.GetComponentsInChildren<Renderer>(true))
                 {
                     var shared = renderer.sharedMaterials;
@@ -243,7 +268,7 @@ public static class MutfakC1Builder
                 }
             }
 
-            PrefabUtility.SaveAsPrefabAsset(instance, LayoutPrefabPath);
+            PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
         }
         finally
         {
@@ -293,10 +318,10 @@ public static class MutfakC1Builder
 
     // Asset'in kendi GLB dosyasındaki kök düğümün "extras" alanı: çizgi alır mı, gölge atar mı (asset listesindeki
     // Outline ve Gölge sütunları). Dosya bulunamazsa ikisi de açık sayılır.
-    private static AssetFlags ReadFlags(string assetName)
+    private static AssetFlags ReadFlags(string modelFolder, string assetName)
     {
         var fallback = new AssetFlags { Outline = true, CastShadow = true };
-        string path = $"{ModelFolder}/{assetName}.glb";
+        string path = $"{modelFolder}/{assetName}.glb";
         if (!File.Exists(path))
             return fallback;
 
@@ -313,12 +338,13 @@ public static class MutfakC1Builder
             : new AssetFlags { Outline = root.extras.cne_outline, CastShadow = root.extras.cne_cast_shadow };
     }
 
-    private static void EnsureFolder(string path)
+    public static void EnsureFolder(string path)
     {
         if (AssetDatabase.IsValidFolder(path))
             return;
 
         string parent = Path.GetDirectoryName(path).Replace('\\', '/');
+        EnsureFolder(parent);
         AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
     }
 }

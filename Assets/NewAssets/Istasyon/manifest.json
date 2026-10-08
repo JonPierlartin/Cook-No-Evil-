@@ -1,0 +1,683 @@
+{
+ "assets": [
+  {
+   "name": "SM_PackingStation",
+   "tris": 1524,
+   "size_cm": [
+    250,
+    85,
+    100
+   ],
+   "bbmin": [
+    -1.25,
+    0,
+    0
+   ],
+   "bbmax": [
+    1.25,
+    1,
+    0.85
+   ],
+   "sockets": [
+    "Tray_1",
+    "Tray_2",
+    "BagStack"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_PackingStation",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     250,
+     85,
+     100
+    ],
+    "cne_pivot": "taban, arka kenar ortasi"
+   }
+  },
+  {
+   "name": "SM_BoxingStation",
+   "tris": 1092,
+   "size_cm": [
+    125,
+    85,
+    100
+   ],
+   "bbmin": [
+    -0.625,
+    0,
+    0
+   ],
+   "bbmax": [
+    0.625,
+    1,
+    0.85
+   ],
+   "sockets": [
+    "BoxStack_1",
+    "BoxStack_2",
+    "BoxStack_3",
+    "BoxStack_4",
+    "Work"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_BoxingStation",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     125,
+     85,
+     100
+    ],
+    "cne_pivot": "taban, arka kenar ortasi"
+   }
+  },
+  {
+   "name": "SM_PackingTray",
+   "tris": 392,
+   "size_cm": [
+    71,
+    58,
+    4
+   ],
+   "bbmin": [
+    -0.355,
+    0,
+    -0.29
+   ],
+   "bbmax": [
+    0.355,
+    0.04,
+    0.29
+   ],
+   "sockets": [
+    "Pack"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_PackingTray",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     71,
+     58,
+     4
+    ],
+    "cne_pivot": "taban ortasi"
+   }
+  },
+  {
+   "name": "SM_BagStack",
+   "tris": 3168,
+   "size_cm": [
+    50.5,
+    45.2,
+    8.3
+   ],
+   "bbmin": [
+    -0.254,
+    0,
+    -0.225
+   ],
+   "bbmax": [
+    0.252,
+    0.083,
+    0.227
+   ],
+   "sockets": [
+    "Take"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_BagStack",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     50,
+     9,
+     46
+    ],
+    "cne_pivot": "taban ortasi",
+    "cne_note": "kaynak destesi; tekil kese kagidi item"
+   }
+  },
+  {
+   "name": "SM_BurgerBox",
+   "tris": 708,
+   "size_cm": [
+    14.1,
+    16.5,
+    7.4
+   ],
+   "bbmin": [
+    -0.07,
+    0,
+    -0.078
+   ],
+   "bbmax": [
+    0.07,
+    0.074,
+    0.087
+   ],
+   "sockets": [
+    "Content"
+   ],
+   "movable": [
+    "Lid"
+   ],
+   "extras": {
+    "cne_asset": "SM_BurgerBox",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     14.1,
+     15.6,
+     7.4
+    ],
+    "cne_pivot": "taban ortasi",
+    "cne_note": "tekil kutu (item olarak da kullanilabilir)"
+   }
+  },
+  {
+   "name": "SM_BurgerBoxStack3",
+   "tris": 2124,
+   "size_cm": [
+    14.5,
+    16.7,
+    22.4
+   ],
+   "bbmin": [
+    -0.073,
+    0,
+    -0.078
+   ],
+   "bbmax": [
+    0.071,
+    0.224,
+    0.089
+   ],
+   "sockets": [
+    "Take"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_BurgerBoxStack3",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     14.5,
+     22.5,
+     16
+    ],
+    "cne_pivot": "taban ortasi",
+    "cne_note": "kaynak yigini"
+   }
+  },
+  {
+   "name": "SM_BurgerBoxStack4",
+   "tris": 2832,
+   "size_cm": [
+    14.7,
+    17.1,
+    29.9
+   ],
+   "bbmin": [
+    -0.075,
+    0,
+    -0.081
+   ],
+   "bbmax": [
+    0.072,
+    0.299,
+    0.09
+   ],
+   "sockets": [
+    "Take"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_BurgerBoxStack4",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     14.5,
+     30,
+     16
+    ],
+    "cne_pivot": "taban ortasi",
+    "cne_note": "kaynak yigini"
+   }
+  },
+  {
+   "name": "SM_TrashBin",
+   "tris": 1668,
+   "size_cm": [
+    60,
+    64,
+    76.1
+   ],
+   "bbmin": [
+    -0.3,
+    0,
+    -0.315
+   ],
+   "bbmax": [
+    0.3,
+    0.761,
+    0.325
+   ],
+   "sockets": [
+    "Drop"
+   ],
+   "movable": [
+    "Lid"
+   ],
+   "extras": {
+    "cne_asset": "SM_TrashBin",
+    "cne_outline": true,
+    "cne_cast_shadow": true,
+    "cne_size_cm": [
+     60,
+     62.5,
+     76.1
+    ],
+    "cne_pivot": "taban ortasi",
+    "cne_note": "C1 paketindeki SM_TrashBin ile ayni olcu/pivot"
+   }
+  },
+  {
+   "name": "SM_IngredientBoard",
+   "tris": 7324,
+   "size_cm": [
+    80,
+    5,
+    80
+   ],
+   "bbmin": [
+    -0.4,
+    -0.4,
+    0
+   ],
+   "bbmax": [
+    0.4,
+    0.4,
+    0.05
+   ],
+   "sockets": [],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_IngredientBoard",
+    "cne_outline": false,
+    "cne_cast_shadow": false,
+    "cne_size_cm": [
+     80,
+     4,
+     80
+    ],
+    "cne_pivot": "arka yuz ortasi",
+    "cne_note": "kart icerigi yer tutucu"
+   }
+  },
+  {
+   "name": "SM_StationWindow_Kasa",
+   "tris": 348,
+   "size_cm": [
+    262,
+    65,
+    116.1
+   ],
+   "bbmin": [
+    -1.31,
+    -0.141,
+    -0.3
+   ],
+   "bbmax": [
+    1.31,
+    1.02,
+    0.35
+   ],
+   "sockets": [
+    "Slot_1",
+    "Slot_2",
+    "Slot_3"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_StationWindow_Kasa",
+    "cne_outline": true,
+    "cne_cast_shadow": false,
+    "cne_size_cm": [
+     262,
+     65,
+     116
+    ],
+    "cne_pivot": "net acikligin alt kenari ortasi, yuva tarafi duvar yuzu",
+    "cne_note": "Kasa-Istasyon penceresi: 35 cm pervaz Istasyon tarafinda (3 iki yonlu yuva), 10 cm Kasa tarafinda"
+   }
+  },
+  {
+   "name": "SM_StationWindow_Kitchen",
+   "tris": 420,
+   "size_cm": [
+    262,
+    58,
+    116.1
+   ],
+   "bbmin": [
+    -1.31,
+    -0.141,
+    -0.23
+   ],
+   "bbmax": [
+    1.31,
+    1.02,
+    0.35
+   ],
+   "sockets": [
+    "Burger_1",
+    "Burger_2",
+    "Burger_3",
+    "Side_1",
+    "Side_2",
+    "Side_3"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_StationWindow_Kitchen",
+    "cne_outline": true,
+    "cne_cast_shadow": false,
+    "cne_size_cm": [
+     262,
+     55.5,
+     116
+    ],
+    "cne_pivot": "net acikligin alt kenari ortasi, yuva tarafi duvar yuzu",
+    "cne_note": "Mutfak-Istasyon penceresi: C1 SM_StationWindow yerine; Istasyon tarafinda pervaz yok (5 mm dudak)"
+   }
+  },
+  {
+   "name": "SM_CeilingLight",
+   "tris": 1392,
+   "size_cm": [
+    39.2,
+    39.2,
+    8.5
+   ],
+   "bbmin": [
+    -0.196,
+    -0.085,
+    -0.196
+   ],
+   "bbmax": [
+    0.196,
+    0,
+    0.196
+   ],
+   "sockets": [
+    "Light"
+   ],
+   "movable": [],
+   "extras": {
+    "cne_asset": "SM_CeilingLight",
+    "cne_outline": false,
+    "cne_cast_shadow": false,
+    "cne_size_cm": [
+     39.2,
+     39.2,
+     9.1
+    ],
+    "cne_pivot": "ust yuz ortasi (tavana oturur)",
+    "cne_note": "C1 paketindeki SM_CeilingLight ile ayni olcu/pivot"
+   }
+  }
+ ],
+ "layout": [
+  {
+   "name": "SM_PackingStation",
+   "asset": "SM_PackingStation",
+   "plan_pos": [
+    0,
+    0,
+    3
+   ],
+   "plan_rotY": 90,
+   "unity_pos": [
+    0,
+    0,
+    3
+   ],
+   "unity_rotY": -90
+  },
+  {
+   "name": "SM_PackingTray_1",
+   "asset": "SM_PackingTray",
+   "plan_pos": [
+    0.427,
+    1,
+    2.205
+   ],
+   "plan_rotY": 90,
+   "unity_pos": [
+    -0.427,
+    1,
+    2.205
+   ],
+   "unity_rotY": -90
+  },
+  {
+   "name": "SM_PackingTray_2",
+   "asset": "SM_PackingTray",
+   "plan_pos": [
+    0.427,
+    1,
+    3.795
+   ],
+   "plan_rotY": 90,
+   "unity_pos": [
+    -0.427,
+    1,
+    3.795
+   ],
+   "unity_rotY": -90
+  },
+  {
+   "name": "SM_BagStack",
+   "asset": "SM_BagStack",
+   "plan_pos": [
+    0.42,
+    1,
+    3
+   ],
+   "plan_rotY": 90,
+   "unity_pos": [
+    -0.42,
+    1,
+    3
+   ],
+   "unity_rotY": -90
+  },
+  {
+   "name": "SM_BoxingStation",
+   "asset": "SM_BoxingStation",
+   "plan_pos": [
+    4,
+    0,
+    1.075
+   ],
+   "plan_rotY": -90,
+   "unity_pos": [
+    -4,
+    0,
+    1.075
+   ],
+   "unity_rotY": 90
+  },
+  {
+   "name": "SM_BurgerBoxStack3_1",
+   "asset": "SM_BurgerBoxStack3",
+   "plan_pos": [
+    3.7,
+    1,
+    0.755
+   ],
+   "plan_rotY": -90,
+   "unity_pos": [
+    -3.7,
+    1,
+    0.755
+   ],
+   "unity_rotY": 90
+  },
+  {
+   "name": "SM_BurgerBoxStack4_1",
+   "asset": "SM_BurgerBoxStack4",
+   "plan_pos": [
+    3.46,
+    1,
+    0.755
+   ],
+   "plan_rotY": -90,
+   "unity_pos": [
+    -3.46,
+    1,
+    0.755
+   ],
+   "unity_rotY": 90
+  },
+  {
+   "name": "SM_BurgerBoxStack4_2",
+   "asset": "SM_BurgerBoxStack4",
+   "plan_pos": [
+    3.7,
+    1,
+    0.95
+   ],
+   "plan_rotY": -90,
+   "unity_pos": [
+    -3.7,
+    1,
+    0.95
+   ],
+   "unity_rotY": 90
+  },
+  {
+   "name": "SM_BurgerBoxStack3_2",
+   "asset": "SM_BurgerBoxStack3",
+   "plan_pos": [
+    3.46,
+    1,
+    0.95
+   ],
+   "plan_rotY": -90,
+   "unity_pos": [
+    -3.46,
+    1,
+    0.95
+   ],
+   "unity_rotY": 90
+  },
+  {
+   "name": "SM_TrashBin",
+   "asset": "SM_TrashBin",
+   "plan_pos": [
+    0.3,
+    0,
+    1.25
+   ],
+   "plan_rotY": 90,
+   "unity_pos": [
+    -0.3,
+    0,
+    1.25
+   ],
+   "unity_rotY": -90
+  },
+  {
+   "name": "SM_IngredientBoard",
+   "asset": "SM_IngredientBoard",
+   "plan_pos": [
+    3.45,
+    1.7,
+    0
+   ],
+   "plan_rotY": 0,
+   "unity_pos": [
+    -3.45,
+    1.7,
+    0
+   ],
+   "unity_rotY": 0
+  },
+  {
+   "name": "SM_StationWindow_Kasa",
+   "asset": "SM_StationWindow_Kasa",
+   "plan_pos": [
+    1.7,
+    1,
+    0
+   ],
+   "plan_rotY": 0,
+   "unity_pos": [
+    -1.7,
+    1,
+    0
+   ],
+   "unity_rotY": 0
+  },
+  {
+   "name": "SM_StationWindow_Kitchen",
+   "asset": "SM_StationWindow_Kitchen",
+   "plan_pos": [
+    4.2,
+    1,
+    3
+   ],
+   "plan_rotY": 90,
+   "unity_pos": [
+    -4.2,
+    1,
+    3
+   ],
+   "unity_rotY": -90
+  },
+  {
+   "name": "SM_CeilingLight_1",
+   "asset": "SM_CeilingLight",
+   "plan_pos": [
+    2,
+    2.75,
+    1.3
+   ],
+   "plan_rotY": 0,
+   "unity_pos": [
+    -2,
+    2.75,
+    1.3
+   ],
+   "unity_rotY": 0
+  },
+  {
+   "name": "SM_CeilingLight_2",
+   "asset": "SM_CeilingLight",
+   "plan_pos": [
+    2,
+    2.75,
+    3.15
+   ],
+   "plan_rotY": 0,
+   "unity_pos": [
+    -2,
+    2.75,
+    3.15
+   ],
+   "unity_rotY": 0
+  }
+ ],
+ "layoutTris": 29026,
+ "palette_added": {
+  "S10·K3": "#6F4E37 dana kofte pismis",
+  "S10·K4": "#F2B23A patates pismis"
+ }
+}

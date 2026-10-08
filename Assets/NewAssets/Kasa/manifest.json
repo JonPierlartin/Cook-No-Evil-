@@ -1,0 +1,1262 @@
+{
+ "package": "CNE_Kasa_Modeller",
+ "date": "2026-10-08",
+ "units": "metre",
+ "up": "+Y",
+ "front": "+Z",
+ "unity_note": "glTFast X eksenini ters çevirir: plan (x; y; z) -> Unity (-x; y; z); Y ve Z dönüşleri işaret değiştirir, X dönüşleri aynı kalır.",
+ "layout_axes": "X doğu (0 = Kasa batı duvarı iç yüzü), Z güney (0 = müşteri duvarı iç yüzü)",
+ "roots_in_kasa": {
+  "Istasyon": [
+   0.0,
+   0.0,
+   3.2
+  ],
+  "C1_Mutfak": [
+   4.2,
+   0.0,
+   3.2
+  ]
+ },
+ "textures": {
+  "palette": "textures/cook_no_evil_palet_256.png",
+  "mese": "textures/mese_damar_512.png",
+  "akca": "textures/akcaagac_damar_512.png"
+ },
+ "assets": [
+  {
+   "file": "glb/SM_DrinkIceCounter.glb",
+   "name": "SM_DrinkIceCounter",
+   "title": "İçecek + dondurma tezgahı",
+   "kind": "prop",
+   "size_cm_GxDxY": [
+    375.0,
+    86.6,
+    100.0
+   ],
+   "bbox_min_m": [
+    -1.875,
+    0.0,
+    0.0
+   ],
+   "bbox_max_m": [
+    1.875,
+    1.0,
+    0.866
+   ],
+   "triangles": 1092,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban, arka kenar ortası",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_Palette_Steel",
+    "MI_Wood_Mese"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_DrinkMachine",
+     "parent": "SM_DrinkIceCounter",
+     "pos_m": [
+      -1.175,
+      1.0,
+      0.03
+     ]
+    },
+    {
+     "name": "Socket_CupStack",
+     "parent": "SM_DrinkIceCounter",
+     "pos_m": [
+      -0.235,
+      1.0,
+      0.24
+     ]
+    },
+    {
+     "name": "Socket_LidStack",
+     "parent": "SM_DrinkIceCounter",
+     "pos_m": [
+      0.275,
+      1.0,
+      0.24
+     ]
+    },
+    {
+     "name": "Socket_IceCream",
+     "parent": "SM_DrinkIceCounter",
+     "pos_m": [
+      0.955,
+      1.0,
+      0.05
+     ]
+    },
+    {
+     "name": "Socket_Toppings",
+     "parent": "SM_DrinkIceCounter",
+     "pos_m": [
+      1.6,
+      1.0,
+      0.39
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_DrinkMachine.glb",
+   "name": "SM_DrinkMachine",
+   "title": "İçecek makinesi (4 slot)",
+   "kind": "prop",
+   "size_cm_GxDxY": [
+    125.4,
+    59.0,
+    78.0
+   ],
+   "bbox_min_m": [
+    -0.627,
+    0.0,
+    0.0
+   ],
+   "bbox_max_m": [
+    0.627,
+    0.78,
+    0.59
+   ],
+   "triangles": 4888,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban, arka kenar ortası",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_Palette_Steel"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Slot_1",
+     "parent": "SM_DrinkMachine",
+     "pos_m": [
+      -0.435,
+      0.051,
+      0.47
+     ]
+    },
+    {
+     "name": "Socket_Slot_2",
+     "parent": "SM_DrinkMachine",
+     "pos_m": [
+      -0.145,
+      0.051,
+      0.47
+     ]
+    },
+    {
+     "name": "Socket_Slot_3",
+     "parent": "SM_DrinkMachine",
+     "pos_m": [
+      0.145,
+      0.051,
+      0.47
+     ]
+    },
+    {
+     "name": "Socket_Slot_4",
+     "parent": "SM_DrinkMachine",
+     "pos_m": [
+      0.435,
+      0.051,
+      0.47
+     ]
+    }
+   ],
+   "movable": [
+    {
+     "node": "Lever_1",
+     "pivot": "kolun üst kenarı",
+     "pivot_pos_m": [
+      -0.435,
+      0.43,
+      0.4425
+     ],
+     "motion_gltf": "X +12° (geriye itilir)",
+     "motion_unity": "X +12°"
+    },
+    {
+     "node": "Lever_2",
+     "pivot": "kolun üst kenarı",
+     "pivot_pos_m": [
+      -0.145,
+      0.43,
+      0.4425
+     ],
+     "motion_gltf": "X +12° (geriye itilir)",
+     "motion_unity": "X +12°"
+    },
+    {
+     "node": "Lever_3",
+     "pivot": "kolun üst kenarı",
+     "pivot_pos_m": [
+      0.145,
+      0.43,
+      0.4425
+     ],
+     "motion_gltf": "X +12° (geriye itilir)",
+     "motion_unity": "X +12°"
+    },
+    {
+     "node": "Lever_4",
+     "pivot": "kolun üst kenarı",
+     "pivot_pos_m": [
+      0.435,
+      0.43,
+      0.4425
+     ],
+     "motion_gltf": "X +12° (geriye itilir)",
+     "motion_unity": "X +12°"
+    }
+   ]
+  },
+  {
+   "file": "glb/SM_CupStack.glb",
+   "name": "SM_CupStack",
+   "title": "Karton bardak yığını (kaynak)",
+   "kind": "prop",
+   "size_cm_GxDxY": [
+    38.0,
+    38.0,
+    33.9
+   ],
+   "bbox_min_m": [
+    -0.19,
+    0.0,
+    -0.19
+   ],
+   "bbox_max_m": [
+    0.19,
+    0.339,
+    0.19
+   ],
+   "triangles": 6112,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Take",
+     "parent": "SM_CupStack",
+     "pos_m": [
+      0.0,
+      0.339,
+      0.0
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_LidStack.glb",
+   "name": "SM_LidStack",
+   "title": "Plastik kapak yığını (kaynak)",
+   "kind": "prop",
+   "size_cm_GxDxY": [
+    38.0,
+    38.0,
+    13.4
+   ],
+   "bbox_min_m": [
+    -0.19,
+    0.0,
+    -0.19
+   ],
+   "bbox_max_m": [
+    0.19,
+    0.134,
+    0.19
+   ],
+   "triangles": 4528,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Take",
+     "parent": "SM_LidStack",
+     "pos_m": [
+      0.0,
+      0.134,
+      0.0
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_Cup.glb",
+   "name": "SM_Cup",
+   "title": "Karton bardak (tekil)",
+   "kind": "item",
+   "size_cm_GxDxY": [
+    9.4,
+    9.4,
+    12.3
+   ],
+   "bbox_min_m": [
+    -0.0472,
+    0.0,
+    -0.0472
+   ],
+   "bbox_max_m": [
+    0.0472,
+    0.123,
+    0.0472
+   ],
+   "triangles": 560,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Fill",
+     "parent": "SM_Cup",
+     "pos_m": [
+      0.0,
+      0.1,
+      0.0
+     ]
+    },
+    {
+     "name": "Socket_Lid",
+     "parent": "SM_Cup",
+     "pos_m": [
+      0.0,
+      0.12,
+      0.0
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_CupLid.glb",
+   "name": "SM_CupLid",
+   "title": "Plastik kapak (tekil)",
+   "kind": "item",
+   "size_cm_GxDxY": [
+    9.5,
+    9.5,
+    1.4
+   ],
+   "bbox_min_m": [
+    -0.0475,
+    0.0,
+    -0.0475
+   ],
+   "bbox_max_m": [
+    0.0475,
+    0.0145,
+    0.0475
+   ],
+   "triangles": 400,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette"
+   ],
+   "sockets": [],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_IceCreamMachine.glb",
+   "name": "SM_IceCreamMachine",
+   "title": "Dondurma makinesi (tek slot)",
+   "kind": "prop",
+   "size_cm_GxDxY": [
+    62.0,
+    60.8,
+    85.0
+   ],
+   "bbox_min_m": [
+    -0.31,
+    0.0,
+    0.0
+   ],
+   "bbox_max_m": [
+    0.31,
+    0.85,
+    0.6083
+   ],
+   "triangles": 2376,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban, arka kenar ortası",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_Palette_Emission",
+    "MI_Palette_Steel"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Slot",
+     "parent": "SM_IceCreamMachine",
+     "pos_m": [
+      0.0,
+      0.046,
+      0.525
+     ]
+    }
+   ],
+   "movable": [
+    {
+     "node": "Lever",
+     "pivot": "dağıtıcı başın üstü",
+     "pivot_pos_m": [
+      0.0,
+      0.455,
+      0.53
+     ],
+     "motion_gltf": "X +40° (aşağı çekilir)",
+     "motion_unity": "X +40°"
+    },
+    {
+     "node": "Lid",
+     "pivot": "hazne kapağının arka kenarı",
+     "pivot_pos_m": [
+      0.0,
+      0.8,
+      0.065
+     ],
+     "motion_gltf": "X −80° (arka menteşe, açılır)",
+     "motion_unity": "X −80°"
+    }
+   ]
+  },
+  {
+   "file": "glb/SM_ToppingBins.glb",
+   "name": "SM_ToppingBins",
+   "title": "Parçacık kutuları ×3 (çikolata, draje, bisküvi)",
+   "kind": "prop",
+   "size_cm_GxDxY": [
+    43.0,
+    66.0,
+    24.9
+   ],
+   "bbox_min_m": [
+    -0.215,
+    -0.0,
+    -0.33
+   ],
+   "bbox_max_m": [
+    0.215,
+    0.2489,
+    0.33
+   ],
+   "triangles": 4356,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Steel"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Scoop_1",
+     "parent": "SM_ToppingBins",
+     "pos_m": [
+      0.0,
+      0.242,
+      -0.21
+     ]
+    },
+    {
+     "name": "Socket_Scoop_2",
+     "parent": "SM_ToppingBins",
+     "pos_m": [
+      0.0,
+      0.192,
+      0.02
+     ]
+    },
+    {
+     "name": "Socket_Scoop_3",
+     "parent": "SM_ToppingBins",
+     "pos_m": [
+      0.0,
+      0.142,
+      0.23
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_StationWindow_Order.glb",
+   "name": "SM_StationWindow_Order",
+   "title": "Sipariş penceresi",
+   "kind": "window",
+   "size_cm_GxDxY": [
+    262.0,
+    65.0,
+    116.1
+   ],
+   "bbox_min_m": [
+    -1.31,
+    -0.141,
+    -0.3
+   ],
+   "bbox_max_m": [
+    1.31,
+    1.02,
+    0.35
+   ],
+   "triangles": 252,
+   "outline": true,
+   "cast_shadow": false,
+   "pivot": "net açıklığın alt kenarı ortası, Kasa tarafı duvar yüzü (pervaz üstü)",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_Palette_Steel"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_RecipeBook",
+     "parent": "SM_StationWindow_Order",
+     "pos_m": [
+      -0.9,
+      0.0,
+      0.18
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_StationWindow_Delivery.glb",
+   "name": "SM_StationWindow_Delivery",
+   "title": "Teslimat penceresi",
+   "kind": "window",
+   "size_cm_GxDxY": [
+    262.0,
+    65.0,
+    116.1
+   ],
+   "bbox_min_m": [
+    -1.31,
+    -0.141,
+    -0.3
+   ],
+   "bbox_max_m": [
+    1.31,
+    1.02,
+    0.35
+   ],
+   "triangles": 612,
+   "outline": true,
+   "cast_shadow": false,
+   "pivot": "net açıklığın alt kenarı ortası, Kasa tarafı duvar yüzü (pervaz üstü)",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_Palette_Steel"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Slot_1",
+     "parent": "SM_StationWindow_Delivery",
+     "pos_m": [
+      -0.8,
+      0.0085,
+      0.17
+     ]
+    },
+    {
+     "name": "Socket_Slot_2",
+     "parent": "SM_StationWindow_Delivery",
+     "pos_m": [
+      -0.01,
+      0.0085,
+      0.17
+     ]
+    },
+    {
+     "name": "Socket_Slot_3",
+     "parent": "SM_StationWindow_Delivery",
+     "pos_m": [
+      0.8,
+      0.0085,
+      0.17
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_StockHatch_Kasa.glb",
+   "name": "SM_StockHatch_Kasa",
+   "title": "Stok kapağı, Kasa yüzü",
+   "kind": "wall",
+   "size_cm_GxDxY": [
+    75.0,
+    28.8,
+    50.0
+   ],
+   "bbox_min_m": [
+    -0.375,
+    -0.25,
+    -0.2
+   ],
+   "bbox_max_m": [
+    0.375,
+    0.25,
+    0.088
+   ],
+   "triangles": 960,
+   "outline": true,
+   "cast_shadow": false,
+   "pivot": "çerçeve arka yüzü ortası (duvar yüzü)",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_Palette_Steel"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Load",
+     "parent": "Drawer",
+     "pos_m": [
+      0.0,
+      -0.175,
+      -0.07
+     ]
+    }
+   ],
+   "movable": [
+    {
+     "node": "Drawer",
+     "pivot": "çerçeve arka yüzü",
+     "pivot_pos_m": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "motion_gltf": "Z +0,30 m (Kasa'ya dışarı kayar)",
+     "motion_unity": "Z +0,30 m"
+    }
+   ]
+  },
+  {
+   "file": "glb/SM_ExtinguisherBracket.glb",
+   "name": "SM_ExtinguisherBracket",
+   "title": "Yangın tüpü askısı",
+   "kind": "wall",
+   "size_cm_GxDxY": [
+    17.8,
+    20.0,
+    37.0
+   ],
+   "bbox_min_m": [
+    -0.089,
+    -0.21,
+    0.0
+   ],
+   "bbox_max_m": [
+    0.089,
+    0.16,
+    0.2
+   ],
+   "triangles": 324,
+   "outline": false,
+   "cast_shadow": false,
+   "pivot": "arka yüz ortası (duvar yüzü)",
+   "materials": [
+    "MI_Palette"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Extinguisher",
+     "parent": "SM_ExtinguisherBracket",
+     "pos_m": [
+      0.0,
+      -0.2,
+      0.105
+     ]
+    }
+   ],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_FireExtinguisher.glb",
+   "name": "SM_FireExtinguisher",
+   "title": "Yangın tüpü (item)",
+   "kind": "item",
+   "size_cm_GxDxY": [
+    23.1,
+    17.7,
+    50.2
+   ],
+   "bbox_min_m": [
+    -0.121,
+    0.0,
+    -0.0885
+   ],
+   "bbox_max_m": [
+    0.11,
+    0.502,
+    0.0885
+   ],
+   "triangles": 2184,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette",
+    "MI_Palette_Chrome"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Hand",
+     "parent": "SM_FireExtinguisher",
+     "pos_m": [
+      0.045,
+      0.451,
+      0.0
+     ]
+    },
+    {
+     "name": "Socket_Nozzle",
+     "parent": "SM_FireExtinguisher",
+     "pos_m": [
+      -0.098,
+      0.055,
+      0.045
+     ]
+    }
+   ],
+   "movable": [
+    {
+     "node": "Handle",
+     "pivot": "kolun arka ucu",
+     "pivot_pos_m": [
+      -0.01,
+      0.496,
+      0.0
+     ],
+     "motion_gltf": "Z −12° (sıkılır)",
+     "motion_unity": "Z +12°"
+    }
+   ]
+  },
+  {
+   "file": "glb/SM_RecipeBook.glb",
+   "name": "SM_RecipeBook",
+   "title": "Tarif kitabı (item)",
+   "kind": "item",
+   "size_cm_GxDxY": [
+    30.6,
+    25.0,
+    4.1
+   ],
+   "bbox_min_m": [
+    -0.156,
+    0.0,
+    -0.11
+   ],
+   "bbox_max_m": [
+    0.15,
+    0.0408,
+    0.14
+   ],
+   "triangles": 456,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette"
+   ],
+   "sockets": [],
+   "movable": [
+    {
+     "node": "Cover",
+     "pivot": "sırt üst kenarı",
+     "pivot_pos_m": [
+      -0.144,
+      0.036,
+      0.0
+     ],
+     "motion_gltf": "Z +180°’ye kadar (açılır)",
+     "motion_unity": "Z −180°"
+    }
+   ]
+  },
+  {
+   "file": "glb/SM_IngredientBoard.glb",
+   "name": "SM_IngredientBoard",
+   "title": "Malzeme panosu",
+   "kind": "wall",
+   "size_cm_GxDxY": [
+    80.0,
+    5.0,
+    80.0
+   ],
+   "bbox_min_m": [
+    -0.4,
+    -0.4,
+    0.0
+   ],
+   "bbox_max_m": [
+    0.4,
+    0.4,
+    0.05
+   ],
+   "triangles": 2382,
+   "outline": false,
+   "cast_shadow": false,
+   "pivot": "arka yüz ortası",
+   "materials": [
+    "MI_Palette",
+    "MI_Wood_Akcaagac"
+   ],
+   "sockets": [],
+   "movable": []
+  },
+  {
+   "file": "glb/SM_TrashBin.glb",
+   "name": "SM_TrashBin",
+   "title": "Çöp kovası ø60 (C1 ile aynı)",
+   "kind": "prop",
+   "size_cm_GxDxY": [
+    60.0,
+    65.5,
+    76.0
+   ],
+   "bbox_min_m": [
+    -0.3,
+    0.0,
+    -0.3
+   ],
+   "bbox_max_m": [
+    0.3,
+    0.76,
+    0.355
+   ],
+   "triangles": 1356,
+   "outline": true,
+   "cast_shadow": true,
+   "pivot": "taban ortası",
+   "materials": [
+    "MI_Palette"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Drop",
+     "parent": "SM_TrashBin",
+     "pos_m": [
+      0.0,
+      0.76,
+      0.0
+     ]
+    }
+   ],
+   "movable": [
+    {
+     "node": "Lid",
+     "pivot": "kapağın arka kenarı",
+     "pivot_pos_m": [
+      0.0,
+      0.67,
+      -0.3
+     ],
+     "motion_gltf": "X −75° (pedal)",
+     "motion_unity": "X −75°"
+    }
+   ]
+  },
+  {
+   "file": "glb/SM_CeilingLight.glb",
+   "name": "SM_CeilingLight",
+   "title": "Tavan lambası (C1 ile aynı)",
+   "kind": "ceiling",
+   "size_cm_GxDxY": [
+    39.2,
+    39.2,
+    8.5
+   ],
+   "bbox_min_m": [
+    -0.196,
+    -0.085,
+    -0.196
+   ],
+   "bbox_max_m": [
+    0.196,
+    0.0,
+    0.196
+   ],
+   "triangles": 1688,
+   "outline": false,
+   "cast_shadow": false,
+   "pivot": "üst yüz ortası",
+   "materials": [
+    "MI_Palette_Chrome",
+    "MI_Palette_Emission"
+   ],
+   "sockets": [
+    {
+     "name": "Socket_Light",
+     "parent": "SM_CeilingLight",
+     "pos_m": [
+      0.0,
+      -0.05,
+      0.0
+     ]
+    }
+   ],
+   "movable": []
+  }
+ ],
+ "layout": [
+  {
+   "node": "SM_DrinkIceCounter",
+   "asset": "SM_DrinkIceCounter",
+   "plan_pos_m": [
+    4.975,
+    0.0,
+    0.0
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -4.975,
+    0.0,
+    0.0
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_DrinkMachine",
+   "asset": "SM_DrinkMachine",
+   "plan_pos_m": [
+    3.8,
+    1.0,
+    0.03
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -3.8,
+    1.0,
+    0.03
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_CupStack",
+   "asset": "SM_CupStack",
+   "plan_pos_m": [
+    4.74,
+    1.0,
+    0.24
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -4.74,
+    1.0,
+    0.24
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_LidStack",
+   "asset": "SM_LidStack",
+   "plan_pos_m": [
+    5.25,
+    1.0,
+    0.24
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -5.25,
+    1.0,
+    0.24
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_IceCreamMachine",
+   "asset": "SM_IceCreamMachine",
+   "plan_pos_m": [
+    5.93,
+    1.0,
+    0.05
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -5.93,
+    1.0,
+    0.05
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_ToppingBins",
+   "asset": "SM_ToppingBins",
+   "plan_pos_m": [
+    6.575,
+    1.0,
+    0.39
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -6.575,
+    1.0,
+    0.39
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_StationWindow_Order",
+   "asset": "SM_StationWindow_Order",
+   "plan_pos_m": [
+    1.7,
+    1.0,
+    0.0
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -1.7,
+    1.0,
+    0.0
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_StationWindow_Delivery",
+   "asset": "SM_StationWindow_Delivery",
+   "plan_pos_m": [
+    8.3,
+    1.0,
+    0.0
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -8.3,
+    1.0,
+    0.0
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_RecipeBook",
+   "asset": "SM_RecipeBook",
+   "plan_pos_m": [
+    0.8,
+    1.0,
+    0.18
+   ],
+   "plan_rot_y_deg": -8,
+   "unity_local_pos_m": [
+    -0.8,
+    1.0,
+    0.18
+   ],
+   "unity_rot_y_deg": 8
+  },
+  {
+   "node": "SM_ExtinguisherBracket",
+   "asset": "SM_ExtinguisherBracket",
+   "plan_pos_m": [
+    0.225,
+    0.5,
+    0.0
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -0.225,
+    0.5,
+    0.0
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_FireExtinguisher",
+   "asset": "SM_FireExtinguisher",
+   "plan_pos_m": [
+    0.225,
+    0.3,
+    0.105
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -0.225,
+    0.3,
+    0.105
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_IngredientBoard",
+   "asset": "SM_IngredientBoard",
+   "plan_pos_m": [
+    3.5,
+    1.7,
+    3.0
+   ],
+   "plan_rot_y_deg": 180,
+   "unity_local_pos_m": [
+    -3.5,
+    1.7,
+    3.0
+   ],
+   "unity_rot_y_deg": -180
+  },
+  {
+   "node": "SM_StockHatch_Kasa",
+   "asset": "SM_StockHatch_Kasa",
+   "plan_pos_m": [
+    9.225,
+    1.09,
+    3.0
+   ],
+   "plan_rot_y_deg": 180,
+   "unity_local_pos_m": [
+    -9.225,
+    1.09,
+    3.0
+   ],
+   "unity_rot_y_deg": -180
+  },
+  {
+   "node": "SM_TrashBin",
+   "asset": "SM_TrashBin",
+   "plan_pos_m": [
+    9.5,
+    0.0,
+    1.45
+   ],
+   "plan_rot_y_deg": -90,
+   "unity_local_pos_m": [
+    -9.5,
+    0.0,
+    1.45
+   ],
+   "unity_rot_y_deg": 90
+  },
+  {
+   "node": "SM_CeilingLight_1",
+   "asset": "SM_CeilingLight",
+   "plan_pos_m": [
+    1.225,
+    2.75,
+    1.5
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -1.225,
+    2.75,
+    1.5
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_CeilingLight_2",
+   "asset": "SM_CeilingLight",
+   "plan_pos_m": [
+    3.675,
+    2.75,
+    1.5
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -3.675,
+    2.75,
+    1.5
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_CeilingLight_3",
+   "asset": "SM_CeilingLight",
+   "plan_pos_m": [
+    6.125,
+    2.75,
+    1.5
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -6.125,
+    2.75,
+    1.5
+   ],
+   "unity_rot_y_deg": 0
+  },
+  {
+   "node": "SM_CeilingLight_4",
+   "asset": "SM_CeilingLight",
+   "plan_pos_m": [
+    8.575,
+    2.75,
+    1.5
+   ],
+   "plan_rot_y_deg": 0,
+   "unity_local_pos_m": [
+    -8.575,
+    2.75,
+    1.5
+   ],
+   "unity_rot_y_deg": 0
+  }
+ ],
+ "layout_triangles": 33568,
+ "external": [
+  {
+   "node": "Ext_SM_StationWindow_Kasa",
+   "asset": "SM_StationWindow_Kasa",
+   "package": "İstasyon",
+   "plan_pos_m": [
+    1.7,
+    1.0,
+    3.2
+   ],
+   "plan_rot_y_deg": 0,
+   "note": "İstasyon yerleşimindeki (1,70; 1,00; 0,00) ile aynı nokta; yerel −Z Kasa'ya bakar"
+  },
+  {
+   "node": "Ext_SM_SwingDoorFrame",
+   "asset": "SM_SwingDoorFrame + 2 × SM_SwingDoor",
+   "package": "C1 mutfak",
+   "plan_pos_m": [
+    8.0,
+    0.0,
+    3.2
+   ],
+   "plan_rot_y_deg": 0,
+   "note": "açıklık 7,25–8,75 m, ortası; kesin dönüşüm C1 yerleşiminde"
+  },
+  {
+   "node": "Ext_SM_StockHatch",
+   "asset": "SM_StockHatch (mutfak yüzü, kaldıraçlı)",
+   "package": "C1 mutfak",
+   "plan_pos_m": [
+    9.225,
+    1.09,
+    3.2
+   ],
+   "plan_rot_y_deg": 0,
+   "note": "aynı çekmecenin mutfak yüzü; kesin dönüşüm C1 yerleşiminde"
+  }
+ ],
+ "arch": {
+  "file": "glb/ARCH_Kasa.glb",
+  "triangles": 1586
+ }
+}
