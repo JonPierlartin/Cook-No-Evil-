@@ -1140,6 +1140,28 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     - Tavan lambalarına ve sarkıtlara ışık kaynağı eklenmedi (diğer odalarla aynı). Eşyaların nane / krom tonları
       referanstan sarımsı / koyu duruyor: sahne güneşinin sıcak rengi ve krom matcap'i (mimari `_LightTint` ile
       korunuyor, eşyalar değil) — istenirse eşya materyallerinde de düşürülür.
+  - **SOKAK eklendi (8 Eki 2026, beşinci paket `Assets/NewAssets/Sokak/`; bu paket OBJ):** kök `Sokak`, salon köküyle
+    aynı yerde (10,8 / 0,30 / −14,98). Birleşik yerleşim dosyası (`Sokak_Yerlesim.obj`, 66 alt nesne) tek model olarak
+    içe alındı → `Assets/Prefabs/Harita/Sokak_Yerlesim.prefab`; materyaller ada göre değişir (`HaritaBuilder`).
+    OBJ hiyerarşi / soket / bayrak taşımaz: hepsi `manifest.json`'da. Unity'nin OBJ içe alıcısı da X'i çevirir.
+    - İçerik: yakın kaldırım (salonla aynı kot), yol (15 cm aşağıda), karşı kaldırım, karşı cephe (dükkânlar, üst
+      katlar, tenteler, tabelalar), ara sokak + uzak silüet kartı, 6 sokak lambası, banklar, posta kutusu, gazete
+      otomatı, ağaçlar, giriş kapısının önünde park hâlinde kamyonet. Vitrinin önündeki iki saksı salon paketinin
+      çalısının kopyası (`Sokak_Ekler`). Kurulumun ürettiği "sokak zemini" kaldırıldı.
+    - **Paket kuralı uygulandı: sokakta çizgi yok, gerçek zamanlı gölge yok** (oyuncunun etkileşmediği fon). Mimari
+      ve araç gövdesi materyalleri düşük `_LightTint` ile (palet rengi korunur). Vitrin içleri ve silüet URP Unlit.
+    - **Müşteri yolu:** `Giris` artık kaldırımda, salonun doğusunda (15,8 / −16,5): müşteri orada doğar, kaldırımdan
+      giriş kapısının önüne (`GirisKapisi`) yürür, içeri girip sıraya geçer. Ayrılırken `CikisYolu` → `CikisKapisi` →
+      kaldırım boyunca batıya, `Cikis`'te (−9,2 / −16,5) kaybolur. `CustomerDirector.arriveWaypoints` eklendi;
+      `Customer.ServerRedirect` yalnızca SON hedefi değiştirir (sırası değişen müşteri ara noktalarını unutup duvarın
+      içinden kestirmesin diye — `RefreshQueue` bunu kullanır).
+    - **Gökyüzü düz renk `#CFE3EE`:** sahne kamerası ve `Player.prefab` kamerası Solid Color (paket: SY-10).
+      Ortam ışığı kaynağı değişmedi.
+    - **Palet birleştirildi:** sokak paketinin 14 yeni hücresi (S11 satırı…) proje paletine eklendi; sokak paletinde
+      olmayan 4 hücremiz (S10·K0, K1, K3, K4) korundu.
+    - **Yapılmadı (pakette yalnızca modeli / dokusu var, sistemi yok):** geçen araçlar, yürüyen figüran kartları,
+      egzoz dumanı, lamba ışıkları; "rol Şef ise sokağı kapat" kuralı. Araç ve figüran doğma / kaybolma noktaları
+      manifestte duruyor. Tabela ve vitrin dokuları pakette "taslak" olarak işaretli.
   - **Palet:** `Mutfak_C1/Palettes/cook_no_evil_palet_256.png` İstasyon paketindekiyle değiştirildi (yalnızca iki
     yeni hücre: S10·K3 `#6F4E37`, S10·K4 `#F2B23A`; diğer 254 hücre birebir aynı — karşılaştırıldı).
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını

@@ -15,6 +15,10 @@ public static class HaritaBuilder
     public const string CounterModelFolder = "Assets/NewAssets/Kasa/Models";
     public const string HallPrefabPath = PrefabFolder + "/Salon_Yerlesim.prefab";
     public const string HallModelFolder = "Assets/NewAssets/Salon/Models";
+    public const string StreetPrefabPath = PrefabFolder + "/Sokak_Yerlesim.prefab";
+    private const string StreetModelPath = "Assets/NewAssets/Sokak/Models/Sokak_Yerlesim.obj";
+    private const string StreetTextureFolder = "Assets/NewAssets/Sokak/Textures";
+    private const string StreetMaterialFolder = "Assets/NewAssets/Sokak/Materials";
     public const string SignFaceMaterialName = "MI_Tabela_Zemin";
     public const string SignFaceMaterialPath = "Assets/NewAssets/Salon/Materials/MI_Tabela_Zemin.mat";
     private const string HallTextureFolder = "Assets/NewAssets/Salon/Textures";
@@ -48,6 +52,7 @@ public static class HaritaBuilder
         MutfakC1Builder.BuildLayoutPrefab(HallModelFolder + "/Salon_Yerlesim.glb", HallModelFolder,
             HallPrefabPath, "Salon_Yerlesim", materials, outlineFollowsShadow: true);
         CreateArchitectureMaterials();
+        BuildStreetPrefab(materials);
         AssetDatabase.SaveAssets();
         Debug.Log("[CNE] Harita prefab'ları ve mimari materyalleri hazır.");
     }
@@ -80,6 +85,161 @@ public static class HaritaBuilder
         Add(result, "MI_Arch_Esik", "#A9B3BA");
         Add(result, "MI_Arch_Dis_Zemin", "#8B9096", Grid, "#7C8187", 1.00f, 1.00f, 0.012f);
         return result;
+    }
+
+    // Sokak paketi OBJ'dir (hiyerarşi, soket ve bayrak taşımaz): birleşik yerleşim dosyası tek model olarak içe
+    // alınır, materyaller ada göre proje materyalleriyle değişir. Paket kuralı: sokak oyuncunun etkileşmediği fondur —
+    // çizgi yok, gerçek zamanlı gölge yok.
+    private static void BuildStreetPrefab(Dictionary<string, Material> shared)
+    {
+        if (AssetImporter.GetAtPath(StreetModelPath) is ModelImporter importer
+            && (importer.importNormals != ModelImporterNormals.Import || importer.generateSecondaryUV || importer.isReadable))
+        {
+            importer.importNormals = ModelImporterNormals.Import;
+            importer.generateSecondaryUV = false;
+            importer.isReadable = false;
+            importer.SaveAndReimport();
+        }
+
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(StreetModelPath);
+        if (model == null)
+        {
+            Debug.LogError($"[CNE] Sokak yerleşimi bulunamadı: {StreetModelPath}");
+            return;
+        }
+
+        var materials = CreateStreetMaterials(shared);
+        var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
+        try
+        {
+            instance.name = "Sokak_Yerlesim";
+            uint lineLayers = RenderingLayerMask.GetMask("Outline", "Outline Silhouette");
+            foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                var slots = renderer.sharedMaterials;
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (slots[i] != null && materials.TryGetValue(slots[i].name, out var replacement))
+                        slots[i] = replacement;
+                    else
+                        Debug.LogWarning($"[CNE] Sokak: '{renderer.name}' için '{(slots[i] != null ? slots[i].name : "boş")}' materyali yok.");
+                }
+
+                renderer.sharedMaterials = slots;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.renderingLayerMask &= ~lineLayers;
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(instance, StreetPrefabPath);
+        }
+        finally
+        {
+            Object.DestroyImmediate(instance);
+        }
+    }
+
+    // Sokak materyalleri (paketteki tablo). Mimari ve cephe düz renk; mimari ayarlarıyla (ışığın rengi az yansır).
+    private static Dictionary<string, Material> CreateStreetMaterials(Dictionary<string, Material> shared)
+    {
+        MutfakC1Builder.EnsureFolder(StreetMaterialFolder);
+        var result = new Dictionary<string, Material>
+        {
+            ["MI_Palette"] = shared["MI_Palette"],
+            ["MI_Palette_Chrome"] = shared["MI_Palette_Chrome"],
+            // Araç camı opak palet rengidir.
+            ["MI_CarGlass"] = shared["MI_Palette"],
+        };
+
+        var toon = Shader.Find("CNE/Toon");
+        foreach (var (name, hex) in new[]
+        {
+            ("MI_Arch_Kaldirim", "#9BAEC9"), ("MI_Arch_Bordur", "#B7CAE8"), ("MI_Arch_Asfalt", "#54627A"),
+            ("MI_Arch_YanDuvar", "#587098"), ("MI_Arch_Kapi", "#4A535B"), ("MI_Arch_Cephe", "#688AC1"),
+            ("MI_Arch_Cephe_K0", "#899BBB"), ("MI_Arch_Cephe_K4", "#688AC1"), ("MI_Arch_Cephe_K5", "#8B8DCA"),
+            ("MI_Arch_Cephe_K6", "#7AA6AC"),
+        })
+        {
+            result[name] = StreetMaterial(name, toon, material =>
+            {
+                material.SetColor("_BaseColor", Parse(hex));
+                material.SetFloat("_LightTint", ArchitectureLightTint);
+                material.SetFloat("_ShadowStrength", WallShadowStrength);
+            });
+        }
+
+        foreach (var (name, hex) in new[]
+        {
+            ("MI_CarBody_Nane", "#7DCECD"), ("MI_CarBody_Bebek", "#84B9FF"), ("MI_CarBody_Lila", "#A58FD8"), ("MI_CarBody_Gri", "#899BBB"),
+        })
+        {
+            // Araç gövdesi de palet rengini korur (sıcak güneş gri-maviyi kahveye çekiyordu).
+            result[name] = StreetMaterial(name, toon, material =>
+            {
+                material.SetColor("_BaseColor", Parse(hex));
+                material.SetFloat("_LightTint", ArchitectureLightTint);
+            });
+        }
+
+        result["MI_Ext_Signs"] = StreetMaterial("MI_Ext_Signs", toon,
+            material => material.SetTexture("_BaseMap", StreetTexture("DC_Ext_Signs", false)));
+        result["MI_Ext_Windows"] = StreetMaterial("MI_Ext_Windows", toon,
+            material => material.SetTexture("_BaseMap", StreetTexture("DC_Ext_Windows", false)));
+
+        var unlit = Shader.Find("Universal Render Pipeline/Unlit");
+        result["MI_Ext_ShopInterior"] = StreetMaterial("MI_Ext_ShopInterior", unlit,
+            material => material.SetTexture("_BaseMap", StreetTexture("DC_ShopInterior", false)));
+        result["MI_Ext_FarSilhouette"] = StreetMaterial("MI_Ext_FarSilhouette", unlit, material =>
+        {
+            material.SetTexture("_BaseMap", StreetTexture("T_Ext_FarSilhouette", true));
+            material.SetFloat("_AlphaClip", 1f);
+            material.SetFloat("_Cutoff", 0.5f);
+            material.EnableKeyword("_ALPHATEST_ON");
+            material.SetFloat("_Cull", 0f);
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+        });
+        // Oval gölge: çarpma (multiply) karışımı, opaklık 0,35.
+        result["MI_BlobShadow"] = StreetMaterial("MI_BlobShadow", unlit, material =>
+        {
+            material.SetTexture("_BaseMap", StreetTexture("T_BlobShadow", true));
+            material.SetColor("_BaseColor", new Color(0.141f, 0.137f, 0.227f, 0.35f));
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        });
+        return result;
+    }
+
+    private static Texture2D StreetTexture(string name, bool alphaIsTransparency)
+    {
+        string path = $"{StreetTextureFolder}/{name}.png";
+        if (AssetImporter.GetAtPath(path) is TextureImporter importer
+            && (importer.wrapMode != TextureWrapMode.Clamp || importer.alphaIsTransparency != alphaIsTransparency))
+        {
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.mipmapEnabled = true;
+            importer.alphaIsTransparency = alphaIsTransparency;
+            importer.SaveAndReimport();
+        }
+
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+    }
+
+    private static Material StreetMaterial(string name, Shader shader, System.Action<Material> configure)
+    {
+        string path = $"{StreetMaterialFolder}/{name}.mat";
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (material != null)
+            return material;
+
+        material = new Material(shader);
+        configure(material);
+        AssetDatabase.CreateAsset(material, path);
+        return material;
     }
 
     // Salon paketine özgü materyaller: tabela ve tablo yüzleri (decal), cam parıltısı, akvaryum suyu.

@@ -154,6 +154,25 @@ public class Customer : NetworkBehaviour, IInteractionGate
         _moving = true;
     }
 
+    // Yalnızca SON hedefi değiştirir; henüz geçilmemiş ara noktalar korunur. Sokaktan kapıya yürüyen müşterinin
+    // sıradaki yeri değişirse (öndeki ayrıldı) yine kapıdan girsin, duvarın içinden kestirmesin diye.
+    public void ServerRedirect(Vector3 position, Quaternion rotation, Action<Customer> onArrived)
+    {
+        if (!_moving || _path.Count <= 1)
+        {
+            ServerMoveTo(position, rotation, onArrived);
+            return;
+        }
+
+        var remaining = _path.ToArray();
+        _path.Clear();
+        for (int i = 0; i < remaining.Length - 1; i++)
+            _path.Enqueue(remaining[i]);
+        _path.Enqueue(position);
+        _targetRotation = rotation;
+        _onArrived = onArrived;
+    }
+
     // Sipariş penceresinin önüne (sıranın başına) vardı: sabır sayacı başlar ve siparişi alınabilir (GDD 3.4.4).
     // Sırada arkada bekleyen müşterinin sabrı işlemez — Kasiyer onun siparişini zaten alamaz.
     public void ServerStartWaiting()

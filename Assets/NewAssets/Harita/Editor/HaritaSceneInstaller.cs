@@ -50,15 +50,21 @@ public static class HaritaSceneInstaller
     private const float StorefrontSill = 0.9f;
     private const float StorefrontTop = 2.3f;
     private const float FacadeBandHeight = 0.035f;
-    // Vitrinin dışındaki sokak (camdan görünen düz zemin).
-    private const float OutsideDepth = 6f;
-    private const float OutsideMargin = 4f;
+    // Sokak (paket planı, salon köküne göre Unity ekseninde): müşterinin doğduğu ve kaybolduğu noktalar yakın
+    // kaldırımda; vitrinin önündeki iki saksı salon paketinin çalısıdır.
+    private static readonly Vector3 StreetSpawn = new(5f, 0f, -1.5f);
+    private static readonly Vector3 StreetDespawn = new(-20f, 0f, -1.5f);
+    private static readonly Vector3[] StreetPlanters = { new(-2.4f, 0f, -0.55f), new(-5.2f, 0f, -0.55f) };
+    // Kasiyer ve Komi kameralarının arka planı (paket: SY-10, S11·K12).
+    private static readonly Color32 SkyColor = new(0xCF, 0xE3, 0xEE, 0xFF);
+    private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
     private const float FloorThickness = 0.3f;
 
     private const string KitchenRootName = "Mutfak_C1";
     private const string StationRootName = "Istasyon";
     private const string CounterRootName = "Kasa";
     private const string HallRootName = "Salon";
+    private const string StreetRootName = "Sokak";
     private const string ArchitectureRootName = "Harita_Mimari";
     private const string MeshFolder = "Assets/NewAssets/Harita/Meshes";
     private const string PanelPrefabPath = "Assets/Prefabs/Mutfak/HataPaneli_C1.prefab";
@@ -86,6 +92,8 @@ public static class HaritaSceneInstaller
         var counter = PlaceLayout(CounterRootName, HaritaBuilder.CounterPrefabPath, counterOrigin);
         var hallOrigin = counterOrigin + new Vector3(HallOverhang, 0f, -WallThickness - HallLength);
         var hall = PlaceLayout(HallRootName, HaritaBuilder.HallPrefabPath, hallOrigin);
+        // Sokak yerleşimi salon köküyle aynı yerde durur (paket planı).
+        var street = PlaceLayout(StreetRootName, HaritaBuilder.StreetPrefabPath, hallOrigin);
 
         // Paketler arası sahiplik: mutfak penceresinin güncel modeli İstasyon paketinde; malzeme panolarının işlevli
         // (veriden dolan) hâli sahnede ayrıca durur.
@@ -98,7 +106,9 @@ public static class HaritaSceneInstaller
         MoveKitchenFunction(kitchen, station);
         MoveStationFunction(station);
         MoveCounterFunction(counter, station);
-        PlaceCustomers(counter, hall);
+        PlaceCustomers(counter, hall, street);
+        InstallStreetExtras(hall, street);
+        ApplySky();
         OpenDoors(hall);
         InstallAquarium(hall);
         InstallDoorSigns(hall);
@@ -413,8 +423,7 @@ public static class HaritaSceneInstaller
         Horizontal(floors, materials["MI_Arch_Salon_Zemin"], hallX0, hallX1, hallZ0, hallZ1, 0f, Vector3.up);
         foreach (var doorBounds in doors)
             Horizontal(floors, materials["MI_Arch_Esik"], Snap(doorBounds.min.x), Snap(doorBounds.max.x), hallZ0 - WallThickness, hallZ0, 0f, Vector3.up);
-        float outsideZ1 = hallZ0 - WallThickness, outsideZ0 = outsideZ1 - OutsideDepth;
-        Horizontal(floors, materials["MI_Arch_Dis_Zemin"], hallWest - OutsideMargin, hallEast + OutsideMargin, outsideZ0, outsideZ1, 0f, Vector3.up);
+        // Vitrinin dışı sokak paketinin kaldırımıdır (Sokak kökü); burada zemin üretilmez.
         floors.Build(root, "Harita_Zemin");
 
         // Dama karoları odanın köşesinden başlar (desen dünya uzayında; başlangıç noktası materyale yazılır).
@@ -429,8 +438,8 @@ public static class HaritaSceneInstaller
         ceilings.Build(root, "Harita_Tavan");
 
         Blocker(colliders, "Zemin",
-            new Vector3(hallWest - OutsideMargin, floorY - FloorThickness, outsideZ0),
-            new Vector3(hallEast + OutsideMargin, floorY, kitchenZ1 + WallThickness));
+            new Vector3(hallWest, floorY - FloorThickness, hallZ0 - WallThickness),
+            new Vector3(hallEast, floorY, kitchenZ1 + WallThickness));
 
         // Kapı kapalıdır (GDD 5.2.3: yalnızca yangında açılır — Faz 1): açıklık görünmez bir engelle kapatılır.
         Blocker(colliders, "Engel_Kapi", new Vector3(door.min.x, floorY, counterZ1), new Vector3(door.max.x, door.max.y, kitchenZ0));
@@ -853,7 +862,7 @@ public static class HaritaSceneInstaller
     // Müşteri noktaları (salon; müşteriler pencereye, +Z'ye bakar). Sipariş penceresinin önünde arka arkaya sıra,
     // teslimat penceresinin önünde yuvaların hizasında yan yana. Giriş kapısı sipariş penceresinin, çıkış kapısı
     // teslimat penceresinin tam karşısındadır: müşteri girişten doğar, çıkıştan ayrılır.
-    private static void PlaceCustomers(Transform counter, Transform hall)
+    private static void PlaceCustomers(Transform counter, Transform hall, Transform street)
     {
         const float standOff = 0.55f;       // pervazın dış ucundan müşterinin merkezine
         const float queueSpacing = 0.8f;
@@ -878,17 +887,23 @@ public static class HaritaSceneInstaller
                 spot.SetPositionAndRotation(new Vector3(socket.position.x, floorY, frontZ), facing);
         }
 
-        // Kapıların dışı (sokak): müşteri orada doğar ve orada yok olur.
-        const float outsideDoor = 1.2f;
+        // Müşteri yakın kaldırımda doğar, giriş kapısının önüne yürüyüp içeri girer; ayrılırken çıkış kapısından
+        // kaldırıma çıkar ve kaldırım boyunca yürüyüp kaybolur (noktalar sokak paketinden).
+        var streetRoot = street.root;
         var entranceDoor = Asset(hall, "SM_StorefrontDoor_1").position;
         var exitDoor = Asset(hall, "SM_StorefrontDoor_2").position;
+        float sidewalkZ = streetRoot.TransformPoint(StreetSpawn).z;
         var entrance = Find("Giris");
         if (entrance != null)
-            entrance.SetPositionAndRotation(new Vector3(entranceDoor.x, floorY, entranceDoor.z - WallThickness - outsideDoor), facing);
+            entrance.SetPositionAndRotation(streetRoot.TransformPoint(StreetSpawn), Quaternion.Euler(0f, 270f, 0f));
 
         var director = Object.FindAnyObjectByType<CustomerDirector>();
+        var entranceLane = EnsurePoint(director.transform, "GirisKapisi");
+        entranceLane.SetPositionAndRotation(new Vector3(entranceDoor.x, floorY, sidewalkZ), facing);
+        var exitLaneOutside = EnsurePoint(director.transform, "CikisKapisi");
+        exitLaneOutside.SetPositionAndRotation(new Vector3(exitDoor.x, floorY, sidewalkZ), Quaternion.Euler(0f, 180f, 0f));
         var exit = EnsurePoint(director.transform, "Cikis");
-        exit.SetPositionAndRotation(new Vector3(exitDoor.x, floorY, exitDoor.z - WallThickness - outsideDoor), Quaternion.Euler(0f, 180f, 0f));
+        exit.SetPositionAndRotation(streetRoot.TransformPoint(StreetDespawn), Quaternion.Euler(0f, 270f, 0f));
 
         // Sipariş → teslimat yürüyüşü sıranın arkasından dolaşır; ayrılan müşteri önce çıkış kapısının hizasına gelir
         // (salonun ortasındaki akvaryumun içinden geçmesin).
@@ -903,8 +918,12 @@ public static class HaritaSceneInstaller
         var serialized = new SerializedObject(director);
         serialized.FindProperty("exitPoint").objectReferenceValue = exit;
         var lane = serialized.FindProperty("leaveWaypoints");
-        lane.arraySize = 1;
+        lane.arraySize = 2;
         lane.GetArrayElementAtIndex(0).objectReferenceValue = leaveLane;
+        lane.GetArrayElementAtIndex(1).objectReferenceValue = exitLaneOutside;
+        var arrive = serialized.FindProperty("arriveWaypoints");
+        arrive.arraySize = 1;
+        arrive.GetArrayElementAtIndex(0).objectReferenceValue = entranceLane;
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -918,6 +937,65 @@ public static class HaritaSceneInstaller
         }
 
         return point;
+    }
+
+    // Vitrinin önündeki saksılar: salon paketindeki çalının kopyaları (sokak paketi yalnızca yerlerini verir).
+    private const string StreetExtrasName = "Sokak_Ekler";
+
+    private static void InstallStreetExtras(Transform hall, Transform street)
+    {
+        var old = GameObject.Find(StreetExtrasName);
+        if (old != null)
+            Object.DestroyImmediate(old);
+
+        var extras = new GameObject(StreetExtrasName).transform;
+        var bush = Asset(hall, "SM_PlantBush");
+        for (int i = 0; i < StreetPlanters.Length; i++)
+        {
+            var copy = Object.Instantiate(bush.gameObject, extras);
+            copy.name = $"SM_PlantBush_Sokak_{i + 1}";
+            copy.transform.SetPositionAndRotation(street.root.TransformPoint(StreetPlanters[i]), Quaternion.identity);
+            // Sokak fondur: çizgi ve gölge yok (paket kuralı).
+            uint lineLayers = RenderingLayerMask.GetMask("Outline", "Outline Silhouette");
+            foreach (var renderer in copy.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.renderingLayerMask &= ~lineLayers;
+            }
+        }
+    }
+
+    // Gökyüzü: sahne kamerası ve oyuncu kamerası düz renk arka plan çizer (skybox yerine).
+    private static void ApplySky()
+    {
+        foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include))
+            SetSky(camera);
+
+        var player = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+        try
+        {
+            bool changed = false;
+            foreach (var camera in player.GetComponentsInChildren<Camera>(true))
+                changed |= SetSky(camera);
+            if (changed)
+                PrefabUtility.SaveAsPrefabAsset(player, PlayerPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(player);
+        }
+    }
+
+    private static bool SetSky(Camera camera)
+    {
+        if (camera.clearFlags == CameraClearFlags.SolidColor && (Color32)camera.backgroundColor is var c
+            && c.r == SkyColor.r && c.g == SkyColor.g && c.b == SkyColor.b)
+            return false;
+
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.backgroundColor = SkyColor;
+        EditorUtility.SetDirty(camera);
+        return true;
     }
 
     // Vitrin kapıları açık durur (müşteriler içinden yürür; kapı animasyonu yok): giriş salona doğru, çıkış sokağa

@@ -21,6 +21,8 @@ public class CustomerDirector : MonoBehaviour
     [Header("Noktalar (sahne)")]
     [Tooltip("Müşterinin doğduğu nokta (giriş kapısı). Çıkış noktası boşsa ayrılırken de buraya yürür.")]
     [SerializeField] private Transform entrancePoint;
+    [Tooltip("Doğduktan sonra sıraya girmeden önce sırayla geçilen noktalar (sokaktan giriş kapısına). Boş olabilir.")]
+    [SerializeField] private Transform[] arriveWaypoints;
     [Tooltip("Müşterinin ayrılırken yürüdüğü nokta (çıkış kapısı). Boşsa giriş noktası kullanılır.")]
     [SerializeField] private Transform exitPoint;
     [Tooltip("Ayrılırken çıkışa varmadan sırayla geçilen noktalar (eşyaların arasından dolaşmak için). Boş olabilir.")]
@@ -151,7 +153,7 @@ public class CustomerDirector : MonoBehaviour
     {
         for (int i = 0; i < _queue.Count; i++)
         {
-            _queue[i].ServerMoveTo(orderSpots[i].position, orderSpots[i].rotation, arrived =>
+            _queue[i].ServerRedirect(orderSpots[i].position, orderSpots[i].rotation, arrived =>
             {
                 if (_queue.Count > 0 && _queue[0] == arrived)
                     arrived.ServerStartWaiting();
@@ -172,6 +174,9 @@ public class CustomerDirector : MonoBehaviour
 
         _active.Add(customer);
         _queue.Add(customer);
+        // Önce giriş yolu (ara noktalar), sonra sıradaki yeri: RefreshQueue yalnızca son hedefi günceller.
+        int spot = _queue.Count - 1;
+        customer.ServerMoveTo(orderSpots[spot].position, orderSpots[spot].rotation, null, arriveWaypoints);
         RefreshQueue();
         Debug.Log($"[Müşteri] {customer.Label} geldi (sabır {order.Patience:0.#} sn). Restoranda {_active.Count}/{maxConcurrentCustomers}.");
     }

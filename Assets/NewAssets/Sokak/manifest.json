@@ -1,0 +1,3761 @@
+{
+ "paket": "CNE_Sokak_Modeller",
+ "tarih": "2026-10-08",
+ "bicim": "OBJ + MTL",
+ "birim": "metre",
+ "eksen": {
+  "asset": "Y yukarı, ön +Z, X genişlik (sağ el)",
+  "yerlesim": "Salon planı: X doğu, Z güney (sokak negatif Z), kök salonun iç kuzeybatı köşesi, zemin Y 0",
+  "unity": "Unity OBJ içe alırken X'i ters çevirir: plan (x; y; z) -> Unity (−x; y; z); Y dönüşleri işaret değiştirir"
+ },
+ "assetler": [
+  {
+   "id": "MM-01…03, MM-05",
+   "dosya": "ARCH_Sokak.obj",
+   "ad": "Sokak mimarisi: yakın kaldırım, yol, karşı kaldırım, ara sokak",
+   "ucgen": 46,
+   "ucgen_siniri": 112,
+   "gdy_cm": [
+    7000.0,
+    3550.0,
+    765.0
+   ],
+   "sinir_min": [
+    -30.0,
+    -0.15,
+    -35.7
+   ],
+   "sinir_max": [
+    40.0,
+    7.5,
+    -0.2
+   ],
+   "pivot": "Yerleşim kökü = salon kökü (dünya koordinatı)",
+   "materyaller": [
+    "MI_Arch_Kaldirim",
+    "MI_Arch_Bordur",
+    "MI_Arch_Asfalt",
+    "MI_Arch_YanDuvar"
+   ],
+   "nesneler": [
+    "Kaldirim_Yakin",
+    "Yol",
+    "Kaldirim_Karsi",
+    "AraSokak"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Nesneler: Kaldirim_Yakin (Exterior_Gameplay), Yol, Kaldirim_Karsi, AraSokak. Ara sokak duvarları sokağın içinde (X 22,0–22,2 ve 27,8–28,0): cephe modüllerinin yan yüzleriyle çakışmaz.",
+   "v": 40
+  },
+  {
+   "id": "MM-04",
+   "dosya": "ARCH_KarsiCephe_Yer.obj",
+   "ad": "Karşı cephe yer tutucu blokları (11 Ekim)",
+   "ucgen": 168,
+   "ucgen_siniri": 216,
+   "gdy_cm": [
+    7000.0,
+    320.0,
+    750.0
+   ],
+   "sinir_min": [
+    -30.0,
+    0.0,
+    -18.7
+   ],
+   "sinir_max": [
+    40.0,
+    7.5,
+    -15.5
+   ],
+   "pivot": "Dünya koordinatı",
+   "materyaller": [
+    "MI_Arch_Cephe_K4",
+    "MI_Arch_Bordur",
+    "MI_Arch_Cephe_K5",
+    "MI_Arch_Cephe_K6",
+    "MI_Arch_Cephe_K0"
+   ],
+   "nesneler": [
+    "Blok_01",
+    "Blok_02",
+    "Blok_03",
+    "Blok_04",
+    "Blok_05",
+    "Blok_06",
+    "Blok_07",
+    "Blok_08",
+    "Blok_09"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "9 blok (genişlik 6–9 m), X 22–28 boş.",
+   "v": 93
+  },
+  {
+   "id": "CK-01",
+   "dosya": "SM_ShopFront_6m_Plak.obj",
+   "ad": "Dükkân cephesi 6 m · PLAK vitrini",
+   "ucgen": 96,
+   "ucgen_siniri": 350,
+   "gdy_cm": [
+    600.0,
+    35.0,
+    400.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    -0.15
+   ],
+   "sinir_max": [
+    6.0,
+    4.0,
+    0.2
+   ],
+   "pivot": "Taban, ön duvar yüzü, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_ShopInterior",
+    "MI_Arch_Kapi"
+   ],
+   "nesneler": [
+    "ShopFront"
+   ],
+   "soketler": {
+    "Socket_Sign": [
+     3.0,
+     3.4,
+     0.0
+    ],
+    "Socket_Awning": [
+     2.3,
+     3.05,
+     0.0
+    ],
+    "Socket_Blade_L": [
+     0.2,
+     2.5,
+     0.1
+    ],
+    "Socket_Blade_R": [
+     5.8,
+     2.5,
+     0.1
+    ]
+   },
+   "soketler_unity": {
+    "Socket_Sign": {
+     "konum": [
+      -3.0,
+      3.4,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Awning": {
+     "konum": [
+      -2.3,
+      3.05,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_L": {
+     "konum": [
+      -0.2,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_R": {
+     "konum": [
+      -5.8,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Vitrin içi: DC_ShopInterior paneli 0 (Plakci).",
+   "v": 57
+  },
+  {
+   "id": "CK-01",
+   "dosya": "SM_ShopFront_6m_Oyuncak.obj",
+   "ad": "Dükkân cephesi 6 m · OYUNCAK vitrini",
+   "ucgen": 96,
+   "ucgen_siniri": 350,
+   "gdy_cm": [
+    600.0,
+    35.0,
+    400.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    -0.15
+   ],
+   "sinir_max": [
+    6.0,
+    4.0,
+    0.2
+   ],
+   "pivot": "Taban, ön duvar yüzü, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_ShopInterior",
+    "MI_Arch_Kapi"
+   ],
+   "nesneler": [
+    "ShopFront"
+   ],
+   "soketler": {
+    "Socket_Sign": [
+     3.0,
+     3.4,
+     0.0
+    ],
+    "Socket_Awning": [
+     2.3,
+     3.05,
+     0.0
+    ],
+    "Socket_Blade_L": [
+     0.2,
+     2.5,
+     0.1
+    ],
+    "Socket_Blade_R": [
+     5.8,
+     2.5,
+     0.1
+    ]
+   },
+   "soketler_unity": {
+    "Socket_Sign": {
+     "konum": [
+      -3.0,
+      3.4,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Awning": {
+     "konum": [
+      -2.3,
+      3.05,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_L": {
+     "konum": [
+      -0.2,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_R": {
+     "konum": [
+      -5.8,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Vitrin içi: DC_ShopInterior paneli 2 (Oyuncakci).",
+   "v": 57
+  },
+  {
+   "id": "CK-01",
+   "dosya": "SM_ShopFront_6m_Radyo.obj",
+   "ad": "Dükkân cephesi 6 m · RADYO vitrini",
+   "ucgen": 96,
+   "ucgen_siniri": 350,
+   "gdy_cm": [
+    600.0,
+    35.0,
+    400.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    -0.15
+   ],
+   "sinir_max": [
+    6.0,
+    4.0,
+    0.2
+   ],
+   "pivot": "Taban, ön duvar yüzü, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_ShopInterior",
+    "MI_Arch_Kapi"
+   ],
+   "nesneler": [
+    "ShopFront"
+   ],
+   "soketler": {
+    "Socket_Sign": [
+     3.0,
+     3.4,
+     0.0
+    ],
+    "Socket_Awning": [
+     2.3,
+     3.05,
+     0.0
+    ],
+    "Socket_Blade_L": [
+     0.2,
+     2.5,
+     0.1
+    ],
+    "Socket_Blade_R": [
+     5.8,
+     2.5,
+     0.1
+    ]
+   },
+   "soketler_unity": {
+    "Socket_Sign": {
+     "konum": [
+      -3.0,
+      3.4,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Awning": {
+     "konum": [
+      -2.3,
+      3.05,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_L": {
+     "konum": [
+      -0.2,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_R": {
+     "konum": [
+      -5.8,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Vitrin içi: DC_ShopInterior paneli 4 (RadyoTV).",
+   "v": 57
+  },
+  {
+   "id": "CK-02",
+   "dosya": "SM_ShopFront_8m_Cicek.obj",
+   "ad": "Dükkân cephesi 8 m · ÇİÇEK vitrinleri",
+   "ucgen": 110,
+   "ucgen_siniri": 450,
+   "gdy_cm": [
+    800.0,
+    35.0,
+    400.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    -0.15
+   ],
+   "sinir_max": [
+    8.0,
+    4.0,
+    0.2
+   ],
+   "pivot": "Taban, ön duvar yüzü, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_ShopInterior",
+    "MI_Arch_Kapi"
+   ],
+   "nesneler": [
+    "ShopFront"
+   ],
+   "soketler": {
+    "Socket_Sign": [
+     4.0,
+     3.4,
+     0.0
+    ],
+    "Socket_Awning_1": [
+     1.9,
+     3.05,
+     0.0
+    ],
+    "Socket_Awning_2": [
+     6.1,
+     3.05,
+     0.0
+    ],
+    "Socket_Blade_L": [
+     0.2,
+     2.5,
+     0.1
+    ],
+    "Socket_Blade_R": [
+     7.8,
+     2.5,
+     0.1
+    ]
+   },
+   "soketler_unity": {
+    "Socket_Sign": {
+     "konum": [
+      -4.0,
+      3.4,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Awning_1": {
+     "konum": [
+      -1.9,
+      3.05,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Awning_2": {
+     "konum": [
+      -6.1,
+      3.05,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_L": {
+     "konum": [
+      -0.2,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_R": {
+     "konum": [
+      -7.8,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Vitrin içleri: panel 1 (Cicekci) ve 7 (Berber).",
+   "v": 64
+  },
+  {
+   "id": "CK-02",
+   "dosya": "SM_ShopFront_8m_Kitap.obj",
+   "ad": "Dükkân cephesi 8 m · KİTAP vitrinleri",
+   "ucgen": 110,
+   "ucgen_siniri": 450,
+   "gdy_cm": [
+    800.0,
+    35.0,
+    400.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    -0.15
+   ],
+   "sinir_max": [
+    8.0,
+    4.0,
+    0.2
+   ],
+   "pivot": "Taban, ön duvar yüzü, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_ShopInterior",
+    "MI_Arch_Kapi"
+   ],
+   "nesneler": [
+    "ShopFront"
+   ],
+   "soketler": {
+    "Socket_Sign": [
+     4.0,
+     3.4,
+     0.0
+    ],
+    "Socket_Awning_1": [
+     1.9,
+     3.05,
+     0.0
+    ],
+    "Socket_Awning_2": [
+     6.1,
+     3.05,
+     0.0
+    ],
+    "Socket_Blade_L": [
+     0.2,
+     2.5,
+     0.1
+    ],
+    "Socket_Blade_R": [
+     7.8,
+     2.5,
+     0.1
+    ]
+   },
+   "soketler_unity": {
+    "Socket_Sign": {
+     "konum": [
+      -4.0,
+      3.4,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Awning_1": {
+     "konum": [
+      -1.9,
+      3.05,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Awning_2": {
+     "konum": [
+      -6.1,
+      3.05,
+      0.0
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_L": {
+     "konum": [
+      -0.2,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    },
+    "Socket_Blade_R": {
+     "konum": [
+      -7.8,
+      2.5,
+      0.1
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Vitrin içleri: panel 3 (Kitapci) ve 6 (Kirtasiye).",
+   "v": 64
+  },
+  {
+   "id": "CK-03",
+   "dosya": "SM_FacadeFill_3m.obj",
+   "ad": "Dolgu duvar 3 m",
+   "ucgen": 20,
+   "ucgen_siniri": 60,
+   "gdy_cm": [
+    300.0,
+    20.0,
+    400.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    3.0,
+    4.0,
+    0.2
+   ],
+   "pivot": "Taban, ön duvar yüzü, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur"
+   ],
+   "nesneler": [
+    "FacadeFill"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 16
+  },
+  {
+   "id": "CK-04",
+   "dosya": "SM_UpperFloor_3m.obj",
+   "ad": "Üst kat 3 m",
+   "ucgen": 14,
+   "ucgen_siniri": 80,
+   "gdy_cm": [
+    300.0,
+    10.0,
+    360.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    3.0,
+    3.6,
+    0.1
+   ],
+   "pivot": "Kendi tabanı (dünyada Y 4,00), ön yüz, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_Windows"
+   ],
+   "nesneler": [
+    "UpperFloor"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Pencere decal’ı DC_Ext_Windows; tipler dönüşümlü (perdeli, saksılı).",
+   "v": 14
+  },
+  {
+   "id": "CK-04",
+   "dosya": "SM_UpperFloor_6m.obj",
+   "ad": "Üst kat 6 m",
+   "ucgen": 16,
+   "ucgen_siniri": 80,
+   "gdy_cm": [
+    600.0,
+    10.0,
+    360.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    6.0,
+    3.6,
+    0.1
+   ],
+   "pivot": "Kendi tabanı (dünyada Y 4,00), ön yüz, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_Windows"
+   ],
+   "nesneler": [
+    "UpperFloor"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Pencere decal’ı DC_Ext_Windows; tipler dönüşümlü (perdeli, saksılı).",
+   "v": 18
+  },
+  {
+   "id": "CK-04",
+   "dosya": "SM_UpperFloor_8m.obj",
+   "ad": "Üst kat 8 m",
+   "ucgen": 18,
+   "ucgen_siniri": 80,
+   "gdy_cm": [
+    800.0,
+    10.0,
+    360.0
+   ],
+   "sinir_min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    8.0,
+    3.6,
+    0.1
+   ],
+   "pivot": "Kendi tabanı (dünyada Y 4,00), ön yüz, sol kenar",
+   "materyaller": [
+    "MI_Arch_Cephe",
+    "MI_Arch_Bordur",
+    "MI_Ext_Windows"
+   ],
+   "nesneler": [
+    "UpperFloor"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "Pencere decal’ı DC_Ext_Windows; tipler dönüşümlü (perdeli, saksılı).",
+   "v": 22
+  },
+  {
+   "id": "CK-05",
+   "dosya": "SM_Awning_300_Lila.obj",
+   "ad": "Tente 300 · Lila",
+   "ucgen": 20,
+   "ucgen_siniri": 60,
+   "gdy_cm": [
+    300.0,
+    120.0,
+    65.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.65,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.0,
+    1.2
+   ],
+   "pivot": "Arka üst kenar ortası (Socket_Awning)",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Awning"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 26
+  },
+  {
+   "id": "CK-05",
+   "dosya": "SM_Awning_300_Bebek.obj",
+   "ad": "Tente 300 · Bebek",
+   "ucgen": 20,
+   "ucgen_siniri": 60,
+   "gdy_cm": [
+    300.0,
+    120.0,
+    65.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.65,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.0,
+    1.2
+   ],
+   "pivot": "Arka üst kenar ortası (Socket_Awning)",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Awning"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 26
+  },
+  {
+   "id": "CK-05",
+   "dosya": "SM_Awning_300_Nane.obj",
+   "ad": "Tente 300 · Nane",
+   "ucgen": 20,
+   "ucgen_siniri": 60,
+   "gdy_cm": [
+    300.0,
+    120.0,
+    65.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.65,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.0,
+    1.2
+   ],
+   "pivot": "Arka üst kenar ortası (Socket_Awning)",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Awning"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 26
+  },
+  {
+   "id": "CK-05",
+   "dosya": "SM_Awning_450_Lila.obj",
+   "ad": "Tente 450 · Lila",
+   "ucgen": 20,
+   "ucgen_siniri": 60,
+   "gdy_cm": [
+    450.0,
+    120.0,
+    65.0
+   ],
+   "sinir_min": [
+    -2.25,
+    -0.65,
+    0.0
+   ],
+   "sinir_max": [
+    2.25,
+    0.0,
+    1.2
+   ],
+   "pivot": "Arka üst kenar ortası (Socket_Awning)",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Awning"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 26
+  },
+  {
+   "id": "CK-05",
+   "dosya": "SM_Awning_450_Bebek.obj",
+   "ad": "Tente 450 · Bebek",
+   "ucgen": 20,
+   "ucgen_siniri": 60,
+   "gdy_cm": [
+    450.0,
+    120.0,
+    65.0
+   ],
+   "sinir_min": [
+    -2.25,
+    -0.65,
+    0.0
+   ],
+   "sinir_max": [
+    2.25,
+    0.0,
+    1.2
+   ],
+   "pivot": "Arka üst kenar ortası (Socket_Awning)",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Awning"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 26
+  },
+  {
+   "id": "CK-05",
+   "dosya": "SM_Awning_450_Nane.obj",
+   "ad": "Tente 450 · Nane",
+   "ucgen": 20,
+   "ucgen_siniri": 60,
+   "gdy_cm": [
+    450.0,
+    120.0,
+    65.0
+   ],
+   "sinir_min": [
+    -2.25,
+    -0.65,
+    0.0
+   ],
+   "sinir_max": [
+    2.25,
+    0.0,
+    1.2
+   ],
+   "pivot": "Arka üst kenar ortası (Socket_Awning)",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Awning"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 26
+  },
+  {
+   "id": "CK-06",
+   "dosya": "SM_FacadeSign_Plak.obj",
+   "ad": "Cephe tabelası · PLAK",
+   "ucgen": 12,
+   "ucgen_siniri": 30,
+   "gdy_cm": [
+    300.0,
+    6.2,
+    50.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.25,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.25,
+    0.0615
+   ],
+   "pivot": "Arka yüz ortası (Socket_Sign)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "FacadeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 12
+  },
+  {
+   "id": "CK-06",
+   "dosya": "SM_FacadeSign_Cicek.obj",
+   "ad": "Cephe tabelası · ÇİÇEK",
+   "ucgen": 12,
+   "ucgen_siniri": 30,
+   "gdy_cm": [
+    300.0,
+    6.2,
+    50.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.25,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.25,
+    0.0615
+   ],
+   "pivot": "Arka yüz ortası (Socket_Sign)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "FacadeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 12
+  },
+  {
+   "id": "CK-06",
+   "dosya": "SM_FacadeSign_Oyuncak.obj",
+   "ad": "Cephe tabelası · OYUNCAK",
+   "ucgen": 12,
+   "ucgen_siniri": 30,
+   "gdy_cm": [
+    300.0,
+    6.2,
+    50.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.25,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.25,
+    0.0615
+   ],
+   "pivot": "Arka yüz ortası (Socket_Sign)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "FacadeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 12
+  },
+  {
+   "id": "CK-06",
+   "dosya": "SM_FacadeSign_Kitap.obj",
+   "ad": "Cephe tabelası · KİTAP",
+   "ucgen": 12,
+   "ucgen_siniri": 30,
+   "gdy_cm": [
+    300.0,
+    6.2,
+    50.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.25,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.25,
+    0.0615
+   ],
+   "pivot": "Arka yüz ortası (Socket_Sign)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "FacadeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 12
+  },
+  {
+   "id": "CK-06",
+   "dosya": "SM_FacadeSign_Radyo.obj",
+   "ad": "Cephe tabelası · RADYO",
+   "ucgen": 12,
+   "ucgen_siniri": 30,
+   "gdy_cm": [
+    300.0,
+    6.2,
+    50.0
+   ],
+   "sinir_min": [
+    -1.5,
+    -0.25,
+    0.0
+   ],
+   "sinir_max": [
+    1.5,
+    0.25,
+    0.0615
+   ],
+   "pivot": "Arka yüz ortası (Socket_Sign)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "FacadeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 12
+  },
+  {
+   "id": "CK-07",
+   "dosya": "SM_BladeSign_Cicek.obj",
+   "ad": "Bıçak tabela · ÇİÇEK",
+   "ucgen": 96,
+   "ucgen_siniri": 120,
+   "gdy_cm": [
+    10.0,
+    86.0,
+    138.0
+   ],
+   "sinir_min": [
+    -0.05,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    0.05,
+    1.38,
+    0.86
+   ],
+   "pivot": "Pilaster yüzü, tabelanın alt kenarı (Socket_Blade)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "BladeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 64
+  },
+  {
+   "id": "CK-07",
+   "dosya": "SM_BladeSign_Kitap.obj",
+   "ad": "Bıçak tabela · KİTAP",
+   "ucgen": 96,
+   "ucgen_siniri": 120,
+   "gdy_cm": [
+    10.0,
+    86.0,
+    138.0
+   ],
+   "sinir_min": [
+    -0.05,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    0.05,
+    1.38,
+    0.86
+   ],
+   "pivot": "Pilaster yüzü, tabelanın alt kenarı (Socket_Blade)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "BladeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 64
+  },
+  {
+   "id": "CK-07",
+   "dosya": "SM_BladeSign_Radyo.obj",
+   "ad": "Bıçak tabela · RADYO",
+   "ucgen": 96,
+   "ucgen_siniri": 120,
+   "gdy_cm": [
+    10.0,
+    86.0,
+    138.0
+   ],
+   "sinir_min": [
+    -0.05,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    0.05,
+    1.38,
+    0.86
+   ],
+   "pivot": "Pilaster yüzü, tabelanın alt kenarı (Socket_Blade)",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Ext_Signs"
+   ],
+   "nesneler": [
+    "BladeSign"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 64
+  },
+  {
+   "id": "UF-01",
+   "dosya": "SM_FarSilhouetteCard.obj",
+   "ad": "Uzak silüet kartı",
+   "ucgen": 2,
+   "ucgen_siniri": 2,
+   "gdy_cm": [
+    2400.0,
+    0.0,
+    600.0
+   ],
+   "sinir_min": [
+    -12.0,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    12.0,
+    6.0,
+    0.0
+   ],
+   "pivot": "Taban ortası",
+   "materyaller": [
+    "MI_Ext_FarSilhouette"
+   ],
+   "nesneler": [
+    "FarSilhouetteCard"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 4
+  },
+  {
+   "id": "SE-01",
+   "dosya": "SM_StreetLamp.obj",
+   "ad": "Sokak lambası",
+   "ucgen": 242,
+   "ucgen_siniri": 300,
+   "gdy_cm": [
+    37.0,
+    37.0,
+    450.0
+   ],
+   "sinir_min": [
+    -0.1848,
+    0.0,
+    -0.1848
+   ],
+   "sinir_max": [
+    0.1848,
+    4.5,
+    0.1848
+   ],
+   "pivot": "Taban ortası",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "StreetLamp"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 149
+  },
+  {
+   "id": "SE-02",
+   "dosya": "SM_Mailbox.obj",
+   "ad": "Posta kutusu",
+   "ucgen": 82,
+   "ucgen_siniri": 250,
+   "gdy_cm": [
+    50.0,
+    47.0,
+    110.0
+   ],
+   "sinir_min": [
+    -0.25,
+    0.0,
+    -0.225
+   ],
+   "sinir_max": [
+    0.25,
+    1.1,
+    0.245
+   ],
+   "pivot": "Taban ortası, ağız +Z",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Palette_Chrome"
+   ],
+   "nesneler": [
+    "Mailbox"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 62
+  },
+  {
+   "id": "SE-04",
+   "dosya": "SM_Bench.obj",
+   "ad": "Bank",
+   "ucgen": 132,
+   "ucgen_siniri": 300,
+   "gdy_cm": [
+    180.0,
+    55.0,
+    85.0
+   ],
+   "sinir_min": [
+    -0.9,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    0.9,
+    0.85,
+    0.55
+   ],
+   "pivot": "Taban, arka kenar ortası (cepheye yaslı)",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Bench"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 80
+  },
+  {
+   "id": "SE-05",
+   "dosya": "SM_NewsBox.obj",
+   "ad": "Gazete otomatı",
+   "ucgen": 64,
+   "ucgen_siniri": 200,
+   "gdy_cm": [
+    47.0,
+    44.0,
+    103.0
+   ],
+   "sinir_min": [
+    -0.235,
+    0.0,
+    -0.21
+   ],
+   "sinir_max": [
+    0.235,
+    1.03,
+    0.23
+   ],
+   "pivot": "Taban ortası",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Palette_Chrome"
+   ],
+   "nesneler": [
+    "NewsBox"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 52
+  },
+  {
+   "id": "SE-06",
+   "dosya": "SM_Tree_A.obj",
+   "ad": "Ağaç A (büyük)",
+   "ucgen": 376,
+   "ucgen_siniri": 500,
+   "gdy_cm": [
+    312.5,
+    247.5,
+    549.7
+   ],
+   "sinir_min": [
+    -1.5175,
+    0.0,
+    -1.2359
+   ],
+   "sinir_max": [
+    1.6071,
+    5.4974,
+    1.2387
+   ],
+   "pivot": "Taban ortası",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Tree"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 202
+  },
+  {
+   "id": "SE-06",
+   "dosya": "SM_Tree_B.obj",
+   "ad": "Ağaç B (küçük)",
+   "ucgen": 376,
+   "ucgen_siniri": 500,
+   "gdy_cm": [
+    236.9,
+    203.5,
+    445.9
+   ],
+   "sinir_min": [
+    -1.1817,
+    0.0,
+    -1.0186
+   ],
+   "sinir_max": [
+    1.1875,
+    4.4588,
+    1.0163
+   ],
+   "pivot": "Taban ortası",
+   "materyaller": [
+    "MI_Palette"
+   ],
+   "nesneler": [
+    "Tree"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Hayır",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 202
+  },
+  {
+   "id": "AR-01",
+   "dosya": "SM_Car_Sedan.obj",
+   "ad": "Sedan (gövde + cam)",
+   "ucgen": 772,
+   "ucgen_siniri": 1100,
+   "gdy_cm": [
+    194.0,
+    504.0,
+    115.0
+   ],
+   "sinir_min": [
+    -0.97,
+    0.3,
+    -2.52
+   ],
+   "sinir_max": [
+    0.97,
+    1.45,
+    2.52
+   ],
+   "pivot": "Taban ortası, ön +Z",
+   "materyaller": [
+    "MI_CarBody_Nane",
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_CarGlass"
+   ],
+   "nesneler": [
+    "Body"
+   ],
+   "soketler": {
+    "Wheel_FL": {
+     "konum": [
+      0.8,
+      0.3188,
+      1.45
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_FR": {
+     "konum": [
+      -0.8,
+      0.3188,
+      1.45
+     ],
+     "donus_y": 180.0
+    },
+    "Wheel_RL": {
+     "konum": [
+      0.8,
+      0.3188,
+      -1.45
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_RR": {
+     "konum": [
+      -0.8,
+      0.3188,
+      -1.45
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Exhaust": {
+     "konum": [
+      -0.55,
+      0.3,
+      -2.49
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Shadow": {
+     "konum": [
+      0.0,
+      0.01,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "soketler_unity": {
+    "Wheel_FL": {
+     "konum": [
+      -0.8,
+      0.3188,
+      1.45
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_FR": {
+     "konum": [
+      0.8,
+      0.3188,
+      1.45
+     ],
+     "donus_y": 180.0
+    },
+    "Wheel_RL": {
+     "konum": [
+      -0.8,
+      0.3188,
+      -1.45
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_RR": {
+     "konum": [
+      0.8,
+      0.3188,
+      -1.45
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Exhaust": {
+     "konum": [
+      0.55,
+      0.3,
+      -2.49
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Shadow": {
+     "konum": [
+      0.0,
+      0.01,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Oval (FX-04)",
+   "kok": "Exterior_Visual",
+   "not_": "Tekerlekler SM_Wheel örnekleri (soketlerde). Gövde materyali MI_CarBody_* ile değişir.",
+   "v": 459
+  },
+  {
+   "id": "AR-02",
+   "dosya": "SM_Car_Pickup.obj",
+   "ad": "Pikap (gövde + cam)",
+   "ucgen": 740,
+   "ucgen_siniri": 1100,
+   "gdy_cm": [
+    198.0,
+    512.0,
+    130.0
+   ],
+   "sinir_min": [
+    -0.99,
+    0.32,
+    -2.56
+   ],
+   "sinir_max": [
+    0.99,
+    1.62,
+    2.56
+   ],
+   "pivot": "Taban ortası, ön +Z",
+   "materyaller": [
+    "MI_CarBody_Bebek",
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_CarGlass"
+   ],
+   "nesneler": [
+    "Body"
+   ],
+   "soketler": {
+    "Wheel_FL": {
+     "konum": [
+      0.81,
+      0.3188,
+      1.6
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_FR": {
+     "konum": [
+      -0.81,
+      0.3188,
+      1.6
+     ],
+     "donus_y": 180.0
+    },
+    "Wheel_RL": {
+     "konum": [
+      0.81,
+      0.3188,
+      -1.55
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_RR": {
+     "konum": [
+      -0.81,
+      0.3188,
+      -1.55
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Exhaust": {
+     "konum": [
+      -0.55,
+      0.3,
+      -2.52
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Shadow": {
+     "konum": [
+      0.0,
+      0.01,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "soketler_unity": {
+    "Wheel_FL": {
+     "konum": [
+      -0.81,
+      0.3188,
+      1.6
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_FR": {
+     "konum": [
+      0.81,
+      0.3188,
+      1.6
+     ],
+     "donus_y": 180.0
+    },
+    "Wheel_RL": {
+     "konum": [
+      -0.81,
+      0.3188,
+      -1.55
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_RR": {
+     "konum": [
+      0.81,
+      0.3188,
+      -1.55
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Exhaust": {
+     "konum": [
+      0.55,
+      0.3,
+      -2.52
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Shadow": {
+     "konum": [
+      0.0,
+      0.01,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Oval (FX-04)",
+   "kok": "Exterior_Visual",
+   "not_": "Kasa içi S11·K7.",
+   "v": 437
+  },
+  {
+   "id": "AR-03",
+   "dosya": "SM_Van.obj",
+   "ad": "Kamyonet (gövde + cam)",
+   "ucgen": 656,
+   "ucgen_siniri": 1300,
+   "gdy_cm": [
+    198.8,
+    513.0,
+    190.0
+   ],
+   "sinir_min": [
+    -0.994,
+    0.32,
+    -2.56
+   ],
+   "sinir_max": [
+    0.994,
+    2.22,
+    2.57
+   ],
+   "pivot": "Taban ortası, ön +Z",
+   "materyaller": [
+    "MI_CarBody_Lila",
+    "MI_Palette",
+    "MI_Palette_Chrome",
+    "MI_CarGlass"
+   ],
+   "nesneler": [
+    "Body"
+   ],
+   "soketler": {
+    "Wheel_FL": {
+     "konum": [
+      0.82,
+      0.3188,
+      1.7
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_FR": {
+     "konum": [
+      -0.82,
+      0.3188,
+      1.7
+     ],
+     "donus_y": 180.0
+    },
+    "Wheel_RL": {
+     "konum": [
+      0.82,
+      0.3188,
+      -1.7
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_RR": {
+     "konum": [
+      -0.82,
+      0.3188,
+      -1.7
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Exhaust": {
+     "konum": [
+      -0.55,
+      0.3,
+      -2.53
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Shadow": {
+     "konum": [
+      0.0,
+      0.01,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "soketler_unity": {
+    "Wheel_FL": {
+     "konum": [
+      -0.82,
+      0.3188,
+      1.7
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_FR": {
+     "konum": [
+      0.82,
+      0.3188,
+      1.7
+     ],
+     "donus_y": 180.0
+    },
+    "Wheel_RL": {
+     "konum": [
+      -0.82,
+      0.3188,
+      -1.7
+     ],
+     "donus_y": 0.0
+    },
+    "Wheel_RR": {
+     "konum": [
+      0.82,
+      0.3188,
+      -1.7
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Exhaust": {
+     "konum": [
+      0.55,
+      0.3,
+      -2.53
+     ],
+     "donus_y": 180.0
+    },
+    "Socket_Shadow": {
+     "konum": [
+      0.0,
+      0.01,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   "kontur": false,
+   "golge": "Oval (FX-04)",
+   "kok": "Exterior_Visual",
+   "not_": "AR-06 park kamyonet = bu mesh + MI_CarBody_Gri.",
+   "v": 392
+  },
+  {
+   "id": "AR-04",
+   "dosya": "SM_Wheel.obj",
+   "ad": "Tekerlek",
+   "ucgen": 60,
+   "ucgen_siniri": 64,
+   "gdy_cm": [
+    22.5,
+    63.8,
+    63.8
+   ],
+   "sinir_min": [
+    -0.1,
+    -0.3188,
+    -0.3188
+   ],
+   "sinir_max": [
+    0.125,
+    0.3188,
+    0.3188
+   ],
+   "pivot": "Aks merkezi, aks X, jant +X",
+   "materyaller": [
+    "MI_Palette",
+    "MI_Palette_Chrome"
+   ],
+   "nesneler": [
+    "Wheel"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "—",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 37
+  },
+  {
+   "id": "FX-02",
+   "dosya": "SM_Ped_Card.obj",
+   "ad": "Figüran kartı",
+   "ucgen": 2,
+   "ucgen_siniri": 2,
+   "gdy_cm": [
+    90.0,
+    0.0,
+    180.0
+   ],
+   "sinir_min": [
+    -0.45,
+    0.0,
+    0.0
+   ],
+   "sinir_max": [
+    0.45,
+    1.8,
+    0.0
+   ],
+   "pivot": "Taban ortası, ön +Z",
+   "materyaller": [
+    "MI_Ped"
+   ],
+   "nesneler": [
+    "Ped_Card"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "Oval (FX-04)",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 4
+  },
+  {
+   "id": "FX-04",
+   "dosya": "SM_BlobShadow.obj",
+   "ad": "Oval gölge kartı 1 × 1 m",
+   "ucgen": 2,
+   "ucgen_siniri": 2,
+   "gdy_cm": [
+    100.0,
+    100.0,
+    0.0
+   ],
+   "sinir_min": [
+    -0.5,
+    0.0,
+    -0.5
+   ],
+   "sinir_max": [
+    0.5,
+    0.0,
+    0.5
+   ],
+   "pivot": "Merkez, yukarı bakar",
+   "materyaller": [
+    "MI_BlobShadow"
+   ],
+   "nesneler": [
+    "BlobShadow"
+   ],
+   "soketler": {},
+   "soketler_unity": {},
+   "kontur": false,
+   "golge": "—",
+   "kok": "Exterior_Visual",
+   "not_": "",
+   "v": 4
+  }
+ ],
+ "yerlesim": {
+  "faz05": [
+   {
+    "ad": "ARCH_Sokak",
+    "dosya": "ARCH_Sokak",
+    "konum": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "MM-01…03, MM-05",
+    "unity": {
+     "konum": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_1",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     -30.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      30.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_1",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     -30.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      30.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_2",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     -27.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      27.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_2",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     -27.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      27.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_3",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     -24.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      24.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_3",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     -24.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      24.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_4",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     -21.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      21.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_4",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     -21.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      21.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_ShopFront_6m_Plak_1",
+    "dosya": "SM_ShopFront_6m_Plak",
+    "konum": [
+     -18.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-01",
+    "unity": {
+     "konum": [
+      18.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_6m_1",
+    "dosya": "SM_UpperFloor_6m",
+    "konum": [
+     -18.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      18.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeSign_Plak",
+    "dosya": "SM_FacadeSign_Plak",
+    "konum": [
+     -15.0,
+     3.4,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-06",
+    "unity": {
+     "konum": [
+      15.0,
+      3.4,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Awning_450_Lila_D1",
+    "dosya": "SM_Awning_450_Lila",
+    "konum": [
+     -15.7,
+     3.05,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-05",
+    "unity": {
+     "konum": [
+      15.7,
+      3.05,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_ShopFront_8m_Cicek_1",
+    "dosya": "SM_ShopFront_8m_Cicek",
+    "konum": [
+     -12.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K6"
+    },
+    "olcek": null,
+    "liste": "CK-02",
+    "unity": {
+     "konum": [
+      12.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_8m_1",
+    "dosya": "SM_UpperFloor_8m",
+    "konum": [
+     -12.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K6"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      12.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeSign_Cicek",
+    "dosya": "SM_FacadeSign_Cicek",
+    "konum": [
+     -8.0,
+     3.4,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-06",
+    "unity": {
+     "konum": [
+      8.0,
+      3.4,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Awning_300_Bebek_D2",
+    "dosya": "SM_Awning_300_Bebek",
+    "konum": [
+     -10.1,
+     3.05,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-05",
+    "unity": {
+     "konum": [
+      10.1,
+      3.05,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_BladeSign_Cicek",
+    "dosya": "SM_BladeSign_Cicek",
+    "konum": [
+     -4.2,
+     2.5,
+     -15.6
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-07",
+    "unity": {
+     "konum": [
+      4.2,
+      2.5,
+      -15.6
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_5",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     -4.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      4.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_5",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     -4.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      4.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_6",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     -1.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K0"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      1.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_6",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     -1.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K0"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      1.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_7",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     2.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K0"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      -2.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_7",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     2.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K0"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      -2.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_8",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     5.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K0"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      -5.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_8",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     5.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K0"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      -5.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_ShopFront_6m_Oyuncak_1",
+    "dosya": "SM_ShopFront_6m_Oyuncak",
+    "konum": [
+     8.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-01",
+    "unity": {
+     "konum": [
+      -8.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_6m_2",
+    "dosya": "SM_UpperFloor_6m",
+    "konum": [
+     8.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      -8.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeSign_Oyuncak",
+    "dosya": "SM_FacadeSign_Oyuncak",
+    "konum": [
+     11.0,
+     3.4,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-06",
+    "unity": {
+     "konum": [
+      -11.0,
+      3.4,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Awning_300_Nane_D3",
+    "dosya": "SM_Awning_300_Nane",
+    "konum": [
+     10.3,
+     3.05,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-05",
+    "unity": {
+     "konum": [
+      -10.3,
+      3.05,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_ShopFront_8m_Kitap_1",
+    "dosya": "SM_ShopFront_8m_Kitap",
+    "konum": [
+     14.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-02",
+    "unity": {
+     "konum": [
+      -14.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_8m_2",
+    "dosya": "SM_UpperFloor_8m",
+    "konum": [
+     14.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      -14.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeSign_Kitap",
+    "dosya": "SM_FacadeSign_Kitap",
+    "konum": [
+     18.0,
+     3.4,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-06",
+    "unity": {
+     "konum": [
+      -18.0,
+      3.4,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Awning_300_Lila_D4",
+    "dosya": "SM_Awning_300_Lila",
+    "konum": [
+     15.9,
+     3.05,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-05",
+    "unity": {
+     "konum": [
+      -15.9,
+      3.05,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_BladeSign_Kitap",
+    "dosya": "SM_BladeSign_Kitap",
+    "konum": [
+     21.8,
+     2.5,
+     -15.6
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-07",
+    "unity": {
+     "konum": [
+      -21.8,
+      2.5,
+      -15.6
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_ShopFront_6m_Radyo_1",
+    "dosya": "SM_ShopFront_6m_Radyo",
+    "konum": [
+     28.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K6"
+    },
+    "olcek": null,
+    "liste": "CK-01",
+    "unity": {
+     "konum": [
+      -28.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_6m_3",
+    "dosya": "SM_UpperFloor_6m",
+    "konum": [
+     28.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K6"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      -28.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeSign_Radyo",
+    "dosya": "SM_FacadeSign_Radyo",
+    "konum": [
+     31.0,
+     3.4,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-06",
+    "unity": {
+     "konum": [
+      -31.0,
+      3.4,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_BladeSign_Radyo",
+    "dosya": "SM_BladeSign_Radyo",
+    "konum": [
+     28.2,
+     2.5,
+     -15.6
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "CK-07",
+    "unity": {
+     "konum": [
+      -28.2,
+      2.5,
+      -15.6
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_9",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     34.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      -34.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_9",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     34.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K4"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      -34.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FacadeFill_3m_10",
+    "dosya": "SM_FacadeFill_3m",
+    "konum": [
+     37.0,
+     0.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-03",
+    "unity": {
+     "konum": [
+      -37.0,
+      0.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_UpperFloor_3m_10",
+    "dosya": "SM_UpperFloor_3m",
+    "konum": [
+     37.0,
+     4.0,
+     -15.7
+    ],
+    "donus_y": 0.0,
+    "materyal": {
+     "MI_Arch_Cephe": "MI_Arch_Cephe_K5"
+    },
+    "olcek": null,
+    "liste": "CK-04",
+    "unity": {
+     "konum": [
+      -37.0,
+      4.0,
+      -15.7
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_FarSilhouetteCard",
+    "dosya": "SM_FarSilhouetteCard",
+    "konum": [
+     25.0,
+     0.0,
+     -35.6
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "UF-01",
+    "unity": {
+     "konum": [
+      -25.0,
+      0.0,
+      -35.6
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_StreetLamp_Yakin_1",
+    "dosya": "SM_StreetLamp",
+    "konum": [
+     -1.5,
+     0.0,
+     -3.0
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-01",
+    "unity": {
+     "konum": [
+      1.5,
+      0.0,
+      -3.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_StreetLamp_Yakin_2",
+    "dosya": "SM_StreetLamp",
+    "konum": [
+     15.5,
+     0.0,
+     -3.0
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-01",
+    "unity": {
+     "konum": [
+      -15.5,
+      0.0,
+      -3.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_StreetLamp_Karsi_1",
+    "dosya": "SM_StreetLamp",
+    "konum": [
+     -13.5,
+     0.0,
+     -12.9
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-01",
+    "unity": {
+     "konum": [
+      13.5,
+      0.0,
+      -12.9
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_StreetLamp_Karsi_2",
+    "dosya": "SM_StreetLamp",
+    "konum": [
+     -0.5,
+     0.0,
+     -12.9
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-01",
+    "unity": {
+     "konum": [
+      0.5,
+      0.0,
+      -12.9
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_StreetLamp_Karsi_3",
+    "dosya": "SM_StreetLamp",
+    "konum": [
+     13.0,
+     0.0,
+     -12.9
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-01",
+    "unity": {
+     "konum": [
+      -13.0,
+      0.0,
+      -12.9
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_StreetLamp_Karsi_4",
+    "dosya": "SM_StreetLamp",
+    "konum": [
+     30.5,
+     0.0,
+     -12.9
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-01",
+    "unity": {
+     "konum": [
+      -30.5,
+      0.0,
+      -12.9
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Mailbox_1",
+    "dosya": "SM_Mailbox",
+    "konum": [
+     12.8,
+     0.0,
+     -2.9
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-02",
+    "unity": {
+     "konum": [
+      -12.8,
+      0.0,
+      -2.9
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Bench_1",
+    "dosya": "SM_Bench",
+    "konum": [
+     -15.7,
+     0.0,
+     -15.64
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-04",
+    "unity": {
+     "konum": [
+      15.7,
+      0.0,
+      -15.64
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Bench_2",
+    "dosya": "SM_Bench",
+    "konum": [
+     16.0,
+     0.0,
+     -15.64
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-04",
+    "unity": {
+     "konum": [
+      -16.0,
+      0.0,
+      -15.64
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_NewsBox_1",
+    "dosya": "SM_NewsBox",
+    "konum": [
+     7.0,
+     0.0,
+     -13.1
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-05",
+    "unity": {
+     "konum": [
+      -7.0,
+      0.0,
+      -13.1
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "SM_Tree_A_1",
+    "dosya": "SM_Tree_A",
+    "konum": [
+     -12.0,
+     0.0,
+     -13.2
+    ],
+    "donus_y": 20.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-06",
+    "unity": {
+     "konum": [
+      12.0,
+      0.0,
+      -13.2
+     ],
+     "donus_y": -20.0
+    }
+   },
+   {
+    "ad": "SM_Tree_B_1",
+    "dosya": "SM_Tree_B",
+    "konum": [
+     8.0,
+     0.0,
+     -13.2
+    ],
+    "donus_y": -35.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-06",
+    "unity": {
+     "konum": [
+      -8.0,
+      0.0,
+      -13.2
+     ],
+     "donus_y": 35.0
+    }
+   },
+   {
+    "ad": "SM_Tree_A_2",
+    "dosya": "SM_Tree_A",
+    "konum": [
+     22.0,
+     0.0,
+     -13.2
+    ],
+    "donus_y": 140.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "SE-06",
+    "unity": {
+     "konum": [
+      -22.0,
+      0.0,
+      -13.2
+     ],
+     "donus_y": -140.0
+    }
+   },
+   {
+    "ad": "SM_Van_Park",
+    "dosya": "SM_Van",
+    "konum": [
+     3.8,
+     -0.15,
+     -4.45
+    ],
+    "donus_y": 90.0,
+    "materyal": {
+     "MI_CarBody_Lila": "MI_CarBody_Gri"
+    },
+    "olcek": null,
+    "liste": "AR-06",
+    "unity": {
+     "konum": [
+      -3.8,
+      -0.15,
+      -4.45
+     ],
+     "donus_y": -90.0
+    }
+   },
+   {
+    "ad": "SM_Van_Park_Wheel_FL",
+    "dosya": "SM_Wheel",
+    "konum": [
+     5.5,
+     0.1688,
+     -5.27
+    ],
+    "donus_y": 90.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "AR-04",
+    "unity": {
+     "konum": [
+      -5.5,
+      0.1688,
+      -5.27
+     ],
+     "donus_y": -90.0
+    }
+   },
+   {
+    "ad": "SM_Van_Park_Wheel_FR",
+    "dosya": "SM_Wheel",
+    "konum": [
+     5.5,
+     0.1688,
+     -3.63
+    ],
+    "donus_y": -90.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "AR-04",
+    "unity": {
+     "konum": [
+      -5.5,
+      0.1688,
+      -3.63
+     ],
+     "donus_y": 90.0
+    }
+   },
+   {
+    "ad": "SM_Van_Park_Wheel_RL",
+    "dosya": "SM_Wheel",
+    "konum": [
+     2.1,
+     0.1688,
+     -5.27
+    ],
+    "donus_y": 90.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "AR-04",
+    "unity": {
+     "konum": [
+      -2.1,
+      0.1688,
+      -5.27
+     ],
+     "donus_y": -90.0
+    }
+   },
+   {
+    "ad": "SM_Van_Park_Wheel_RR",
+    "dosya": "SM_Wheel",
+    "konum": [
+     2.1,
+     0.1688,
+     -3.63
+    ],
+    "donus_y": -90.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "AR-04",
+    "unity": {
+     "konum": [
+      -2.1,
+      0.1688,
+      -3.63
+     ],
+     "donus_y": 90.0
+    }
+   },
+   {
+    "ad": "SM_Van_Park_Shadow",
+    "dosya": "SM_BlobShadow",
+    "konum": [
+     3.8,
+     -0.14,
+     -4.45
+    ],
+    "donus_y": 90.0,
+    "materyal": {},
+    "olcek": [
+     2.3,
+     1.0,
+     5.2
+    ],
+    "liste": "FX-04",
+    "unity": {
+     "konum": [
+      -3.8,
+      -0.14,
+      -4.45
+     ],
+     "donus_y": -90.0
+    }
+   }
+  ],
+  "ekim11": [
+   {
+    "ad": "ARCH_Sokak",
+    "dosya": "ARCH_Sokak",
+    "konum": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "MM-01…03",
+    "yalniz": [
+     "Kaldirim_Yakin",
+     "Yol",
+     "Kaldirim_Karsi"
+    ],
+    "unity": {
+     "konum": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   },
+   {
+    "ad": "ARCH_KarsiCephe_Yer",
+    "dosya": "ARCH_KarsiCephe_Yer",
+    "konum": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "donus_y": 0.0,
+    "materyal": {},
+    "olcek": null,
+    "liste": "MM-04",
+    "unity": {
+     "konum": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "donus_y": 0.0
+    }
+   }
+  ],
+  "toplam_ucgen_faz05": 5296,
+  "toplam_ucgen_11ekim": 196
+ },
+ "bos_nodelar": {
+  "Ext_Spawn_W": {
+   "plan": [
+    -5.0,
+    0.0,
+    -1.5
+   ],
+   "unity": [
+    5.0,
+    0.0,
+    -1.5
+   ]
+  },
+  "Ext_Despawn_E": {
+   "plan": [
+    20.0,
+    0.0,
+    -1.5
+   ],
+   "unity": [
+    -20.0,
+    0.0,
+    -1.5
+   ]
+  },
+  "Ext_SM_PlantBush_1": {
+   "plan": [
+    2.4,
+    0.0,
+    -0.55
+   ],
+   "unity": [
+    -2.4,
+    0.0,
+    -0.55
+   ]
+  },
+  "Ext_SM_PlantBush_2": {
+   "plan": [
+    5.2,
+    0.0,
+    -0.55
+   ],
+   "unity": [
+    -5.2,
+    0.0,
+    -0.55
+   ]
+  },
+  "Ref_Arac_Yakin_Dogma": {
+   "plan": [
+    -25.0,
+    -0.15,
+    -7.45
+   ],
+   "unity": [
+    25.0,
+    -0.15,
+    -7.45
+   ]
+  },
+  "Ref_Arac_Yakin_Kaybolma": {
+   "plan": [
+    38.0,
+    -0.15,
+    -7.45
+   ],
+   "unity": [
+    -38.0,
+    -0.15,
+    -7.45
+   ]
+  },
+  "Ref_Arac_Uzak_Dogma": {
+   "plan": [
+    38.0,
+    -0.15,
+    -10.95
+   ],
+   "unity": [
+    -38.0,
+    -0.15,
+    -10.95
+   ]
+  },
+  "Ref_Arac_Uzak_Kaybolma": {
+   "plan": [
+    -25.0,
+    -0.15,
+    -10.95
+   ],
+   "unity": [
+    25.0,
+    -0.15,
+    -10.95
+   ]
+  },
+  "Ref_Figuran_Dogu_Dogma": {
+   "plan": [
+    -25.0,
+    0.0,
+    -13.6
+   ],
+   "unity": [
+    25.0,
+    0.0,
+    -13.6
+   ]
+  },
+  "Ref_Figuran_Dogu_Kaybolma": {
+   "plan": [
+    38.0,
+    0.0,
+    -13.6
+   ],
+   "unity": [
+    -38.0,
+    0.0,
+    -13.6
+   ]
+  },
+  "Ref_Figuran_Bati_Dogma": {
+   "plan": [
+    38.0,
+    0.0,
+    -14.6
+   ],
+   "unity": [
+    -38.0,
+    0.0,
+    -14.6
+   ]
+  },
+  "Ref_Figuran_Bati_Kaybolma": {
+   "plan": [
+    -25.0,
+    0.0,
+    -14.6
+   ],
+   "unity": [
+    25.0,
+    0.0,
+    -14.6
+   ]
+  }
+ },
+ "materyaller": [
+  {
+   "ad": "MI_Palette",
+   "hex": null,
+   "doku": "cook_no_evil_palet_256.png",
+   "not_": "Düz palet (CNE/Toon, _BaseMap = palet)"
+  },
+  {
+   "ad": "MI_Palette_Chrome",
+   "hex": null,
+   "doku": "cook_no_evil_palet_256.png",
+   "not_": "Krom: matcap (UV S5·K0)"
+  },
+  {
+   "ad": "MI_CarGlass",
+   "hex": null,
+   "doku": "cook_no_evil_palet_256.png",
+   "not_": "Araç camı S5·K6, ayrı alt mesh"
+  },
+  {
+   "ad": "MI_CarBody_Nane",
+   "hex": "#7DCECD",
+   "doku": null,
+   "not_": "AR-05 · S11·K8"
+  },
+  {
+   "ad": "MI_CarBody_Bebek",
+   "hex": "#84B9FF",
+   "doku": null,
+   "not_": "AR-05 · S11·K9"
+  },
+  {
+   "ad": "MI_CarBody_Lila",
+   "hex": "#A58FD8",
+   "doku": null,
+   "not_": "AR-05 · S6·K6"
+  },
+  {
+   "ad": "MI_CarBody_Gri",
+   "hex": "#899BBB",
+   "doku": null,
+   "not_": "AR-05 · S11·K0 (park kamyonet)"
+  },
+  {
+   "ad": "MI_Arch_Kaldirim",
+   "hex": "#9BAEC9",
+   "doku": null,
+   "not_": "S11·K2"
+  },
+  {
+   "ad": "MI_Arch_Bordur",
+   "hex": "#B7CAE8",
+   "doku": null,
+   "not_": "S11·K3: bordür, silme, taban bandı, denizlik, orta çizgi"
+  },
+  {
+   "ad": "MI_Arch_Asfalt",
+   "hex": "#54627A",
+   "doku": null,
+   "not_": "S11·K1"
+  },
+  {
+   "ad": "MI_Arch_YanDuvar",
+   "hex": "#587098",
+   "doku": null,
+   "not_": "S11·K7: ara sokak yan duvarları"
+  },
+  {
+   "ad": "MI_Arch_Kapi",
+   "hex": "#4A535B",
+   "doku": null,
+   "not_": "S5·K6: dükkân kapı paneli"
+  },
+  {
+   "ad": "MI_Arch_Cephe",
+   "hex": "#688AC1",
+   "doku": null,
+   "not_": "Cephe yuvası: örnek başına _K0/_K4/_K5/_K6 (manifest)"
+  },
+  {
+   "ad": "MI_Arch_Cephe_K0",
+   "hex": "#899BBB",
+   "doku": null,
+   "not_": "S11·K0 · GİRİŞ konisinin karşısı"
+  },
+  {
+   "ad": "MI_Arch_Cephe_K4",
+   "hex": "#688AC1",
+   "doku": null,
+   "not_": "S11·K4"
+  },
+  {
+   "ad": "MI_Arch_Cephe_K5",
+   "hex": "#8B8DCA",
+   "doku": null,
+   "not_": "S11·K5"
+  },
+  {
+   "ad": "MI_Arch_Cephe_K6",
+   "hex": "#7AA6AC",
+   "doku": null,
+   "not_": "S11·K6"
+  },
+  {
+   "ad": "MI_Ext_ShopInterior",
+   "hex": null,
+   "doku": "DC_ShopInterior.png",
+   "not_": "Unlit; vitrin içi atlası (taslak)"
+  },
+  {
+   "ad": "MI_Ext_Signs",
+   "hex": null,
+   "doku": "DC_Ext_Signs.png",
+   "not_": "Tabela yüzleri (taslak), emission yok"
+  },
+  {
+   "ad": "MI_Ext_Windows",
+   "hex": null,
+   "doku": "DC_Ext_Windows.png",
+   "not_": "Üst kat pencere decal’ı (taslak)"
+  },
+  {
+   "ad": "MI_Ext_FarSilhouette",
+   "hex": null,
+   "doku": "T_Ext_FarSilhouette.png",
+   "not_": "Unlit + alpha clip"
+  },
+  {
+   "ad": "MI_Ped",
+   "hex": null,
+   "doku": "T_Ped_Walk_Atlas.png",
+   "not_": "SG_Ped_Flipbook (unlit, alpha clip 0,5)"
+  },
+  {
+   "ad": "MI_BlobShadow",
+   "hex": null,
+   "doku": "T_BlobShadow.png",
+   "not_": "Unlit çarpma, opaklık 0,35"
+  }
+ ]
+}

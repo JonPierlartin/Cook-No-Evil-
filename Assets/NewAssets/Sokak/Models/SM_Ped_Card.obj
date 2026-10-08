@@ -1,0 +1,18 @@
+# Cook No Evil! · sokak modelleri
+# FX-02 · Figüran kartı
+# Pivot: Taban ortası, ön +Z
+# birim m · Y yukarı · ön +Z · üçgen 2
+mtllib CNE_Sokak.mtl
+v -0.45000 0.00000 0.00000
+v 0.45000 0.00000 0.00000
+v 0.45000 1.80000 0.00000
+v -0.45000 1.80000 0.00000
+vt 0.000000 0.000000
+vt 1.000000 0.000000
+vt 1.000000 1.000000
+vt 0.000000 1.000000
+vn 0.0000 0.0000 1.0000
+o Ped_Card
+g Ped_Card
+usemtl MI_Ped
+f 1/1/1 2/2/1 3/3/1 4/4/1

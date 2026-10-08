@@ -1,0 +1,211 @@
+# Cook No Evil! · sokak materyalleri (Kd = sRGB hex / 255). Unity'de proje materyalleriyle değiştirin.
+
+newmtl MI_Palette
+# Düz palet (CNE/Toon, _BaseMap = palet)
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd cook_no_evil_palet_256.png
+
+newmtl MI_Palette_Chrome
+# Krom: matcap (UV S5·K0)
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd cook_no_evil_palet_256.png
+
+newmtl MI_CarGlass
+# Araç camı S5·K6, ayrı alt mesh
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd cook_no_evil_palet_256.png
+
+newmtl MI_CarBody_Nane
+# AR-05 · S11·K8
+# #7DCECD
+Kd 0.4902 0.8078 0.8039
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_CarBody_Bebek
+# AR-05 · S11·K9
+# #84B9FF
+Kd 0.5176 0.7255 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_CarBody_Lila
+# AR-05 · S6·K6
+# #A58FD8
+Kd 0.6471 0.5608 0.8471
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_CarBody_Gri
+# AR-05 · S11·K0 (park kamyonet)
+# #899BBB
+Kd 0.5373 0.6078 0.7333
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Kaldirim
+# S11·K2
+# #9BAEC9
+Kd 0.6078 0.6824 0.7882
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Bordur
+# S11·K3: bordür, silme, taban bandı, denizlik, orta çizgi
+# #B7CAE8
+Kd 0.7176 0.7922 0.9098
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Asfalt
+# S11·K1
+# #54627A
+Kd 0.3294 0.3843 0.4784
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_YanDuvar
+# S11·K7: ara sokak yan duvarları
+# #587098
+Kd 0.3451 0.4392 0.5961
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Kapi
+# S5·K6: dükkân kapı paneli
+# #4A535B
+Kd 0.2902 0.3255 0.3569
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Cephe
+# Cephe yuvası: örnek başına _K0/_K4/_K5/_K6 (manifest)
+# #688AC1
+Kd 0.4078 0.5412 0.7569
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Cephe_K0
+# S11·K0 · GİRİŞ konisinin karşısı
+# #899BBB
+Kd 0.5373 0.6078 0.7333
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Cephe_K4
+# S11·K4
+# #688AC1
+Kd 0.4078 0.5412 0.7569
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Cephe_K5
+# S11·K5
+# #8B8DCA
+Kd 0.5451 0.5529 0.7922
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Arch_Cephe_K6
+# S11·K6
+# #7AA6AC
+Kd 0.4784 0.6510 0.6745
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+
+newmtl MI_Ext_ShopInterior
+# Unlit; vitrin içi atlası (taslak)
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd DC_ShopInterior.png
+
+newmtl MI_Ext_Signs
+# Tabela yüzleri (taslak), emission yok
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd DC_Ext_Signs.png
+
+newmtl MI_Ext_Windows
+# Üst kat pencere decal’ı (taslak)
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd DC_Ext_Windows.png
+
+newmtl MI_Ext_FarSilhouette
+# Unlit + alpha clip
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd T_Ext_FarSilhouette.png
+map_d T_Ext_FarSilhouette.png
+
+newmtl MI_Ped
+# SG_Ped_Flipbook (unlit, alpha clip 0,5)
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd T_Ped_Walk_Atlas.png
+map_d T_Ped_Walk_Atlas.png
+
+newmtl MI_BlobShadow
+# Unlit çarpma, opaklık 0,35
+Kd 1.0000 1.0000 1.0000
+Ka 0 0 0
+Ks 0 0 0
+Ns 0
+illum 1
+map_Kd T_BlobShadow.png
+map_d T_BlobShadow.png

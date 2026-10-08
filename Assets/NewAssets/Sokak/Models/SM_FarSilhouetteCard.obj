@@ -1,0 +1,18 @@
+# Cook No Evil! · sokak modelleri
+# UF-01 · Uzak silüet kartı
+# Pivot: Taban ortası
+# birim m · Y yukarı · ön +Z · üçgen 2
+mtllib CNE_Sokak.mtl
+v -12.00000 0.00000 0.00000
+v 12.00000 0.00000 0.00000
+v 12.00000 6.00000 0.00000
+v -12.00000 6.00000 0.00000
+vt 0.000000 0.000000
+vt 1.000000 0.000000
+vt 1.000000 1.000000
+vt 0.000000 1.000000
+vn 0.0000 0.0000 1.0000
+o FarSilhouetteCard
+g FarSilhouetteCard
+usemtl MI_Ext_FarSilhouette
+f 1/1/1 2/2/1 3/3/1 4/4/1
