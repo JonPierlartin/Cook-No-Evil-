@@ -1,0 +1,630 @@
+{
+ "proje": "Cook No Evil!",
+ "kadro": "L1 (K1 + H1 + R1)",
+ "tarih": "2026-10-08",
+ "format": "FBX 7.4 binary, gömülü palet PNG",
+ "birim": "metre (UnitScaleFactor 100 = 1 birim 1 m)",
+ "eksenler": "Y yukarı, sağ el, karakter +Z'ye bakar; zemin y=0",
+ "doku": {
+  "dosya": "textures/CNE_Karakter_Palet_256.png",
+  "boyut": 256,
+  "hucre_px": 16,
+  "uv": "hücre ortası: u=(K+0.5)/16, v=1-(S+0.5)/16",
+  "bos_hucre": "#FF00FF"
+ },
+ "vertex_color": "R = AO (0..1), G=B=R, A=1",
+ "ortak_kemikler": {
+  "Root": "zemin (0,0,0); Generic rig root node",
+  "Hand_L/R": "yüzen eller Root'a bağlı (gövdeden bağımsız)",
+  "<Parmak>_1..3_L/R": "Index, Middle, Ring, Pinky, Thumb; Y parmak boyunca, kıvırma local X etrafında (+)",
+  "Foot_L/R": "ayakkabılar, Root'a bağlı"
+ },
+ "materyaller": {
+  "MI_Char_Palette": "CNE/Toon, rim açık. Ayakkabı siyahı (S9·K4) için PropMap R ile küçük specular.",
+  "MI_Char_Glove": "CNE/Toon, renderer'da Receive Shadows kapalı. Eldiven hücresi beyaz: _BaseColor sinyal rengini birebir verir (her el ayrı renderer).",
+  "MI_Char_Chrome": "CNE/Toon + Matcap (PropMap R = S5·K0).",
+  "MI_Char_Steel": "CNE/Toon + Specular (PropMap R = S5·K3)."
+ },
+ "dogrulama": "ufbx 0.23 strict: uyarı yok, bind pose = rest, rest skinning hatası < 1e-15 m",
+ "karakterler": {
+  "CNE_Komi": {
+   "ad": "Komi",
+   "rol": "Sağır ketçap şişesi",
+   "varyant": "K1 Konik Tıkaç",
+   "goz_hizasi_m": 1.395,
+   "yuz": "Göz, kaş ve ağız animasyonlu",
+   "bakis_limiti_derece": {
+    "yatay": 16,
+    "dikey": 19,
+    "not_": "Bu açılara kadar göz bebeği tamamen görünür; ötesinde iç köşede şişe yüzeyinin arkasına kısmen girer (dış yana tek göz 45°+ dönebilir)."
+   },
+   "kemik_notlari": {
+    "Body": "gövde pivotu, şişenin alt yüzü (y 0.45)",
+    "Cap": "kapak + uç (eğilir, sallanır)",
+    "Eye_L/R": "Y = bakış yönü; yatay bakış local Z, dikey bakış local X etrafında",
+    "Brow_L/R": "kaş kemeri tepesinde; kaldır/indir/eğ",
+    "Mouth": "ağız şeridi (komple kaydır/döndür)",
+    "Ear_L/R": "konik tıkaçlar; Y dışarı"
+   },
+   "dosya": "fbx/CNE_Komi.fbx",
+   "bayt": 1111484,
+   "sha256_16": "84878acf153f2d33",
+   "sinir_kutusu_m": {
+    "min": [
+     -0.634,
+     0.0,
+     -0.305
+    ],
+    "max": [
+     0.634,
+     2.13,
+     0.325
+    ]
+   },
+   "yukseklik_m": 2.13,
+   "toplam": {
+    "vertex": 13701,
+    "ucgen": 27104
+   },
+   "meshler": [
+    {
+     "ad": "Komi_Body",
+     "vertex": 4574,
+     "ucgen": 9120,
+     "materyaller": [
+      "MI_Char_Palette"
+     ],
+     "kemikler": [
+      "Body",
+      "Cap",
+      "Ear_L",
+      "Ear_R"
+     ],
+     "max_etki": 1,
+     "blendshape": []
+    },
+    {
+     "ad": "Komi_Face",
+     "vertex": 1935,
+     "ucgen": 3632,
+     "materyaller": [
+      "MI_Char_Palette"
+     ],
+     "kemikler": [
+      "Body",
+      "Brow_L",
+      "Brow_R",
+      "Eye_L",
+      "Eye_R",
+      "Mouth"
+     ],
+     "max_etki": 1,
+     "blendshape": [
+      "Blink_L",
+      "Blink_R",
+      "Brow_L_Angry",
+      "Brow_L_Sad",
+      "Brow_L_Flat",
+      "Brow_L_Arch",
+      "Brow_R_Angry",
+      "Brow_R_Sad",
+      "Brow_R_Flat",
+      "Brow_R_Arch",
+      "Mouth_Open",
+      "Mouth_O",
+      "Mouth_Frown",
+      "Mouth_Flat",
+      "Mouth_Wide",
+      "Mouth_Smirk_L",
+      "Mouth_Smirk_R"
+     ]
+    },
+    {
+     "ad": "Komi_Glove_L",
+     "vertex": 1890,
+     "ucgen": 3776,
+     "materyaller": [
+      "MI_Char_Glove"
+     ],
+     "kemikler": "16 kemik",
+     "max_etki": 3,
+     "blendshape": []
+    },
+    {
+     "ad": "Komi_Glove_R",
+     "vertex": 1890,
+     "ucgen": 3776,
+     "materyaller": [
+      "MI_Char_Glove"
+     ],
+     "kemikler": "16 kemik",
+     "max_etki": 3,
+     "blendshape": []
+    },
+    {
+     "ad": "Komi_Shoes",
+     "vertex": 3412,
+     "ucgen": 6800,
+     "materyaller": [
+      "MI_Char_Palette"
+     ],
+     "kemikler": [
+      "Foot_L",
+      "Foot_R"
+     ],
+     "max_etki": 1,
+     "blendshape": []
+    }
+   ],
+   "kemik_hiyerarsisi": {
+    "Root": "CNE_Komi",
+    "Body": "Root",
+    "Brow_L": "Body",
+    "Brow_R": "Body",
+    "Cap": "Body",
+    "Ear_L": "Body",
+    "Ear_R": "Body",
+    "Eye_L": "Body",
+    "Eye_R": "Body",
+    "Mouth": "Body",
+    "Foot_L": "Root",
+    "Foot_R": "Root",
+    "Hand_L": "Root",
+    "Index_1_L": "Hand_L",
+    "Index_2_L": "Index_1_L",
+    "Index_3_L": "Index_2_L",
+    "Middle_1_L": "Hand_L",
+    "Middle_2_L": "Middle_1_L",
+    "Middle_3_L": "Middle_2_L",
+    "Pinky_1_L": "Hand_L",
+    "Pinky_2_L": "Pinky_1_L",
+    "Pinky_3_L": "Pinky_2_L",
+    "Ring_1_L": "Hand_L",
+    "Ring_2_L": "Ring_1_L",
+    "Ring_3_L": "Ring_2_L",
+    "Thumb_1_L": "Hand_L",
+    "Thumb_2_L": "Thumb_1_L",
+    "Thumb_3_L": "Thumb_2_L",
+    "Hand_R": "Root",
+    "Index_1_R": "Hand_R",
+    "Index_2_R": "Index_1_R",
+    "Index_3_R": "Index_2_R",
+    "Middle_1_R": "Hand_R",
+    "Middle_2_R": "Middle_1_R",
+    "Middle_3_R": "Middle_2_R",
+    "Pinky_1_R": "Hand_R",
+    "Pinky_2_R": "Pinky_1_R",
+    "Pinky_3_R": "Pinky_2_R",
+    "Ring_1_R": "Hand_R",
+    "Ring_2_R": "Ring_1_R",
+    "Ring_3_R": "Ring_2_R",
+    "Thumb_1_R": "Hand_R",
+    "Thumb_2_R": "Thumb_1_R",
+    "Thumb_3_R": "Thumb_2_R"
+   },
+   "palet_hucreleri": {
+    "S4·K3": {
+     "hex": "#B88A5E",
+     "ad": "Meşe (tıkaç)"
+    },
+    "S4·K5": {
+     "hex": "#D2A77A",
+     "ad": "Meşe açık (tıkaç ucu)"
+    },
+    "S5·K8": {
+     "hex": "#2C3237",
+     "ad": "Mürekkep / bebek / ekran / bant kumaşı"
+    },
+    "S6·K3": {
+     "hex": "#F1EEE6",
+     "ad": "Taban / göz akı"
+    },
+    "S9·K0": {
+     "hex": "#FFFFFF",
+     "ad": "Eldiven beyazı"
+    },
+    "S9·K3": {
+     "hex": "#C42E35",
+     "ad": "Komi kırmızısı (yeni)"
+    },
+    "S9·K4": {
+     "hex": "#2F2E3E",
+     "ad": "Ayakkabı siyahı (yeni)"
+    }
+   }
+  },
+  "CNE_Sef": {
+   "ad": "Şef",
+   "rol": "Kör hamburger",
+   "varyant": "H1 Göz Bandı",
+   "goz_hizasi_m": null,
+   "yuz": "Yüz animasyonu yok (bant sabit)",
+   "kemik_notlari": {
+    "Body": "alt ekmek + alt marul (y 0.45)",
+    "Stack_1": "alt köfte + alt peynir",
+    "Stack_2": "üst köfte + üst peynir",
+    "Stack_3": "domates + üst marul",
+    "Head": "üst ekmek + göz bandı + düğüm",
+    "Tail_L/R": "bant uçları (ikincil hareket)"
+   },
+   "dosya": "fbx/CNE_Sef.fbx",
+   "bayt": 1335884,
+   "sha256_16": "24b3c0412e1f6886",
+   "sinir_kutusu_m": {
+    "min": [
+     -0.843,
+     0.0,
+     -0.658
+    ],
+    "max": [
+     0.843,
+     1.555,
+     0.574
+    ]
+   },
+   "yukseklik_m": 1.555,
+   "toplam": {
+    "vertex": 21746,
+    "ucgen": 43416
+   },
+   "meshler": [
+    {
+     "ad": "Sef_Body",
+     "vertex": 14554,
+     "ucgen": 29064,
+     "materyaller": [
+      "MI_Char_Palette"
+     ],
+     "kemikler": [
+      "Body",
+      "Head",
+      "Stack_1",
+      "Stack_2",
+      "Stack_3",
+      "Tail_L",
+      "Tail_R"
+     ],
+     "max_etki": 1,
+     "blendshape": []
+    },
+    {
+     "ad": "Sef_Glove_L",
+     "vertex": 1890,
+     "ucgen": 3776,
+     "materyaller": [
+      "MI_Char_Glove"
+     ],
+     "kemikler": "16 kemik",
+     "max_etki": 3,
+     "blendshape": []
+    },
+    {
+     "ad": "Sef_Glove_R",
+     "vertex": 1890,
+     "ucgen": 3776,
+     "materyaller": [
+      "MI_Char_Glove"
+     ],
+     "kemikler": "16 kemik",
+     "max_etki": 3,
+     "blendshape": []
+    },
+    {
+     "ad": "Sef_Shoes",
+     "vertex": 3412,
+     "ucgen": 6800,
+     "materyaller": [
+      "MI_Char_Palette"
+     ],
+     "kemikler": [
+      "Foot_L",
+      "Foot_R"
+     ],
+     "max_etki": 1,
+     "blendshape": []
+    }
+   ],
+   "kemik_hiyerarsisi": {
+    "Root": "CNE_Sef",
+    "Body": "Root",
+    "Stack_1": "Body",
+    "Stack_2": "Stack_1",
+    "Stack_3": "Stack_2",
+    "Head": "Stack_3",
+    "Tail_L": "Head",
+    "Tail_R": "Head",
+    "Foot_L": "Root",
+    "Foot_R": "Root",
+    "Hand_L": "Root",
+    "Index_1_L": "Hand_L",
+    "Index_2_L": "Index_1_L",
+    "Index_3_L": "Index_2_L",
+    "Middle_1_L": "Hand_L",
+    "Middle_2_L": "Middle_1_L",
+    "Middle_3_L": "Middle_2_L",
+    "Pinky_1_L": "Hand_L",
+    "Pinky_2_L": "Pinky_1_L",
+    "Pinky_3_L": "Pinky_2_L",
+    "Ring_1_L": "Hand_L",
+    "Ring_2_L": "Ring_1_L",
+    "Ring_3_L": "Ring_2_L",
+    "Thumb_1_L": "Hand_L",
+    "Thumb_2_L": "Thumb_1_L",
+    "Thumb_3_L": "Thumb_2_L",
+    "Hand_R": "Root",
+    "Index_1_R": "Hand_R",
+    "Index_2_R": "Index_1_R",
+    "Index_3_R": "Index_2_R",
+    "Middle_1_R": "Hand_R",
+    "Middle_2_R": "Middle_1_R",
+    "Middle_3_R": "Middle_2_R",
+    "Pinky_1_R": "Hand_R",
+    "Pinky_2_R": "Pinky_1_R",
+    "Pinky_3_R": "Pinky_2_R",
+    "Ring_1_R": "Hand_R",
+    "Ring_2_R": "Ring_1_R",
+    "Ring_3_R": "Ring_2_R",
+    "Thumb_1_R": "Hand_R",
+    "Thumb_2_R": "Thumb_1_R",
+    "Thumb_3_R": "Thumb_2_R"
+   },
+   "palet_hucreleri": {
+    "S4·K6": {
+     "hex": "#5C4A40",
+     "ad": "Ceviz (köfte)"
+    },
+    "S5·K8": {
+     "hex": "#2C3237",
+     "ad": "Mürekkep / bebek / ekran / bant kumaşı"
+    },
+    "S6·K3": {
+     "hex": "#F1EEE6",
+     "ad": "Taban / göz akı"
+    },
+    "S8·K0": {
+     "hex": "#D49A5A",
+     "ad": "Ekmek"
+    },
+    "S8·K1": {
+     "hex": "#E8553E",
+     "ad": "Domates"
+    },
+    "S8·K2": {
+     "hex": "#F28C1E",
+     "ad": "Peynir"
+    },
+    "S8·K4": {
+     "hex": "#74BF4A",
+     "ad": "Marul"
+    },
+    "S9·K0": {
+     "hex": "#FFFFFF",
+     "ad": "Eldiven beyazı"
+    },
+    "S9·K4": {
+     "hex": "#2F2E3E",
+     "ad": "Ayakkabı siyahı (yeni)"
+    }
+   }
+  },
+  "CNE_Kasiyer": {
+   "ad": "Kasiyer",
+   "rol": "Dilsiz yazar kasa",
+   "varyant": "R1 Fermuar",
+   "goz_hizasi_m": 1.395,
+   "yuz": "Göz ve kaş animasyonlu, ağız (fermuar) sabit",
+   "bakis_limiti_derece": {
+    "yatay": 25,
+    "dikey": 25,
+    "not_": "Ekran düz; ±29°/±27°e kadar göz bebeği tamamen görünür."
+   },
+   "kemik_notlari": {
+    "Body": "taban, gövde, tuş rayı, fermuar (y 0.45)",
+    "Head": "kafa kutusu + ekran (kapak gibi açılır/eğilir)",
+    "Eye_L/R": "Y = bakış yönü; yatay bakış local Z, dikey bakış local X etrafında",
+    "Brow_L/R": "kaş kemeri tepesinde",
+    "Crank": "yan kol; Y = mil, çevirme local Y etrafında",
+    "Key_1..7": "tuşlar; basma local X etrafında (+25° civarı)"
+   },
+   "dosya": "fbx/CNE_Kasiyer.fbx",
+   "bayt": 1229644,
+   "sha256_16": "f3355857ba39e06a",
+   "sinir_kutusu_m": {
+    "min": [
+     -0.76,
+     0.0,
+     -0.332
+    ],
+    "max": [
+     0.76,
+     1.57,
+     0.349
+    ]
+   },
+   "yukseklik_m": 1.57,
+   "toplam": {
+    "vertex": 22370,
+    "ucgen": 43828
+   },
+   "meshler": [
+    {
+     "ad": "Kasiyer_Body",
+     "vertex": 13488,
+     "ucgen": 26252,
+     "materyaller": [
+      "MI_Char_Palette",
+      "MI_Char_Chrome",
+      "MI_Char_Steel"
+     ],
+     "kemikler": [
+      "Body",
+      "Crank",
+      "Head",
+      "Key_1",
+      "Key_2",
+      "Key_3",
+      "Key_4",
+      "Key_5",
+      "Key_6",
+      "Key_7"
+     ],
+     "max_etki": 1,
+     "blendshape": []
+    },
+    {
+     "ad": "Kasiyer_Face",
+     "vertex": 1690,
+     "ucgen": 3224,
+     "materyaller": [
+      "MI_Char_Palette"
+     ],
+     "kemikler": [
+      "Brow_L",
+      "Brow_R",
+      "Eye_L",
+      "Eye_R",
+      "Head"
+     ],
+     "max_etki": 1,
+     "blendshape": [
+      "Blink_L",
+      "Blink_R",
+      "Brow_L_Angry",
+      "Brow_L_Sad",
+      "Brow_L_Flat",
+      "Brow_L_Arch",
+      "Brow_R_Angry",
+      "Brow_R_Sad",
+      "Brow_R_Flat",
+      "Brow_R_Arch"
+     ]
+    },
+    {
+     "ad": "Kasiyer_Glove_L",
+     "vertex": 1890,
+     "ucgen": 3776,
+     "materyaller": [
+      "MI_Char_Glove"
+     ],
+     "kemikler": "16 kemik",
+     "max_etki": 3,
+     "blendshape": []
+    },
+    {
+     "ad": "Kasiyer_Glove_R",
+     "vertex": 1890,
+     "ucgen": 3776,
+     "materyaller": [
+      "MI_Char_Glove"
+     ],
+     "kemikler": "16 kemik",
+     "max_etki": 3,
+     "blendshape": []
+    },
+    {
+     "ad": "Kasiyer_Shoes",
+     "vertex": 3412,
+     "ucgen": 6800,
+     "materyaller": [
+      "MI_Char_Palette"
+     ],
+     "kemikler": [
+      "Foot_L",
+      "Foot_R"
+     ],
+     "max_etki": 1,
+     "blendshape": []
+    }
+   ],
+   "kemik_hiyerarsisi": {
+    "Root": "CNE_Kasiyer",
+    "Body": "Root",
+    "Crank": "Body",
+    "Head": "Body",
+    "Brow_L": "Head",
+    "Brow_R": "Head",
+    "Eye_L": "Head",
+    "Eye_R": "Head",
+    "Key_1": "Body",
+    "Key_2": "Body",
+    "Key_3": "Body",
+    "Key_4": "Body",
+    "Key_5": "Body",
+    "Key_6": "Body",
+    "Key_7": "Body",
+    "Foot_L": "Root",
+    "Foot_R": "Root",
+    "Hand_L": "Root",
+    "Index_1_L": "Hand_L",
+    "Index_2_L": "Index_1_L",
+    "Index_3_L": "Index_2_L",
+    "Middle_1_L": "Hand_L",
+    "Middle_2_L": "Middle_1_L",
+    "Middle_3_L": "Middle_2_L",
+    "Pinky_1_L": "Hand_L",
+    "Pinky_2_L": "Pinky_1_L",
+    "Pinky_3_L": "Pinky_2_L",
+    "Ring_1_L": "Hand_L",
+    "Ring_2_L": "Ring_1_L",
+    "Ring_3_L": "Ring_2_L",
+    "Thumb_1_L": "Hand_L",
+    "Thumb_2_L": "Thumb_1_L",
+    "Thumb_3_L": "Thumb_2_L",
+    "Hand_R": "Root",
+    "Index_1_R": "Hand_R",
+    "Index_2_R": "Index_1_R",
+    "Index_3_R": "Index_2_R",
+    "Middle_1_R": "Hand_R",
+    "Middle_2_R": "Middle_1_R",
+    "Middle_3_R": "Middle_2_R",
+    "Pinky_1_R": "Hand_R",
+    "Pinky_2_R": "Pinky_1_R",
+    "Pinky_3_R": "Pinky_2_R",
+    "Ring_1_R": "Hand_R",
+    "Ring_2_R": "Ring_1_R",
+    "Ring_3_R": "Ring_2_R",
+    "Thumb_1_R": "Hand_R",
+    "Thumb_2_R": "Thumb_1_R",
+    "Thumb_3_R": "Thumb_2_R"
+   },
+   "palet_hucreleri": {
+    "S1·K6": {
+     "hex": "#2E9E98",
+     "ad": "Turkuaz vurgu (Kasiyer gövde)"
+    },
+    "S5·K0": {
+     "hex": "#C3CCD2",
+     "ad": "Krom"
+    },
+    "S5·K3": {
+     "hex": "#A9B3BA",
+     "ad": "Paslanmaz"
+    },
+    "S5·K8": {
+     "hex": "#2C3237",
+     "ad": "Mürekkep / bebek / ekran / bant kumaşı"
+    },
+    "S6·K2": {
+     "hex": "#1B5754",
+     "ad": "Turkuaz koyu (Kasiyer taban)"
+    },
+    "S6·K3": {
+     "hex": "#F1EEE6",
+     "ad": "Taban / göz akı"
+    },
+    "S6·K6": {
+     "hex": "#A58FD8",
+     "ad": "Lila (tuş, kol)"
+    },
+    "S9·K0": {
+     "hex": "#FFFFFF",
+     "ad": "Eldiven beyazı"
+    },
+    "S9·K4": {
+     "hex": "#2F2E3E",
+     "ad": "Ayakkabı siyahı (yeni)"
+    }
+   }
+  }
+ }
+}

@@ -1249,6 +1249,26 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     Play'de değişir — commit edilmez.
   - Kitin `CNE_UI` metin tablosu ayrı (`Assets/CNE_UI/Localization/Tables`); `UIStrings`'e ve dil listesine dokunulmadı.
     Tek dil olduğu için DİL satırı gizli.
+- **YENİ KARAKTER MODELLERİ (9 Eki 2026, artist paketi `Assets/NewAssets/Karakterler/`; `BENIOKU.md` + `manifest.json` yanında):**
+  `CNE_Sef` / `CNE_Komi` / `CNE_Kasiyer` FBX (iskeletli, skinned; yüzlerde blendshape; +Z'ye bakar, zemin y=0, ölçek 1).
+  Eski gövde ve ayakkabı kaynakları (`CookNoEvil_Characters.fbx`, yürüme klibi, `Goz_*` materyalleri) SİLİNDİ; aşağıdaki
+  "Karakter modelleri" bölümündeki eski mesh ayrıntıları geçmiştir, animasyon kuralları geçerlidir.
+  - *CNE → Karakterler → Build* (`KarakterBuilder`; yeniden çalıştırılabilir): paketin yeni palet hücrelerini ana palete
+    ekler (çakışmada dokunmaz, hata yazar), `Materials/MI_Char_*` (kalıcı `CNE/Toon`; var olanın üzerine yazmaz) üretip
+    FBX'lere eşler, `Assets/Prefabs/Characters/Karakter_*` prefab'larını YERİNDE yeniden kurar (dosya, GUID ve animasyon
+    ayarları kalır). Avatar / Animator yok: kemikler düz Transform, hareket yine `ProceduralCharacterAnimator`.
+  - **Prefab düzeni aynı:** kök → `Govde` (altında `Body` kemiği + gövde / yüz mesh'leri), `AyakSol/Sag` (pivot ayağın
+    yere bastığı noktada; altında `Foot_L/R` kemiği), `ElSol/Sag`, `Ayakkabilar` (iki ayağın tek mesh'i). Model düz
+    kopyadır (FBX'e prefab bağı yok): iskelet değişirse Build yeniden çalıştırılır. L = karakterin solu = −X.
+  - **ELLER HÂLÂ ESKİ EL MODELİ** (dört parmak; bütün jest / klip / tutma animasyonları ona göre). Paketin beş parmaklı
+    eldivenleri prefab'da KAPALI durur (`YeniEldivenler`: `*_Glove_L/R` + `Hand_*` ve parmak kemikleri). Geçiş ayrı iş:
+    `HandPose`'a yüzük parmağı, sayı jestinin yeniden tanımı (5 tek elde) ve artist kliplerinin yeni kemiklere
+    aktarılması gerekir (klipler parmak dönüşünü kemik ADIYLA kopyalıyor).
+  - `browPoint` modelden okunur (`Brow_R` kemiği; Şef'te yüz yok → göz bandının üst kenarı 1,40); `gestureCenter.z`
+    gövdenin önünden en az 0,12 m ileride (Şef 0,85, Kasiyer 0,68). `GetBodyBounds` iskeletli mesh'te sınırı kök
+    kemiğin uzayında okur.
+  - Kullanılmayanlar (kemikleri hazır): göz kırpma / kaş / ağız blendshape'leri, bakış, Şef'in katman sallanması, Kasiyer'in
+    tuşları ve kolu. Şef 1,69 m genişlikte — çarpışma kapsülünden (yarıçap 0,5) geniş, duvara yanaşınca görseli girer.
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
   konsol her kare "There are no audio listeners" yazıyordu.

@@ -812,11 +812,15 @@ public class ProceduralCharacterAnimator : MonoBehaviour
         foreach (var bodyRenderer in body.GetComponentsInChildren<Renderer>(true))
         {
             var local = bodyRenderer.localBounds;
+            // İskeletli mesh'in sınırı kendi nesnesinin değil, kök kemiğinin uzayındadır.
+            var space = bodyRenderer is SkinnedMeshRenderer skinned && skinned.rootBone != null
+                ? skinned.rootBone
+                : bodyRenderer.transform;
             for (int i = 0; i < 8; i++)
             {
                 var corner = local.center + Vector3.Scale(local.extents,
                     new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
-                var point = transform.InverseTransformPoint(bodyRenderer.transform.TransformPoint(corner));
+                var point = transform.InverseTransformPoint(space.TransformPoint(corner));
                 min = Vector3.Min(min, point);
                 max = Vector3.Max(max, point);
             }

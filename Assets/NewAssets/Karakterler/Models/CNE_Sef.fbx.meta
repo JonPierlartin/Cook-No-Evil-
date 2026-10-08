@@ -1,11 +1,31 @@
 fileFormatVersion: 2
-guid: 973d5680bcccde842819bf29dc5e6e8b
+guid: 91b6d3680f5fd444ea327e61cfb9c933
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MI_Char_Chrome
+    second: {fileID: 2100000, guid: 0297e20ecf7dbc54d84629f8c979a9f0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MI_Char_Glove
+    second: {fileID: 2100000, guid: b91c5302dec7864468f8d591f5e252f6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MI_Char_Palette
+    second: {fileID: 2100000, guid: 89db9932b352e1b4ab070a8c3f3a8362, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MI_Char_Steel
+    second: {fileID: 2100000, guid: 047d2dc581ca4d0429bc5a9d3e292d62, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
     materialLocation: 1
@@ -79,11 +99,11 @@ ModelImporter:
     tangentImportMode: 3
     normalCalculationMode: 4
     legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
-    blendShapeNormalImportMode: 1
+    blendShapeNormalImportMode: 0
     normalSmoothingSource: 0
     calculateBlendshapeNormalsDeltaFromImportedNormals: 0
   referencedClips: []
-  importAnimation: 1
+  importAnimation: 0
   humanDescription:
     serializedVersion: 3
     human: []
