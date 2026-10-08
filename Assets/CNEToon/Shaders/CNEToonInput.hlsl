@@ -20,6 +20,7 @@ CBUFFER_START(UnityPerMaterial)
     half _ShadowStrength;
     half _GIStrength;
     half _LightClamp;
+    half _LightTint;
     half4 _SpecColor;
     half _SpecSize;
     half _SpecSoftness;
@@ -33,6 +34,10 @@ CBUFFER_START(UnityPerMaterial)
     half _EmissionBaseTint;
     half _HatchStrength;
     half _HatchScale;
+    half4 _PatternColor;
+    float4 _PatternSize;
+    half _PatternType;
+    half _PatternLine;
 CBUFFER_END
 
 TEXTURE2D(_BaseMap);    SAMPLER(sampler_BaseMap);

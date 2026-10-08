@@ -76,6 +76,23 @@ bantlar görünmez. Önce ışığı düzelt (ana ışık şiddeti 1, koyu ortam
 **Renk doğruluğu.** Beyaz ana ışık, şiddet 1, dolaylı ışık yok, Tonemapping None iken tam aydınlık yüzeyin ekrandaki
 rengi palet hex'iyle aynıdır (ölçüldü: ketçap `#E0262B`, hardal `#F5C518`, mayonez `#FAF6EA`, barbekü `#8C4A22`).
 
+### Yüzey deseni (mimari)
+
+Mimaride UV yoktur; fayans, lambri ve dama deseni materyalde, **dünya uzayında** üretilir (yüzeyin baktığı eksene
+göre). Yalnızca rengi değiştirir: normale ve derinliğe dokunmaz, Şef'in kontur görüşünde görünmez.
+
+| Parametre | Ne yapar |
+|---|---|
+| Yüzey deseni (`_SURFACEPATTERN_ON`) | Deseni açar. Varsayılan kapalı. |
+| Tür (`_PatternType`) | Fayans = şaşırtmalı derz · Kare = düz derz · Şerit = yalnızca düşey derz (lambri) · Dama = iki renkli kareler. |
+| Desen rengi (`_PatternColor`) | Derzin (damada ikinci karenin) rengi. Alfa = desenin gücü. |
+| Ölçü (`_PatternSize`) | X = karonun eni, Y = boyu (metre). |
+| Derz kalınlığı (`_PatternLine`) | Metre. Uzakta derz bir pikselden inceyken kırpışmasın diye solar. Damada kullanılmaz. |
+
+**Işık renginin etkisi (`_LightTint`)** — Işık bölümünde. 1 = ışığın rengi yüzeye olduğu gibi yansır (eşyalar).
+0 = yalnızca şiddeti (en parlak kanal); yüzey palet rengini korur. Mimari materyallerinde 0,15: sıcak güneş krem
+duvarı turuncuya çekmesin diye.
+
 ### Parlama
 
 | Parametre | Ne yapar | Varsayılan |

@@ -26,6 +26,7 @@ Shader "CNE/Toon"
         _ShadowStrength ("Golge gucu", Range(0, 1)) = 0.55
         _GIStrength ("Dolayli isik gucu", Range(0, 2)) = 0.5
         _LightClamp ("Isik ust siniri", Range(1, 3)) = 1.2
+        _LightTint ("Isik renginin etkisi", Range(0, 1)) = 1
 
         [Toggle(_SPECULAR_ON)] _Specular ("Parilti", Float) = 0
         _SpecColor ("Parilti rengi", Color) = (1, 1, 1, 1)
@@ -51,6 +52,13 @@ Shader "CNE/Toon"
         _HatchStrength ("Tarama gucu", Range(0, 1)) = 0.2
         _HatchScale ("Tarama olcegi (1/m)", Float) = 4
 
+        // Dunya uzayinda yuzey deseni (mimari: fayans, lambri, dama). Yalnizca RENK; normale ve derinlige dokunmaz.
+        [Toggle(_SURFACEPATTERN_ON)] _SurfacePattern ("Yuzey deseni", Float) = 0
+        [Enum(Fayans, 0, Kare, 1, Serit, 2, Dama, 3)] _PatternType ("Desen turu", Float) = 0
+        _PatternColor ("Desen rengi (derz / ikinci renk)", Color) = (0.5, 0.5, 0.5, 1)
+        _PatternSize ("Desen olcusu (m): en, boy", Vector) = (0.3, 0.15, 0, 0)
+        _PatternLine ("Derz kalinligi (m)", Range(0.001, 0.05)) = 0.008
+
         _VertexAOStrength ("Vertex AO gucu", Range(0, 1)) = 1
     }
 
@@ -75,6 +83,7 @@ Shader "CNE/Toon"
             #pragma shader_feature_local_fragment _RIM_ON
             #pragma shader_feature_local_fragment _EMISSION_ON
             #pragma shader_feature_local _HATCH_ON
+            #pragma shader_feature_local_fragment _SURFACEPATTERN_ON
 
             // URP anahtar kelimeleri — Lit.shader (URP 17.5) ForwardLit geçişinden.
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN

@@ -122,6 +122,15 @@ void InitializeInputData(Varyings input, out InputData inputData)
 // gölgenin kenarı yüzeyin açısına göre kayar ve gölge haritasının pikselleri testere dişi gibi görünür. Düşen
 // gölgenin kenarı kendi yumuşaklığıyla (_CastShadowSoftness) geçer; yumuşak gölge filtresinin 0–1 geçişinin ortası
 // alındığı için kenar gölge haritasının piksellerini değil, filtrelenmiş çizgiyi izler.
+// Işığın rengi: _LightTint 1 iken olduğu gibi, 0 iken yalnızca şiddeti (renksiz; en parlak kanal). Mimaride düşük
+// tutulur ki duvar ve zemin palet rengini korusun (sıcak güneş açık renkli duvarı turuncuya çekmesin): şiddeti 1
+// olan renkli bir ışığın altında ışık alan yüzey tam palet rengindedir.
+half3 CNELightColor(half3 color)
+{
+    half peak = max(color.r, max(color.g, color.b));
+    return lerp(peak.xxx, color, _LightTint);
+}
+
 half CNEBand(half nDotL, half shadow)
 {
     half facing = saturate(nDotL * (1.0 - _Wrap) + _Wrap);
@@ -157,6 +166,39 @@ half CNEHatch(float3 positionOS, half3 normalOS)
 }
 #endif
 
+#if defined(_SURFACEPATTERN_ON)
+// Dünya uzayında yüzey deseni: mimaride UV yoktur, desen yüzeyin baktığı eksene göre dünya konumundan üretilir.
+// Dönen değer 0–1: yüzey rengi ile desen rengi (_PatternColor) arasındaki karışım. Yalnızca rengi değiştirir.
+// Türler: 0 fayans (şaşırtmalı derz), 1 kare (düz derz), 2 şerit (yalnızca düşey derz), 3 dama.
+half CNESurfacePattern(float3 positionWS, half3 normalWS)
+{
+    half3 axis = abs(normalWS);
+    float2 p = axis.y > max(axis.x, axis.z) ? positionWS.xz
+        : (axis.x > axis.z ? positionWS.zy : positionWS.xy);
+    float2 cell = p / max(_PatternSize.xy, 1e-4);
+
+    if (_PatternType > 2.5)
+    {
+        // Dama: kenarlar piksel genişliğinde yumuşatılır.
+        float2 tri = abs(frac(cell * 0.5) - 0.5) * 2.0;
+        float2 width = max(fwidth(cell), 1e-5);
+        float2 side = smoothstep(0.5 - width, 0.5 + width, tri);
+        return side.x * (1.0 - side.y) + side.y * (1.0 - side.x);
+    }
+
+    if (_PatternType < 0.5)
+        cell.x += 0.5 * fmod(floor(cell.y), 2.0);
+
+    // Derze uzaklık (metre).
+    float2 edge = min(frac(cell), 1.0 - frac(cell)) * _PatternSize.xy;
+    float gap = _PatternType > 1.5 ? edge.x : min(edge.x, edge.y);
+    float pixel = max(fwidth(gap), 1e-5);
+    half lineMask = 1.0 - smoothstep(_PatternLine * 0.5 - pixel, _PatternLine * 0.5 + pixel, gap);
+    // Derz bir pikselden inceyken (uzakta) kırpışmasın diye solar.
+    return lineMask * saturate(_PatternLine / (pixel * 1.5));
+}
+#endif
+
 void ForwardFragment(
     Varyings input
     , out half4 outColor : SV_Target0
@@ -169,6 +211,9 @@ void ForwardFragment(
 
     half4 base = CNESampleBase(input.uv);
     CNEAlphaClip(base.a);
+#if defined(_SURFACEPATTERN_ON)
+    base.rgb = lerp(base.rgb, _PatternColor.rgb, CNESurfacePattern(input.positionWS, input.normalWS) * _PatternColor.a);
+#endif
 
 #if defined(_SPECULAR_ON) || defined(_MATCAP_ON) || defined(_EMISSION_ON) || defined(_HATCH_ON)
     half3 props = SAMPLE_TEXTURE2D(_PropMap, sampler_PropMap, input.uv).rgb;
@@ -196,7 +241,7 @@ void ForwardFragment(
 #endif
     {
         mainBand = CNEBand(dot(normalWS, mainLight.direction), mainLight.shadowAttenuation * mainLight.distanceAttenuation);
-        light += mainLight.color * lerp(shadowMultiplier, half3(1, 1, 1), mainBand);
+        light += CNELightColor(mainLight.color) * lerp(shadowMultiplier, half3(1, 1, 1), mainBand);
     #if defined(_SPECULAR_ON)
         specular += mainLight.color * (CNESpecular(normalWS, mainLight.direction, viewDirWS) * mainBand);
     #endif
@@ -216,7 +261,7 @@ void ForwardFragment(
     #endif
         {
             half band = CNEBand(dot(normalWS, light2.direction), light2.shadowAttenuation);
-            light += light2.color * (band * light2.distanceAttenuation);
+            light += CNELightColor(light2.color) * (band * light2.distanceAttenuation);
         }
     }
     #endif
@@ -229,7 +274,7 @@ void ForwardFragment(
         {
             // Bant yüzeyin yönünden ve gölgeden, parlaklık mesafeden gelir: lamba uzaklaştıkça bant kaymaz, solar.
             half band = CNEBand(dot(normalWS, light2.direction), light2.shadowAttenuation);
-            light += light2.color * (band * light2.distanceAttenuation);
+            light += CNELightColor(light2.color) * (band * light2.distanceAttenuation);
         #if defined(_SPECULAR_ON)
             specular += light2.color * (CNESpecular(normalWS, light2.direction, viewDirWS) * band * light2.distanceAttenuation);
         #endif

@@ -29,6 +29,7 @@ public class CNEToonShaderGUI : ShaderGUI
         Draw(editor, properties, "_ShadowTint", "Gölge rengi", "Gölgedeki yüzey bu renge doğru çarpılır. Siyah değil, soğuk bir renk olmalı.");
         Draw(editor, properties, "_ShadowStrength", "Gölge gücü", "0 = gölge yok, 1 = yüzey tamamen gölge rengiyle çarpılır.");
         Draw(editor, properties, "_GIStrength", "Dolaylı ışık gücü", "Lightmap, light probe ve ortam ışığının katkısı. Basamaksız eklenir.");
+        Draw(editor, properties, "_LightTint", "Işık renginin etkisi", "1 = ışığın rengi yüzeye olduğu gibi yansır. 0 = yalnızca şiddeti; yüzey palet rengini korur (mimari için düşük tutulur).");
         Draw(editor, properties, "_LightClamp", "Işık üst sınırı", "Toplam ışık bunu geçemez; lambaların yanında palet renkleri patlamaz.");
 
         Header("Parlama");
@@ -67,6 +68,15 @@ public class CNEToonShaderGUI : ShaderGUI
             Draw(editor, properties, "_HatchTex", "Tarama dokusu", "Döşenebilir gri tonlu desen (R kanalı okunur).");
             Draw(editor, properties, "_HatchStrength", "Güç", "Desenin kontrastı. Düşük tutulmalı.");
             Draw(editor, properties, "_HatchScale", "Ölçek", "Desenin metre başına tekrar sayısı (obje uzayında).");
+        }
+
+        Header("Yüzey deseni (mimari)");
+        if (Toggle(editor, properties, "_SurfacePattern", "Yüzey deseni", "Dünya uzayında fayans / lambri / dama deseni (UV gerekmez). Yalnızca rengi değiştirir; Şef'in kontur görüşüne girmez."))
+        {
+            Draw(editor, properties, "_PatternType", "Tür", "Fayans = şaşırtmalı derz, Kare = düz derz, Şerit = yalnızca düşey derz, Dama = iki renkli kareler.");
+            Draw(editor, properties, "_PatternColor", "Desen rengi", "Derzin (damada ikinci karenin) rengi. Alfa = desenin gücü.");
+            Draw(editor, properties, "_PatternSize", "Ölçü (m)", "X = karonun eni, Y = boyu (metre).");
+            Draw(editor, properties, "_PatternLine", "Derz kalınlığı", "Metre. Dama türünde kullanılmaz.");
         }
 
         Header("AO");
