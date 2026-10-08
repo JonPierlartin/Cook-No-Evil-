@@ -14,6 +14,8 @@ public class MusicPlayer : MonoBehaviour
         [Tooltip("Menüde görünen ad.")]
         public string displayName;
         public AudioClip clip;
+        [Tooltip("Lisansın istediği atıf (ör. CC-BY): parça adının yanında gösterilir. Gerekmiyorsa boş.")]
+        public string credit;
     }
 
     public static MusicPlayer Instance { get; private set; }
@@ -31,6 +33,12 @@ public class MusicPlayer : MonoBehaviour
     public int CurrentTrackIndex => TrackCount == 0 ? -1 : Mathf.Clamp(GameSettings.MusicTrack, 0, TrackCount - 1);
 
     public string CurrentTrackName => CurrentTrackIndex >= 0 ? tracks[CurrentTrackIndex].displayName : string.Empty;
+
+    // Çalan parçanın atfı (yoksa boş).
+    public string CurrentTrackCredit => CurrentTrackIndex >= 0 ? tracks[CurrentTrackIndex].credit ?? string.Empty : string.Empty;
+
+    // Müzik şu an çalıyor mu (arayüzdeki plağın dönmesi için; salt okunur).
+    public bool IsPlaying => _source != null && _source.isPlaying;
 
     private void Awake()
     {

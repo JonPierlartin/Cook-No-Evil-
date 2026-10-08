@@ -73,7 +73,11 @@ public class LocalDebugLobby : MonoBehaviour
 
     private UnityEngine.UI.Button CreateButton(string label, UnityEngine.Events.UnityAction onClick, int siblingOffset)
     {
-        var button = Instantiate(buttonTemplate, buttonTemplate.transform.parent);
+        // Düğmeler ana menünün düzenine girmez: lobi denetleyicisinin gösterdiği geliştirici kabına eklenir
+        // (kap yoksa eski yerine, şablonun yanına).
+        var lobby = GetComponent<LobbyUIController>();
+        var parent = lobby != null && lobby.DeveloperButtonParent != null ? lobby.DeveloperButtonParent : buttonTemplate.transform.parent;
+        var button = Instantiate(buttonTemplate, parent);
         button.name = $"{label.Replace(" ", string.Empty)}Button";
 
         // Sablonun etiketi yerellestirme bileseniyle ("Host") surulur; kopyada kalirsa bizim

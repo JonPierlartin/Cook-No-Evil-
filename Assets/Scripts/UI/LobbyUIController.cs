@@ -14,6 +14,21 @@ public class LobbyUIController : MonoBehaviour
     private const string TableName = "UIStrings";
 
     [SerializeField] private GameObject lobbyPanel;
+    [Header("İlk ekran (ana menü)")]
+    [Tooltip("Ana menü: oturum yokken görünen AYRI panel (arayüz kitinin menüsü; kendi Canvas'ı). SetActive ile "
+        + "gösterilip gizlenir — giriş animasyonu ve menü ortamı buna bağlıdır.")]
+    [SerializeField] private GameObject initialScreen;
+    [Tooltip("Lobi içi görünümü (zemin, logo, kart, müzik düğmesi): oturum varken görünür, ana menüde gizlidir. "
+        + "Lobi pencereleri (oluştur / liste / şifre) bunun DIŞINDA durur ve ana menünün üstünde açılır.")]
+    [SerializeField] private GameObject sessionPanel;
+    [Tooltip("Ana menüdeyken durum ve hata metni (bağlanıyor, lobi kurulamadı…): lobi kartı gizli olduğu için ayrı.")]
+    [SerializeField] private Text initialStatusText;
+    [Tooltip("Ana menüyle birlikte görünen ekler (durum metni, geliştirici düğmeleri). Ana menü ayrı Canvas'ta "
+        + "olduğu için bunlar lobi Canvas'ında durur; lobi pencereleri üstlerinde açılır.")]
+    [SerializeField] private GameObject initialOverlay;
+    [Tooltip("Geliştirici düğmelerinin (Local Host / Local Join, test sahnesi) eklendiği kap. Ana menünün düzenine "
+        + "girmezler; ana menüyle birlikte görünürler (initialOverlay'in içinde).")]
+    [SerializeField] private Transform developerButtonParent;
     [SerializeField] private Button hostButton;
     [Tooltip("Açık lobileri listeleyen pencereyi açar (yalnızca ilk ekranda).")]
     [SerializeField] private Button browseButton;
@@ -23,6 +38,12 @@ public class LobbyUIController : MonoBehaviour
     // İlk ekranın düğmelerinden biri: ilk ekrana düğme ekleyen yardımcılar (ör. test sahnesi girişi) bunu şablon
     // olarak kopyalar ve görünürlüğünü buna uydurur.
     public Button InitialButtonTemplate => quitButton;
+
+    // Ana menü paneli: geliştirici düğmeleri onunla birlikte görünür / gizlenir.
+    public GameObject InitialScreen => initialScreen;
+
+    // Geliştirici düğmelerinin ekleneceği kap (atanmadıysa null: çağıran kendi yerini kullanır).
+    public Transform DeveloperButtonParent => developerButtonParent;
     [Tooltip("Lobi oluştur / lobi listesi / şifre pencereleri.")]
     [SerializeField] private LobbyBrowserUI browser;
     [SerializeField] private Button inviteButton;
@@ -241,7 +262,7 @@ public class LobbyUIController : MonoBehaviour
 
     public void BeginHost(string lobbyName, string password)
     {
-        statusText.text = Localize("lobby.creating");
+        SetStatus(Localize("lobby.creating"));
         hostButton.interactable = false;
         SteamLobbyManager.Instance.HostLobby(lobbyName, password);
     }
@@ -249,18 +270,35 @@ public class LobbyUIController : MonoBehaviour
     // Lobi listesinden (ya da şifre penceresinden) katılma.
     public void BeginJoin(ulong lobbyId, string password)
     {
-        statusText.text = Localize("lobby.connecting_generic");
+        SetStatus(Localize("lobby.connecting_generic"));
         SteamLobbyManager.Instance.JoinLobby(lobbyId, password);
     }
 
-    // İlk ekranın düğmeleri (lobi oluştur / lobilere gözat / çıkış) birlikte görünür ve gizlenir.
+    // İlk ekran (ana menü) ile lobi içi görünümü birbirinin tersidir: oturum yokken ana menü, varken lobi kartı.
+    // Eski ilk ekran düğmeleri (hostButton / browseButton / quitButton) artık gösterilmez; ana menünün satırları
+    // aynı işleri yapar (Inspector'dan LobbyBrowserUI'a bağlı). Düğmeler geliştirici düğmelerinin şablonu olarak durur.
     private void SetInitialButtonsVisible(bool visible)
     {
-        hostButton.gameObject.SetActive(visible);
-        browseButton.gameObject.SetActive(visible);
-        quitButton.gameObject.SetActive(visible);
+        if (initialScreen != null)
+            initialScreen.SetActive(visible);
+        if (sessionPanel != null)
+            sessionPanel.SetActive(!visible);
+        if (initialOverlay != null)
+            initialOverlay.SetActive(visible);
+
+        hostButton.gameObject.SetActive(false);
+        browseButton.gameObject.SetActive(false);
+        quitButton.gameObject.SetActive(false);
         if (!visible)
             browser.CloseAll();
+    }
+
+    // Durum metni iki yerde görünür: lobi kartında ve (kart gizliyken) ana menünün altında.
+    private void SetStatus(string message)
+    {
+        statusText.text = message;
+        if (initialStatusText != null)
+            initialStatusText.text = message;
     }
 
     private void HandleInviteClicked()
@@ -272,7 +310,7 @@ public class LobbyUIController : MonoBehaviour
     {
         bool started = GameLoopManager.Instance != null && GameLoopManager.Instance.StartRound();
         if (!started)
-            statusText.text = Localize("lobby.start_failed", RoleManager.MaxPlayers);
+            SetStatus(Localize("lobby.start_failed", RoleManager.MaxPlayers));
     }
 
     private void HandleLeaveClicked()
@@ -349,7 +387,7 @@ public class LobbyUIController : MonoBehaviour
 
     private void HandleLobbyJoined()
     {
-        statusText.text = Localize("lobby.connecting_host");
+        SetStatus(Localize("lobby.connecting_host"));
         SetInitialButtonsVisible(false);
     }
 
@@ -431,6 +469,11 @@ public class LobbyUIController : MonoBehaviour
             && GameLoopManager.Instance != null && GameLoopManager.Instance.CurrentRoundState.Value == RoundState.RoundEnded;
 
         lobbyPanel.SetActive(!active && !ended);
+        // Ana menü ayrı bir Canvas'tır: lobi paneli kapalıyken (round, bölüm sonu) o da kapalı olmalı.
+        if ((active || ended) && initialScreen != null)
+            initialScreen.SetActive(false);
+        if ((active || ended) && initialOverlay != null)
+            initialOverlay.SetActive(false);
         SetGameplayCanvasVisible(active || ended, active);
     }
 
@@ -490,13 +533,13 @@ public class LobbyUIController : MonoBehaviour
 
         if (roundActive)
         {
-            statusText.text = Localize("lobby.round_started", roleName);
+            SetStatus(Localize("lobby.round_started", roleName));
             return;
         }
 
-        statusText.text = isHost
+        SetStatus(isHost
             ? Localize("lobby.connected_host", roleName)
-            : Localize("lobby.connected_client", roleName);
+            : Localize("lobby.connected_client", roleName));
     }
 
     // SteamLobbyManager/RoleManager, gosterim metni yerine sabit bir HATA ANAHTARI
@@ -520,7 +563,7 @@ public class LobbyUIController : MonoBehaviour
         if (!inSession)
             ResetToInitialScreen();
 
-        statusText.text = Localize("lobby.error_prefix", Localize(errorKey));
+        SetStatus(Localize("lobby.error_prefix", Localize(errorKey)));
         hostButton.interactable = true;
     }
 
@@ -533,7 +576,7 @@ public class LobbyUIController : MonoBehaviour
         connectionLostPanel.SetActive(false);
         lobbyPanel.SetActive(true);
         ResetToInitialScreen();
-        statusText.text = Localize("lobby.error_prefix", Localize(errorKey));
+        SetStatus(Localize("lobby.error_prefix", Localize(errorKey)));
     }
 
     // Yalnizca host: GameLoopManager istemcileri koparip oturumu bitirdi; ag burada kapatilir.
@@ -549,7 +592,7 @@ public class LobbyUIController : MonoBehaviour
         // "Sunucu Baglantisi Koptu" ekrani gorunur/tiklanabilir olsun diye geri alir.
         SetGameplayCanvasVisible(false);
 
-        statusText.text = "";
+        SetStatus("");
         connectionLostPanel.SetActive(true);
         lobbyPanel.SetActive(false);
     }
@@ -568,7 +611,7 @@ public class LobbyUIController : MonoBehaviour
         inviteButton.gameObject.SetActive(false);
         startGameButton.gameObject.SetActive(false);
         leaveButton.gameObject.SetActive(false);
-        statusText.text = "";
+        SetStatus("");
         startGameButton.interactable = true;
         if (rolePanel != null)
             rolePanel.SetActive(false);

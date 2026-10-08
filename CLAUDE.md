@@ -1196,6 +1196,45 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
     - Ölçülmedi: gerçek Steam sesiyle seviyeler (yerel testte ses iletilmez). İnterkom hâlâ Faz 0 dışı.
   - **Palet:** `Mutfak_C1/Palettes/cook_no_evil_palet_256.png` İstasyon paketindekiyle değiştirildi (yalnızca iki
     yeni hücre: S10·K3 `#6F4E37`, S10·K4 `#F2B23A`; diğer 254 hücre birebir aynı — karşılaştırıldı).
+- **ARAYÜZ KİTİ 0.2.0 ve yeni ana menü (9 Eki 2026):** `Assets/CNE_UI/` (artist'in kiti; 50'ler diner teması,
+  TextMeshPro, kendi sesleri). **Kit yalnızca görünüm ve etkileşimdir; oyunun sistemleri tek kaynak kalır.** Kararlar
+  `docs/` dışında, kitle gelen `arayuz-kiti-kararlar.md`'de; kurulum `Assets/CNE_UI/README_KURULUM.md`.
+  - **Kit dosyaları düzenlenmez** (paket güncellemesi üzerine yazar; prefab'lar her kurulumda yeniden üretilir). Kurulum:
+    `CookNoEvil.UI.EditorTools.CNEUIKitBuilder.BuildSilent()` — pencere açmaz. *Tuzak:* uzun sürer; MCP çağrısı zaman
+    aşımına düşüp yeniden denenince komut 5 kez çalıştı (zararsız, ama bekle ve logdan başarı satırına bak).
+    Pencereli "Kur + demo sahnesi" komutu KULLANILMAZ. `Assets/TextMesh Pro/` kurulumla geldi.
+  - **Köprüler (proje kodu, `Assets/Scripts/UI/`; asset'ler `Assets/Data/UI/`):** `GameSettingsUISource`
+    (`CNESettingsSource` → `GameSettings` + `LookPreference`; sürgü aralıkları asset'te veri) ve `MusicPlayerUISource`
+    (`CNEMusicSource` → `MusicPlayer`). Köprü `AudioListener`'a / PlayerPrefs'e doğrudan yazmaz.
+    **Bekleyen karar:** VARSAYILANLAR düğmesi bağlı değil (uyarı loglar) ve `Save` boş — `GameSettings`'te sıfırlama ve
+    kaydetme metodu yok; Ersel'e iki seçenek anlatıldı.
+  - **Ana menü = `CNE_MainMenu` (kök, kendi Canvas'ı, sortingOrder −1):** `SampleScene`'in ilk ekranı; ayrı sahne yok.
+    LOBİ OLUŞTUR / LOBİLERE GÖZAT, Inspector'da görünen kalıcı dinleyicilerle `LobbyBrowserUI.OpenCreateDialog` /
+    `OpenList`'e bağlı; ÇIKIŞ kitin kendi kapatması; NASIL OYNANIR gizli. Mikrofon testi kaynağı atanmadı (satır gizli).
+  - **`LobbyUIController`: ilk ekran artık AYRI panel.** `initialScreen` (ana menü) ile `sessionPanel`
+    (`LobbyPanel/LobiIci`: kareli örtü zemini, logo, kart, müzik düğmesi) birbirinin tersidir; lobi pencereleri
+    (oluştur / liste / şifre) `LobbyPanel`'de kalır ve menünün üstünde açılır. Eski üç ilk ekran düğmesi kapalı
+    (silinmedi: geliştirici düğmelerinin şablonu). Durum / hata metni ana menüde `AnaMenuEkleri/DurumYazisi`'nda da
+    görünür (`SetStatus`). **Açılış durumu sahnede kayıtlıdır** (menü açık, lobi içi kapalı) — denetleyici açılışta
+    ayrıca kurmaz. Eski kareli örtü teması yalnızca ana menüden kalktı; lobi içi, ESC menüsü, HUD aynen duruyor.
+  - **Geliştirici düğmeleri** (Local Host / Local Join, TOON TEST) çalışırken kopyalanır; artık
+    `LobbyUIController.DeveloperButtonParent`'a (sağ üst köşe, `AnaMenuEkleri/GelistiriciDugmeleri`) eklenir, ana
+    menünün düzenine girmez.
+  - **Müzik:** `MusicPlayer.IsPlaying` (salt okunur) ve `Track.credit` eklendi; jukebox şeridi atfı adın yanında
+    gösterir (Chubby Cat → "PlayOnLoop.com (CC-BY 4.0)").
+  - **Gece ortamı (`CNEMenuAmbience`, `CNE_MainMenu/MenuAmbience`):** yalnızca ana menü görünürken, çalışma zamanında
+    uygulanır, gizlenince geri alınır; sahneye gece değeri yazılmaz. Sahnede kalıcı olanlar: `MenuNight` (KAPALI ışık
+    düzeneği: ay ışığı + 4 lamba + jukebox ve akvaryum neonu), `MenuCameraAnchor` / `MenuCameraAnchorB` (kadraj:
+    salondan sipariş penceresine; kamera 55 sn'de gidip gelir, FOV 45) ve `Assets/Data/UI/MenuNightProfile.asset`.
+    Gündüz güneşi menüde kapanır. Kapılar açık kalır, materyallere dokunulmaz, menüde bloom yok.
+    Editör önizlemesi: `Apply()` → RenderTexture → `Restore()` aynı çağrıda, try/finally ile; sonra sahne kaydedilmez.
+    Bilinen: sokaktaki ışıksız yüzeyler (vitrin içleri, silüet, figüranlar) gece kararmaz; mimari ışığın rengini az
+    aldığı için ay mavisi duvarlarda zayıf.
+  - **Tek kurulum komutu:** *CNE → Ana Menü → Kur* (`Assets/Editor/AnaMenuInstaller.cs`; yeniden çalıştırılabilir,
+    pencere açmaz): menü örneği, bağlantılar, lobi panelinin bölünmesi, ekler, parça atıfları ve gece düzeneği.
+    Salon yeniden kurulursa bu komut da yeniden çalıştırılır (ışıklar soket konumlarına oturur).
+  - Kitin `CNE_UI` metin tablosu ayrı (`Assets/CNE_UI/Localization/Tables`); `UIStrings`'e ve dil listesine dokunulmadı.
+    Tek dil olduğu için DİL satırı gizli.
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
   (sahnenin tek `AudioListener`'ı üstünde) despawn'da ve sahipliği bitince geri açar; açılmayınca lobiye dönüşte
   konsol her kare "There are no audio listeners" yazıyordu.

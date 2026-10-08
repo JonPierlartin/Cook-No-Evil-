@@ -97,8 +97,11 @@ public static class CNELookdev
         string label = settings != null ? settings.lookdevButtonLabel : SceneName;
 
         var template = lobby.InitialButtonTemplate;
-        var button = Object.Instantiate(template, template.transform.parent);
+        // Düğme ana menünün düzenine girmez: geliştirici kabına eklenir ve ana menüyle birlikte görünür.
+        var parent = lobby.DeveloperButtonParent != null ? lobby.DeveloperButtonParent : template.transform.parent;
+        var button = Object.Instantiate(template, parent);
         button.name = "ToonLookdevButton";
+        button.gameObject.SetActive(true);
 
         // Şablonun etiketi yerelleştirme bileşeniyle sürülür; kopyada kalırsa metni ezer.
         foreach (var localized in button.GetComponentsInChildren<UnityEngine.Localization.Components.LocalizeStringEvent>(true))
@@ -111,6 +114,10 @@ public static class CNELookdev
         button.transform.SetSiblingIndex(template.transform.GetSiblingIndex() + 1);
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(Enter);
+
+        // Kap ana menüyle birlikte açılıp kapanır (LobbyUIController); kap yoksa düğme şablonunu izler.
+        if (lobby.DeveloperButtonParent != null)
+            return;
 
         var visibility = template.transform.parent.gameObject.AddComponent<CNEMenuButtonVisibility>();
         visibility.Target = template.gameObject;
