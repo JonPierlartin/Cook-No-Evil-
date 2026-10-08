@@ -19,6 +19,10 @@ public class BlindVisionCamera : MonoBehaviour
     [SerializeField] private int blindVisionRendererIndex;
     [Tooltip("Bu rol kor gorusle gorur.")]
     [SerializeField] private PlayerRole blindRole = PlayerRole.Sef;
+    [Tooltip("Kör görüşte ÇİZİLMEYEN katmanlar (Şef'in görmemesi gereken eşyalar).")]
+    [SerializeField] private LayerMask hiddenWhenBlind;
+    [Tooltip("YALNIZCA kör görüşte çizilen katmanlar (Şef'in görüşünü kapatan perdeler; diğer roller görmez).")]
+    [SerializeField] private LayerMask visibleOnlyWhenBlind;
 
     // URP: SetRenderer(-1) = asset'in varsayilan renderer'i.
     private const int DefaultRendererIndex = -1;
@@ -29,10 +33,25 @@ public class BlindVisionCamera : MonoBehaviour
 
     private UniversalAdditionalCameraData _cameraData;
     private RoleManager _roleManager;
+    private Camera _camera;
+    private int _baseCullingMask;
 
     private void Awake()
     {
-        _cameraData = GetComponent<Camera>().GetUniversalAdditionalCameraData();
+        _camera = GetComponent<Camera>();
+        _cameraData = _camera.GetUniversalAdditionalCameraData();
+        _baseCullingMask = _camera.cullingMask;
+        ApplyCullingMask();
+    }
+
+    // Şef'in neyi görebildiği (GDD 4.1.1 + 8 Eki kararı): Şef yalnızca kendi mutfağını ve pencereden Komi ile Komi'nin
+    // ODASINI görür — İstasyon'un eşyalarını, Kasa'yı, Kasiyer'i ve ötesini görmez. Bu bir çizim kuralıdır:
+    // gizlenecek eşyalar bir katmanda, görüşü kesen perdeler (Kasa penceresi, mutfak kapısı) başka bir katmandadır.
+    private void ApplyCullingMask()
+    {
+        _camera.cullingMask = IsBlind
+            ? (_baseCullingMask & ~hiddenWhenBlind.value) | visibleOnlyWhenBlind.value
+            : _baseCullingMask & ~visibleOnlyWhenBlind.value;
     }
 
     private void OnEnable()
@@ -55,12 +74,14 @@ public class BlindVisionCamera : MonoBehaviour
         _roleManager = null;
         IsBlind = false;
         _cameraData.SetRenderer(DefaultRendererIndex);
+        ApplyCullingMask();
     }
 
     private void ApplyRole(PlayerRole role)
     {
         IsBlind = role == blindRole;
         _cameraData.SetRenderer(IsBlind ? blindVisionRendererIndex : DefaultRendererIndex);
+        ApplyCullingMask();
 
         // Kör görüşte post-process ve kenar yumuşatma YOKTUR: tonemapping / bloom / AA beyaz kontur çizgilerini
         // grileştirir ya da bulandırır. Başka bir sistem bu kamerada post-process açmış olsa da burada kapanır.

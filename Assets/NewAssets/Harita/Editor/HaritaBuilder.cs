@@ -16,7 +16,8 @@ public static class HaritaBuilder
     public const string HallPrefabPath = PrefabFolder + "/Salon_Yerlesim.prefab";
     public const string HallModelFolder = "Assets/NewAssets/Salon/Models";
     public const string StreetPrefabPath = PrefabFolder + "/Sokak_Yerlesim.prefab";
-    private const string StreetModelPath = "Assets/NewAssets/Sokak/Models/Sokak_Yerlesim.obj";
+    private const string StreetModelFolder = "Assets/NewAssets/Sokak/Models";
+    private const string StreetActorFolder = PrefabFolder + "/Sokak";
     private const string StreetTextureFolder = "Assets/NewAssets/Sokak/Textures";
     private const string StreetMaterialFolder = "Assets/NewAssets/Sokak/Materials";
     public const string SignFaceMaterialName = "MI_Tabela_Zemin";
@@ -52,7 +53,9 @@ public static class HaritaBuilder
         MutfakC1Builder.BuildLayoutPrefab(HallModelFolder + "/Salon_Yerlesim.glb", HallModelFolder,
             HallPrefabPath, "Salon_Yerlesim", materials, outlineFollowsShadow: true);
         CreateArchitectureMaterials();
-        BuildStreetPrefab(materials);
+        var streetMaterials = CreateStreetMaterials(materials);
+        BuildStreetPrefab(streetMaterials);
+        BuildStreetActors(streetMaterials);
         AssetDatabase.SaveAssets();
         Debug.Log("[CNE] Harita prefab'ları ve mimari materyalleri hazır.");
     }
@@ -90,9 +93,29 @@ public static class HaritaBuilder
     // Sokak paketi OBJ'dir (hiyerarşi, soket ve bayrak taşımaz): birleşik yerleşim dosyası tek model olarak içe
     // alınır, materyaller ada göre proje materyalleriyle değişir. Paket kuralı: sokak oyuncunun etkileşmediği fondur —
     // çizgi yok, gerçek zamanlı gölge yok.
-    private static void BuildStreetPrefab(Dictionary<string, Material> shared)
+    private static void BuildStreetPrefab(Dictionary<string, Material> materials)
     {
-        if (AssetImporter.GetAtPath(StreetModelPath) is ModelImporter importer
+        var model = LoadStreetModel("Sokak_Yerlesim");
+        if (model == null)
+            return;
+
+        var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
+        try
+        {
+            instance.name = "Sokak_Yerlesim";
+            ApplyStreetLook(instance, materials);
+            PrefabUtility.SaveAsPrefabAsset(instance, StreetPrefabPath);
+        }
+        finally
+        {
+            Object.DestroyImmediate(instance);
+        }
+    }
+
+    private static GameObject LoadStreetModel(string name)
+    {
+        string path = $"{StreetModelFolder}/{name}.obj";
+        if (AssetImporter.GetAtPath(path) is ModelImporter importer
             && (importer.importNormals != ModelImporterNormals.Import || importer.generateSecondaryUV || importer.isReadable))
         {
             importer.importNormals = ModelImporterNormals.Import;
@@ -101,41 +124,205 @@ public static class HaritaBuilder
             importer.SaveAndReimport();
         }
 
-        var model = AssetDatabase.LoadAssetAtPath<GameObject>(StreetModelPath);
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         if (model == null)
-        {
-            Debug.LogError($"[CNE] Sokak yerleşimi bulunamadı: {StreetModelPath}");
-            return;
-        }
+            Debug.LogError($"[CNE] Sokak modeli bulunamadı: {path}");
 
-        var materials = CreateStreetMaterials(shared);
-        var instance = (GameObject)PrefabUtility.InstantiatePrefab(model);
-        try
+        return model;
+    }
+
+    // Sokak fondur: materyaller proje materyalleriyle değişir, gölge ve çizgi yok.
+    private static void ApplyStreetLook(GameObject root, Dictionary<string, Material> materials)
+    {
+        uint lineLayers = RenderingLayerMask.GetMask("Outline", "Outline Silhouette");
+        foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
         {
-            instance.name = "Sokak_Yerlesim";
-            uint lineLayers = RenderingLayerMask.GetMask("Outline", "Outline Silhouette");
-            foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
+            var slots = renderer.sharedMaterials;
+            for (int i = 0; i < slots.Length; i++)
             {
-                var slots = renderer.sharedMaterials;
-                for (int i = 0; i < slots.Length; i++)
-                {
-                    if (slots[i] != null && materials.TryGetValue(slots[i].name, out var replacement))
-                        slots[i] = replacement;
-                    else
-                        Debug.LogWarning($"[CNE] Sokak: '{renderer.name}' için '{(slots[i] != null ? slots[i].name : "boş")}' materyali yok.");
-                }
-
-                renderer.sharedMaterials = slots;
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                renderer.renderingLayerMask &= ~lineLayers;
+                if (slots[i] != null && materials.TryGetValue(slots[i].name, out var replacement))
+                    slots[i] = replacement;
+                else
+                    Debug.LogWarning($"[CNE] Sokak: '{renderer.name}' için '{(slots[i] != null ? slots[i].name : "boş")}' materyali yok.");
             }
 
-            PrefabUtility.SaveAsPrefabAsset(instance, StreetPrefabPath);
+            renderer.sharedMaterials = slots;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.renderingLayerMask &= ~lineLayers;
+        }
+    }
+
+    // ---------- sokakta hareket edenler: araçlar ve figüran ----------
+
+    // Araç soketleri (paket manifest'i → soketler_unity): tekerlek yanı (x), ön / arka aks (z), egzoz (z).
+    private static readonly (string model, string prefab, float wheelX, float frontZ, float rearZ, float exhaustZ)[] CarSpecs =
+    {
+        ("SM_Car_Sedan", "Arac_Sedan", 0.80f, 1.45f, -1.45f, -2.49f),
+        ("SM_Car_Pickup", "Arac_Pikap", 0.81f, 1.60f, -1.55f, -2.52f),
+        ("SM_Van", "Arac_Kamyonet", 0.82f, 1.70f, -1.70f, -2.53f),
+    };
+
+    private const float WheelAxleHeight = 0.3188f;
+    private static readonly Vector3 ExhaustOffset = new(0.55f, 0.30f, 0f);
+    private static readonly Vector3 CarShadowScale = new(2.3f, 1f, 5.2f);
+    private static readonly Vector3 PedestrianShadowScale = new(0.70f, 1f, 0.35f);
+    private const float ShadowLift = 0.01f;
+
+    public static string StreetActorPath(string name) => $"{StreetActorFolder}/{name}.prefab";
+
+    private static void BuildStreetActors(Dictionary<string, Material> materials)
+    {
+        MutfakC1Builder.EnsureFolder(StreetActorFolder);
+        var bodyColors = new[]
+        {
+            materials["MI_CarBody_Nane"], materials["MI_CarBody_Bebek"], materials["MI_CarBody_Lila"], materials["MI_CarBody_Gri"],
+        };
+
+        foreach (var spec in CarSpecs)
+            BuildCar(spec.model, spec.prefab, spec.wheelX, spec.frontZ, spec.rearZ, spec.exhaustZ, materials, bodyColors);
+
+        BuildPedestrian(materials);
+    }
+
+    private static void BuildCar(string modelName, string prefabName, float wheelX, float frontZ, float rearZ, float exhaustZ,
+        Dictionary<string, Material> materials, Material[] bodyColors)
+    {
+        var root = new GameObject(prefabName);
+        try
+        {
+            var body = AddStreetModel(root.transform, modelName, "Govde", materials);
+            var left = new[]
+            {
+                AddStreetModel(root.transform, "SM_Wheel", "Teker_OnSol", materials),
+                AddStreetModel(root.transform, "SM_Wheel", "Teker_ArkaSol", materials),
+            };
+            var right = new[]
+            {
+                AddStreetModel(root.transform, "SM_Wheel", "Teker_OnSag", materials),
+                AddStreetModel(root.transform, "SM_Wheel", "Teker_ArkaSag", materials),
+            };
+            // Unity ekseninde aracın solu −X; sağ tekerlekler 180° dönük (jant dışa baksın).
+            left[0].localPosition = new Vector3(-wheelX, WheelAxleHeight, frontZ);
+            left[1].localPosition = new Vector3(-wheelX, WheelAxleHeight, rearZ);
+            right[0].localPosition = new Vector3(wheelX, WheelAxleHeight, frontZ);
+            right[1].localPosition = new Vector3(wheelX, WheelAxleHeight, rearZ);
+            foreach (var wheel in right)
+                wheel.localRotation = Quaternion.Euler(0f, 180f, 0f);
+
+            var shadow = AddStreetModel(root.transform, "SM_BlobShadow", "Golge", materials);
+            shadow.localPosition = new Vector3(0f, ShadowLift, 0f);
+            shadow.localScale = CarShadowScale;
+
+            var exhaust = BuildExhaust(root.transform, materials["MI_FX_Puff"]);
+            exhaust.localPosition = new Vector3(ExhaustOffset.x, ExhaustOffset.y, exhaustZ);
+            exhaust.localRotation = Quaternion.Euler(-15f, 180f, 0f);
+
+            root.AddComponent<StreetTraveller>();
+            var car = root.AddComponent<StreetCar>();
+            var serialized = new SerializedObject(car);
+            serialized.FindProperty("body").objectReferenceValue = body;
+            SetArray(serialized.FindProperty("leftWheels"), left);
+            SetArray(serialized.FindProperty("rightWheels"), right);
+
+            var bodyRenderer = body.GetComponentInChildren<Renderer>();
+            int slot = System.Array.FindIndex(bodyRenderer.sharedMaterials, m => m != null && m.name.StartsWith("MI_CarBody"));
+            serialized.FindProperty("bodyRenderer").objectReferenceValue = bodyRenderer;
+            serialized.FindProperty("bodyMaterialIndex").intValue = slot;
+            SetArray(serialized.FindProperty("bodyColors"), bodyColors);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, StreetActorPath(prefabName));
         }
         finally
         {
-            Object.DestroyImmediate(instance);
+            Object.DestroyImmediate(root);
         }
+    }
+
+    // Egzoz dumanı: arkaya doğru çıkan, büyüyüp sönen birkaç puf.
+    private static Transform BuildExhaust(Transform parent, Material material)
+    {
+        var exhaust = new GameObject("Egzoz", typeof(ParticleSystem));
+        exhaust.transform.SetParent(parent, false);
+        var particles = exhaust.GetComponent<ParticleSystem>();
+
+        var main = particles.main;
+        main.startLifetime = 0.9f;
+        main.startSpeed = 0.6f;
+        main.startSize = 0.2f;
+        main.startColor = new Color(1f, 1f, 1f, 0.5f);
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.maxParticles = 24;
+
+        var emission = particles.emission;
+        emission.rateOverTime = 7f;
+
+        var shape = particles.shape;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = 10f;
+        shape.radius = 0.03f;
+
+        var size = particles.sizeOverLifetime;
+        size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 2.6f));
+
+        var color = particles.colorOverLifetime;
+        color.enabled = true;
+        var fade = new Gradient();
+        fade.SetKeys(
+            new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+            new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
+        color.color = fade;
+
+        var renderer = exhaust.GetComponent<ParticleSystemRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        return exhaust.transform;
+    }
+
+    private static void BuildPedestrian(Dictionary<string, Material> materials)
+    {
+        var root = new GameObject("Figuran");
+        try
+        {
+            var card = AddStreetModel(root.transform, "SM_Ped_Card", "Kart", materials);
+            var shadow = AddStreetModel(root.transform, "SM_BlobShadow", "Golge", materials);
+            shadow.localPosition = new Vector3(0f, ShadowLift, 0f);
+            shadow.localScale = PedestrianShadowScale;
+
+            root.AddComponent<StreetTraveller>();
+            var pedestrian = root.AddComponent<StreetPedestrian>();
+            var serialized = new SerializedObject(pedestrian);
+            serialized.FindProperty("card").objectReferenceValue = card.GetComponentInChildren<Renderer>();
+            // Pastel tonlar (palet): figüranlar tek tip görünmesin.
+            var tints = serialized.FindProperty("tints");
+            string[] hexes = { "#FFFFFF", "#DCEBFF", "#E6DCF7", "#D8F0E4", "#FFE9D6" };
+            tints.arraySize = hexes.Length;
+            for (int i = 0; i < hexes.Length; i++)
+                tints.GetArrayElementAtIndex(i).colorValue = Parse(hexes[i]);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, StreetActorPath("Figuran"));
+        }
+        finally
+        {
+            Object.DestroyImmediate(root);
+        }
+    }
+
+    private static Transform AddStreetModel(Transform parent, string modelName, string name, Dictionary<string, Material> materials)
+    {
+        var instance = (GameObject)PrefabUtility.InstantiatePrefab(LoadStreetModel(modelName), parent);
+        instance.name = name;
+        ApplyStreetLook(instance, materials);
+        return instance.transform;
+    }
+
+    private static void SetArray(SerializedProperty property, Object[] values)
+    {
+        property.arraySize = values.Length;
+        for (int i = 0; i < values.Length; i++)
+            property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
     }
 
     // Sokak materyalleri (paketteki tablo). Mimari ve cephe düz renk; mimari ayarlarıyla (ışığın rengi az yansır).
@@ -196,6 +383,28 @@ public static class HaritaBuilder
             material.EnableKeyword("_ALPHATEST_ON");
             material.SetFloat("_Cull", 0f);
             material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+        });
+        // Figüran kartı: yürüme atlası, alpha clip. Kareyi ve aynalamayı StreetPedestrian renderer başına yazar.
+        result["MI_Ped"] = StreetMaterial("MI_Ped", unlit, material =>
+        {
+            material.SetTexture("_BaseMap", StreetTexture("T_Ped_Walk_Atlas", true));
+            material.SetFloat("_AlphaClip", 1f);
+            material.SetFloat("_Cutoff", 0.5f);
+            material.EnableKeyword("_ALPHATEST_ON");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+        });
+        // Egzoz pufu: saydam, ışıksız parçacık.
+        result["MI_FX_Puff"] = StreetMaterial("MI_FX_Puff", Shader.Find("Universal Render Pipeline/Particles/Unlit"), material =>
+        {
+            material.SetTexture("_BaseMap", StreetTexture("T_FX_Puff", true));
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 0f);
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
         });
         // Oval gölge: çarpma (multiply) karışımı, opaklık 0,35.
         result["MI_BlobShadow"] = StreetMaterial("MI_BlobShadow", unlit, material =>

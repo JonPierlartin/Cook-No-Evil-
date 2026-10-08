@@ -16,6 +16,10 @@ public class VoiceStreamPlayer : MonoBehaviour
     // enjekte edildiği için AudioSource.volume buna uygulanmaz; seviye burada çarpılır. Ses iş parçacığından okunur.
     public volatile float Gain = 1f;
 
+    // Sesin geldiği yön: −1 = tam sol, 0 = orta, +1 = tam sağ. Aynı sebeple (enjeksiyon) AudioSource'un 3B ayarına
+    // güvenilmez; yön burada, kanallara eşit güçlü dağıtımla verilir. Ses iş parçacığından okunur.
+    public volatile float Pan;
+
     private readonly object _lock = new();
     private float[] _ringBuffer;
     private int _writeIndex;
@@ -60,6 +64,10 @@ public class VoiceStreamPlayer : MonoBehaviour
     private void OnAudioFilterRead(float[] data, int channels)
     {
         float gain = Gain;
+        // Eşit güçlü dağıtım: ortada iki kanal da 1 (mono kaynağın seviyesi değişmez), kenarda biri 0'a iner.
+        float angle = (Mathf.Clamp(Pan, -1f, 1f) + 1f) * 0.25f * Mathf.PI;
+        float left = Mathf.Min(1f, Mathf.Cos(angle) * 1.41421356f);
+        float right = Mathf.Min(1f, Mathf.Sin(angle) * 1.41421356f);
         lock (_lock)
         {
             for (int i = 0; i < data.Length; i += channels)
@@ -72,8 +80,16 @@ public class VoiceStreamPlayer : MonoBehaviour
                     _available--;
                 }
 
-                for (int c = 0; c < channels; c++)
-                    data[i + c] = sample;
+                if (channels == 2)
+                {
+                    data[i] = sample * left;
+                    data[i + 1] = sample * right;
+                }
+                else
+                {
+                    for (int c = 0; c < channels; c++)
+                        data[i + c] = sample;
+                }
             }
         }
     }

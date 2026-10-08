@@ -10,12 +10,17 @@ using UnityEngine;
 //    (30 Eyl testi: mute ile Komi oyunculari net duyuyordu). Ana ses seviyesinden bagimsizdir (K3).
 //    Oyun efektleri (GDD 4.1.3) DeafHearing + RoleAwareAudioRange ile ayrica bogulur/daralir.
 // Bu kisitlamalar yalnizca round aktifken uygulanir; lobide herkes normal konusup duyabilir.
-// Bilinen eksik (K4): konusmaci AudioSource'lari gercek oyuncu konumunda degil (Faz 0 plani, VoIP adimi).
+// Mekansal ses (K4, GDD 10.4): round sirasinda her paketin seviyesi ve yonu, konusanin karakteri ile yerel
+//    dinleyici arasindaki SES YOLUNDAN hesaplanir (AcousticSpace: ses duvardan ve kapali kapidan gecmez,
+//    pencerelerden dolasir). Seviye ve yon VoiceStreamPlayer'da orneklere uygulanir; hoparlor AudioSource'u 2B'dir
+//    (ses filtreyle enjekte edildigi icin Unity'nin 3B zayiflamasina guvenilmez). Lobide mekansal ses yoktur.
 [RequireComponent(typeof(NetworkObject))]
 public class VoIPController : NetworkBehaviour
 {
     private IVoiceProvider _voiceProvider;
     private readonly Dictionary<ulong, VoiceStreamPlayer> _speakerPlayers = new();
+    // Konusanin karakteri (ses yolunun baslangici). Karakter round'da dogar; bulunamazsa mekansal ses uygulanmaz.
+    private readonly Dictionary<ulong, PlayerController> _speakerCharacters = new();
     private PlayerRole _localRole = PlayerRole.None;
 
     // Mikrofon seviyesi pakette tek bayt olarak gider (yüzde: 100 = olduğu gibi). Steam sesi sıkıştırılmış verir,
@@ -66,6 +71,7 @@ public class VoIPController : NetworkBehaviour
                 Destroy(player.gameObject);
         }
         _speakerPlayers.Clear();
+        _speakerCharacters.Clear();
 
         _localRole = PlayerRole.None;
     }
@@ -137,9 +143,55 @@ public class VoIPController : NetworkBehaviour
             return;
 
         var player = GetOrCreateSpeakerPlayer(senderId);
-        // Konuşanın mikrofon seviyesi × bu oyuncunun "sesli sohbet" ayarı (yerel).
-        player.Gain = micGainPercent / MicGainScale * GameSettings.VoiceVolume;
+        // Konuşanın mikrofon seviyesi × bu oyuncunun "sesli sohbet" ayarı (yerel) × mekânın zayıflatması.
+        float spatialGain = ComputeSpatialGain(senderId, out float pan);
+        player.Gain = micGainPercent / MicGainScale * GameSettings.VoiceVolume * spatialGain;
+        player.Pan = pan;
+        if (spatialGain <= 0f)
+            return;
+
         _voiceProvider.DecompressAndEnqueue(player.Source, compressedData);
+    }
+
+    // Round sırasında: ses yolunun etkin mesafesinden seviye, sesin dinleyiciye geldiği noktadan yön.
+    // Lobide, ya da konuşanın karakteri / dinleyici / akustik veri yoksa: tam seviye, ortadan.
+    private float ComputeSpatialGain(ulong speakerId, out float pan)
+    {
+        pan = 0f;
+        var space = AcousticSpace.Instance;
+        var listener = AcousticSpace.Listener;
+        if (!IsRoundActive || space == null || listener == null)
+            return 1f;
+
+        var speaker = FindSpeakerCharacter(speakerId);
+        if (speaker == null)
+            return 1f;
+
+        float gain = space.VoiceGain(speaker.transform.position, listener.position, out var apparent);
+        var toSource = apparent - listener.position;
+        toSource.y = 0f;
+        if (toSource.sqrMagnitude > 0.0001f)
+            pan = Vector3.Dot(toSource.normalized, listener.right);
+
+        return gain;
+    }
+
+    private PlayerController FindSpeakerCharacter(ulong speakerId)
+    {
+        if (_speakerCharacters.TryGetValue(speakerId, out var cached) && cached != null && cached.OwnerClientId == speakerId)
+            return cached;
+
+        foreach (var character in FindObjectsByType<PlayerController>(FindObjectsInactive.Exclude))
+        {
+            if (character.OwnerClientId != speakerId)
+                continue;
+
+            _speakerCharacters[speakerId] = character;
+            return character;
+        }
+
+        _speakerCharacters.Remove(speakerId);
+        return null;
     }
 
     private VoiceStreamPlayer GetOrCreateSpeakerPlayer(ulong speakerId)
@@ -164,30 +216,9 @@ public class VoIPController : NetworkBehaviour
 
     private void ApplyRoleBasedAudioSettings(AudioSource source)
     {
-        // Round durumu ve/veya rol degismis olabilir: her cagrida sifirdan dogru kurulum yapilir.
-        // (Komi'nin sagirligi burada DEGIL, ReceiveVoiceClientRpc'de paket duzeyinde uygulanir.)
-        if (!IsRoundActive)
-        {
-            // Lobide (round aktif degilken) hic kimsenin sesi kisitlanmaz.
-            source.spatialBlend = 0.5f;
-            return;
-        }
-
-        switch (_localRole)
-        {
-            case PlayerRole.Sef:
-                // Kor icin abartili 3D Uzamsal Ses (Hyper-Spatial Audio).
-                source.spatialBlend = 1f;
-                source.spread = 0f;
-                source.dopplerLevel = 1f;
-                source.rolloffMode = AudioRolloffMode.Custom;
-                source.maxDistance = 25f;
-                source.SetCustomCurve(AudioSourceCurveType.CustomRolloff, AnimationCurve.EaseInOut(0f, 1f, 25f, 0f));
-                break;
-
-            default:
-                source.spatialBlend = 0.5f;
-                break;
-        }
+        // Hoparlör 2B'dir: mesafe ve yön ComputeSpatialGain'de hesaplanıp örneklere uygulanır (bkz. dosya başı).
+        // (Komi'nin sağırlığı burada DEĞİL, ReceiveVoiceClientRpc'de paket düzeyinde uygulanır.)
+        source.spatialBlend = 0f;
+        source.dopplerLevel = 0f;
     }
 }

@@ -202,6 +202,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BlindVisionCamera
   blindVisionRendererIndex: 1
   blindRole: 3
+  hiddenWhenBlind:
+    serializedVersion: 2
+    m_Bits: 2048
+  visibleOnlyWhenBlind:
+    serializedVersion: 2
+    m_Bits: 1024
 --- !u!169 &3010492735796030904
 AudioLowPassFilter:
   m_ObjectHideFlags: 0

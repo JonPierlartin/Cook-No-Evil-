@@ -108,6 +108,8 @@ public static class HaritaSceneInstaller
         MoveCounterFunction(counter, station);
         PlaceCustomers(counter, hall, street);
         InstallStreetExtras(hall, street);
+        InstallStreetLife(street);
+        InstallChefVision(station);
         ApplySky();
         OpenDoors(hall);
         InstallAquarium(hall);
@@ -444,6 +446,14 @@ public static class HaritaSceneInstaller
         // Kapı kapalıdır (GDD 5.2.3: yalnızca yangında açılır — Faz 1): açıklık görünmez bir engelle kapatılır.
         Blocker(colliders, "Engel_Kapi", new Vector3(door.min.x, floorY, counterZ1), new Vector3(door.max.x, door.max.y, kitchenZ0));
 
+        BuildChefScreens(root, materials["MI_Arch_Dis"], counterWindowX, counterZ1, door, floorY);
+        BuildAcoustics(root,
+            new Bounds(new Vector3((kitchenX0 + kitchenX1) * 0.5f, floorY + CeilingHeight * 0.5f, (kitchenZ0 + kitchenZ1) * 0.5f), new Vector3(KitchenWidth, CeilingHeight, KitchenLength)),
+            new Bounds(new Vector3((stationX0 + stationX1) * 0.5f, floorY + CeilingHeight * 0.5f, (stationZ0 + stationZ1) * 0.5f), new Vector3(StationWidth, CeilingHeight, StationLength)),
+            new Bounds(new Vector3((counterX0 + counterX1) * 0.5f, floorY + CeilingHeight * 0.5f, (counterZ0 + counterZ1) * 0.5f), new Vector3(counterX1 - counterX0, CeilingHeight, CounterLength)),
+            new Bounds(new Vector3((hallX0 + hallX1) * 0.5f, floorY + CeilingHeight * 0.5f, (hallZ0 + hallZ1) * 0.5f), new Vector3(HallWidth, CeilingHeight, HallLength)),
+            kitchenWindowZ, counterWindowX, orderX, deliveryX);
+
         // Eşyaların çarpışması (dekor). Üstünde etkileşim hedefi duran eşyada engel o yüzeyin altında biter; yoksa
         // nişan ışını engele çarpar ve hedef bulunamaz. Pencere pervazları da aynı kuralla (yuvaların altında).
         const float belowSurface = 0.98f;
@@ -488,6 +498,170 @@ public static class HaritaSceneInstaller
 
         material.SetVector("_PatternSize", updated);
         EditorUtility.SetDirty(material);
+    }
+
+    // ---------- Şef'in görüşü ----------
+
+    // Şef yalnızca mutfağını, pencereden Komi'yi ve Komi'nin ODASINI görür (Ersel, 8 Eki): İstasyon'un eşyalarını,
+    // Kasa'yı, Kasiyer'i ve ötesini görmez; mutfak kapısının camlarından da hiçbir şey görmez.
+    //  - Perdeler (yalnızca Şef'in kamerasının çizdiği katman): Kasa penceresinin ve mutfak kapısının açıklığını
+    //    Kasa tarafından kapatan düz yüzeyler. Arkalarındaki her şey (Kasa, Kasiyer, müşteriler, salon, sokak) Şef
+    //    için görünmez; başka hiçbir rol perdeleri görmez.
+    //  - Gizlenen eşyalar (Şef'in kamerasının çizmediği katman): İstasyon yerleşimi (pencereler hariç), İstasyon'daki
+    //    pano ve hata paneli.
+    // Katman kararını kamera verir (BlindVisionCamera); burada yalnızca nesneler katmanlara konur.
+    private const string ChefHiddenLayer = "SefGormez";
+    private const string ChefScreenLayer = "SefPerdesi";
+
+    private static void BuildChefScreens(Transform root, Material material, float counterWindowX, float counterFaceZ, Bounds door, float floorY)
+    {
+        int layer = EnsureLayer(ChefScreenLayer);
+        var screens = new GameObject("SefPerdeleri").transform;
+        screens.SetParent(root, false);
+
+        const float margin = 0.05f;     // perde açıklıktan biraz büyük (kenardan sızmasın)
+        const float inset = 0.01f;
+        // Kasa penceresi: açıklığın Kasa tarafındaki ağzı.
+        Screen(screens, "Perde_KasaPenceresi", material, layer,
+            new Vector3(counterWindowX, floorY + (WindowBottom + WindowTop) * 0.5f, counterFaceZ + inset),
+            new Vector2(WindowHalfWidth * 2f + margin * 2f, WindowTop - WindowBottom + margin * 2f));
+        // Mutfak kapısı: kapı kanatlarının Kasa tarafı (kanatlar Şef'e görünür kalır, camların ardı kapanır).
+        float doorHeight = door.max.y - floorY;
+        Screen(screens, "Perde_MutfakKapisi", material, layer,
+            new Vector3(door.center.x, floorY + doorHeight * 0.5f, Mathf.Min(door.min.z, counterFaceZ) - inset),
+            new Vector2(door.size.x + margin * 2f, doorHeight + margin * 2f));
+    }
+
+    // Kuzeye (+Z, mutfak ve İstasyon tarafına) bakan düz yüzey.
+    private static void Screen(Transform parent, string name, Material material, int layer, Vector3 center, Vector2 size)
+    {
+        var screen = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        Object.DestroyImmediate(screen.GetComponent<Collider>());
+        screen.name = name;
+        screen.layer = layer;
+        screen.transform.SetParent(parent, false);
+        screen.transform.SetPositionAndRotation(center, Quaternion.Euler(0f, 180f, 0f));
+        screen.transform.localScale = new Vector3(size.x, size.y, 1f);
+        var renderer = screen.GetComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+    }
+
+    private static void InstallChefVision(Transform station)
+    {
+        int hidden = EnsureLayer(ChefHiddenLayer);
+        int screen = EnsureLayer(ChefScreenLayer);
+
+        foreach (Transform asset in station)
+        {
+            // Pencereler odanın parçasıdır (ve mutfak penceresi iki odanın ortağıdır): görünür kalır.
+            if (!asset.name.StartsWith("SM_StationWindow"))
+                SetLayer(asset, hidden);
+        }
+
+        foreach (string name in new[] { "MalzemePanosu_Istasyon", "HataPaneli_Istasyon" })
+        {
+            var found = GameObject.Find(name);
+            if (found != null)
+                SetLayer(found.transform, hidden);
+        }
+
+        // Perdeleri Şef dışında hiçbir kamera çizmez: sahne kamerası ve oyuncu kamerasının kör olmayan hâli.
+        foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include))
+        {
+            if ((camera.cullingMask & (1 << screen)) == 0)
+                continue;
+
+            camera.cullingMask &= ~(1 << screen);
+            EditorUtility.SetDirty(camera);
+        }
+
+        var player = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+        try
+        {
+            var blind = player.GetComponentInChildren<BlindVisionCamera>(true);
+            var serialized = new SerializedObject(blind);
+            serialized.FindProperty("hiddenWhenBlind").intValue = 1 << hidden;
+            serialized.FindProperty("visibleOnlyWhenBlind").intValue = 1 << screen;
+            if (serialized.ApplyModifiedPropertiesWithoutUndo())
+                PrefabUtility.SaveAsPrefabAsset(player, PlayerPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(player);
+        }
+    }
+
+    private static void SetLayer(Transform root, int layer)
+    {
+        foreach (var child in root.GetComponentsInChildren<Transform>(true))
+            child.gameObject.layer = layer;
+    }
+
+    // Katman yoksa ilk boş kullanıcı katmanına eklenir (Tags and Layers).
+    private static int EnsureLayer(string name)
+    {
+        int existing = LayerMask.NameToLayer(name);
+        if (existing >= 0)
+            return existing;
+
+        var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+        var layers = tagManager.FindProperty("layers");
+        const int firstUserLayer = 8;
+        for (int i = firstUserLayer; i < layers.arraySize; i++)
+        {
+            var slot = layers.GetArrayElementAtIndex(i);
+            if (!string.IsNullOrEmpty(slot.stringValue))
+                continue;
+
+            slot.stringValue = name;
+            tagManager.ApplyModifiedPropertiesWithoutUndo();
+            _log.AppendLine($"katman eklendi: {name} ({i})");
+            return i;
+        }
+
+        throw new System.InvalidOperationException($"'{name}' için boş katman yok.");
+    }
+
+    // ---------- akustik ----------
+
+    // Ses yolu verisi (AcousticSpace): dört oda ve aralarındaki pencereler. Mutfak kapısı AÇIKLIK DEĞİLDİR (kapalı):
+    // Kasa ile Mutfak arasında ses ancak İstasyon'dan, iki pencereden dolaşır.
+    private static void BuildAcoustics(Transform root, Bounds kitchen, Bounds station, Bounds counter, Bounds hall,
+        float kitchenWindowZ, float counterWindowX, float orderX, float deliveryX)
+    {
+        const int kitchenRoom = 0, stationRoom = 1, counterRoom = 2, hallRoom = 3;
+        // Odalar duvar kalınlığının yarısı kadar genişletilir: pencerenin içindeki / duvara yaslı nokta da bir odaya düşsün.
+        var grow = new Vector3(WallThickness, 0.5f, WallThickness);
+        var space = new GameObject("SesAkustigi").AddComponent<AcousticSpace>();
+        space.transform.SetParent(root, false);
+
+        float earY = kitchen.center.y;
+        var alongX = new Vector3(WindowHalfWidth, 0f, 0f);
+        var alongZ = new Vector3(0f, 0f, WindowHalfWidth);
+        space.Configure(
+            new[]
+            {
+                Room("Mutfak", kitchen, grow), Room("Istasyon", station, grow), Room("Kasa", counter, grow), Room("Salon", hall, grow),
+            },
+            new[]
+            {
+                Portal("MutfakPenceresi", kitchenRoom, stationRoom, new Vector3(kitchen.max.x + WallThickness * 0.5f, earY, kitchenWindowZ), alongZ),
+                Portal("KasaPenceresi", stationRoom, counterRoom, new Vector3(counterWindowX, earY, counter.max.z + WallThickness * 0.5f), alongX),
+                Portal("SiparisPenceresi", counterRoom, hallRoom, new Vector3(orderX, earY, counter.min.z - WallThickness * 0.5f), alongX),
+                Portal("TeslimatPenceresi", counterRoom, hallRoom, new Vector3(deliveryX, earY, counter.min.z - WallThickness * 0.5f), alongX),
+            });
+        EditorUtility.SetDirty(space);
+    }
+
+    private static AcousticSpace.Room Room(string name, Bounds bounds, Vector3 grow)
+    {
+        return new AcousticSpace.Room { name = name, center = bounds.center, size = bounds.size + grow };
+    }
+
+    private static AcousticSpace.Portal Portal(string name, int roomA, int roomB, Vector3 center, Vector3 halfSpan)
+    {
+        return new AcousticSpace.Portal { name = name, roomA = roomA, roomB = roomB, center = center, halfSpan = halfSpan };
     }
 
     private static Opening Window(float center)
@@ -962,6 +1136,86 @@ public static class HaritaSceneInstaller
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.renderingLayerMask &= ~lineLayers;
             }
+        }
+    }
+
+    // Sokağın hareketi (paket manifest'i → bos_nodelar; salon köküne göre Unity ekseninde): iki araç şeridi, karşı
+    // kaldırımda iki figüran hattı. Lambaların ışığı: lamba başına gölgesiz bir nokta ışık.
+    private static readonly (string name, Vector3 start, Vector3 end, bool cars)[] StreetLanes =
+    {
+        ("Arac_Yakin", new Vector3(25f, -0.15f, -7.45f), new Vector3(-38f, -0.15f, -7.45f), true),
+        ("Arac_Uzak", new Vector3(-38f, -0.15f, -10.95f), new Vector3(25f, -0.15f, -10.95f), true),
+        ("Figuran_Dogu", new Vector3(25f, 0f, -13.6f), new Vector3(-38f, 0f, -13.6f), false),
+        ("Figuran_Bati", new Vector3(-38f, 0f, -14.6f), new Vector3(25f, 0f, -14.6f), false),
+    };
+
+    private static readonly Vector2 CarInterval = new(5f, 13f);
+    private static readonly Vector2 CarSpeed = new(6f, 8.5f);
+    private static readonly Vector2 PedestrianInterval = new(7f, 18f);
+    private static readonly Vector2 PedestrianSpeed = new(1.1f, 1.5f);
+    private static readonly Color32 LampColor = new(0xFF, 0xE7, 0xC2, 0xFF);
+    private const float LampIntensity = 0.6f;
+    private const float LampRange = 6f;
+    private const float LampHeadDrop = 0.35f;   // ışık, lambanın tepesinden bu kadar aşağıda (kürenin içi)
+
+    private static void InstallStreetLife(Transform street)
+    {
+        var extras = GameObject.Find(StreetExtrasName).transform;
+        var streetRoot = street.root;
+
+        var traffic = new GameObject("Sokak_Trafik").AddComponent<StreetTraffic>();
+        traffic.transform.SetParent(extras, false);
+        var cars = new List<Object>();
+        foreach (string prefabName in new[] { "Arac_Sedan", "Arac_Pikap", "Arac_Kamyonet" })
+            cars.Add(AssetDatabase.LoadAssetAtPath<StreetTraveller>(HaritaBuilder.StreetActorPath(prefabName)));
+        var pedestrians = new List<Object> { AssetDatabase.LoadAssetAtPath<StreetTraveller>(HaritaBuilder.StreetActorPath("Figuran")) };
+
+        var serialized = new SerializedObject(traffic);
+        var lanes = serialized.FindProperty("lanes");
+        lanes.arraySize = StreetLanes.Length;
+        for (int i = 0; i < StreetLanes.Length; i++)
+        {
+            var (name, start, end, isCar) = StreetLanes[i];
+            var startPoint = new GameObject(name + "_Dogma").transform;
+            var endPoint = new GameObject(name + "_Kaybolma").transform;
+            startPoint.SetParent(traffic.transform, false);
+            endPoint.SetParent(traffic.transform, false);
+            startPoint.position = streetRoot.TransformPoint(start);
+            endPoint.position = streetRoot.TransformPoint(end);
+
+            var lane = lanes.GetArrayElementAtIndex(i);
+            lane.FindPropertyRelative("name").stringValue = name;
+            lane.FindPropertyRelative("start").objectReferenceValue = startPoint;
+            lane.FindPropertyRelative("end").objectReferenceValue = endPoint;
+            lane.FindPropertyRelative("interval").vector2Value = isCar ? CarInterval : PedestrianInterval;
+            lane.FindPropertyRelative("speed").vector2Value = isCar ? CarSpeed : PedestrianSpeed;
+            var prefabs = lane.FindPropertyRelative("prefabs");
+            var source = isCar ? cars : pedestrians;
+            prefabs.arraySize = source.Count;
+            for (int k = 0; k < source.Count; k++)
+                prefabs.GetArrayElementAtIndex(k).objectReferenceValue = source[k];
+        }
+
+        // Figüranlar yavaştır: aralarındaki en az mesafe araçlarınkinden kısa olmalı ki hat tıkanmasın; tek değer
+        // araçlara göre seçildi, figüran aralığı zaten uzun.
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+
+        var lights = new GameObject("Sokak_Isiklar").transform;
+        lights.SetParent(extras, false);
+        foreach (Transform asset in street)
+        {
+            if (!asset.name.StartsWith("SM_StreetLamp"))
+                continue;
+
+            var bounds = WorldBounds(asset);
+            var lamp = new GameObject("Isik_" + asset.name).AddComponent<Light>();
+            lamp.transform.SetParent(lights, false);
+            lamp.transform.position = new Vector3(bounds.center.x, bounds.max.y - LampHeadDrop, bounds.center.z);
+            lamp.type = LightType.Point;
+            lamp.color = LampColor;
+            lamp.intensity = LampIntensity;
+            lamp.range = LampRange;
+            lamp.shadows = LightShadows.None;
         }
     }
 

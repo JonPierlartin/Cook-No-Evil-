@@ -1159,9 +1159,41 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
       Ortam ışığı kaynağı değişmedi.
     - **Palet birleştirildi:** sokak paketinin 14 yeni hücresi (S11 satırı…) proje paletine eklendi; sokak paletinde
       olmayan 4 hücremiz (S10·K0, K1, K3, K4) korundu.
-    - **Yapılmadı (pakette yalnızca modeli / dokusu var, sistemi yok):** geçen araçlar, yürüyen figüran kartları,
-      egzoz dumanı, lamba ışıkları; "rol Şef ise sokağı kapat" kuralı. Araç ve figüran doğma / kaybolma noktaları
-      manifestte duruyor. Tabela ve vitrin dokuları pakette "taslak" olarak işaretli.
+    - **Sokağın hareketi (8 Eki, Ersel'in onayıyla):** `StreetTraffic` (sahne: `Sokak_Ekler/Sokak_Trafik`) — iki araç
+      şeridi + karşı kaldırımda iki figüran hattı; hat başına doğma / kaybolma noktası, aralık, hız ve prefab listesi
+      VERİ. **Yalnızca görsel, her istemcide yerel ve rastgele; ağ yok, oyun durumuna dokunmaz** (müşteriler bunlardan
+      değildir). `StreetTraveller` (hedefe gider, varınca yok olur) + `StreetCar` (tekerlek dönüşü, gövde yaylanması,
+      rastgele gövde rengi) / `StreetPedestrian` (yürüme atlası: 16 × 4 ızgara, satır = karakter, 12 kare; kare
+      hızı yürüme hızına bağlı; `_BaseMap_ST` renderer başına). Prefab'lar `Assets/Prefabs/Harita/Sokak/`
+      (`HaritaBuilder` araç OBJ'lerinden kurar; soketler koda tablo olarak yazıldı — OBJ soket taşımaz). Egzoz:
+      araç prefab'ında parçacık. Lambalar: lamba başına gölgesiz nokta ışık (`Sokak_Isiklar`).
+      Figüran atlasının maskesi kullanılmıyor (kartın tamamı hafif tonlanır); tabela ve vitrin dokuları "taslak".
+  - **ŞEF NEYİ GÖRÜR (8 Eki 2026, Ersel):** yalnızca mutfağını, pencereden Komi'yi ve Komi'nin ODASINI. İstasyon'un
+    eşyalarını, Kasa'yı, Kasiyer'i, müşterileri ve ötesini görmez; mutfak kapısının camlarından hiçbir şey görmez.
+    Uygulama bir çizim kuralıdır, iki katmanla (`BlindVisionCamera` kör görüşte kameranın culling mask'ını değiştirir):
+    - `SefPerdesi`: YALNIZCA Şef'in kamerasının çizdiği düz yüzeyler (`Harita_Mimari/SefPerdeleri`) — Kasa
+      penceresinin Kasa tarafındaki ağzı ve mutfak kapısının Kasa tarafı. Arkalarındaki her şey Şef'e görünmez. Diğer
+      roller ve sahne kamerası bu katmanı çizmez.
+    - `SefGormez`: Şef'in kamerasının çizmediği nesneler — İstasyon yerleşimi (pencereler hariç), İstasyon'daki pano
+      ve hata paneli.
+    - Sınır: İstasyon'da duran / taşınan ÖĞELER (tepsideki kese kağıdı, Komi'nin elindeki) Şef'e görünür kalır
+      (dinamik ağ nesneleri; yerlerine göre katman değiştirmiyorlar). Yeni bir oda açıklığı ya da İstasyon'a yeni
+      sabit eşya eklenirse perde / katman kurulumda (`HaritaSceneInstaller`) eklenir.
+  - **MEKÂNSAL SES (K4 uygulandı, 8 Eki 2026):** `AcousticSpace` (sahne: `Harita_Mimari/SesAkustigi`) — odalar ve
+    aralarındaki pencereler VERİ; iki nokta arasındaki ses yolu odalar üzerinden en kısa yoldur (Dijkstra, pencere
+    başına 3 nokta) ve her pencere yola sabit bir ek mesafe ekler → **etkin mesafe**. Duvar ve KAPALI KAPI yol değildir:
+    Kasa ↔ Mutfak arasında ses ancak İstasyon'dan, iki pencereden dolaşır (yeni haritada Kasa mutfağın bitişiğinde;
+    düz mesafe kullanılsaydı GDD 10.4'ün "yerleşim kısıtı" delinirdi).
+    - **Sesli sohbet:** `VoIPController` round sırasında her pakette konuşanın karakteri ile yerel dinleyici
+      arasındaki etkin mesafeden seviye (`fullVoiceDistance` 6 m → 1, `zeroVoiceDistance` 18 m → 0, `portalPenalty`
+      6 m; playtest parametreleri, Inspector) ve sesin geldiği noktadan sağ / sol yön hesaplar; ikisi de
+      `VoiceStreamPlayer`'da örneklere uygulanır (`Gain`, `Pan`). Hoparlör kaynağı 2B'dir — ses filtreyle enjekte
+      edildiği için Unity'nin 3B ayarına güvenilmez. Lobide mekânsal ses yok. Seviye 0 ise paket çözülmez.
+    - **Dünya efektleri:** `RoleAwareAudioRange` aynı yolu kullanır: Unity kaynağı düz mesafeyle zayıflatır,
+      bileşen seviyeyi "etkin mesafedeki zayıflama / düz mesafedeki zayıflama" oranıyla düzeltir (10 Hz). Cızırtı,
+      teslim sesleri, adımlar duvardan / kapıdan geçmez. Kaynak Linear rolloff olmalı.
+    - Odaların dışındaki nokta (lobi kamerası, sokak) için model uygulanmaz (düz mesafe).
+    - Ölçülmedi: gerçek Steam sesiyle seviyeler (yerel testte ses iletilmez). İnterkom hâlâ Faz 0 dışı.
   - **Palet:** `Mutfak_C1/Palettes/cook_no_evil_palet_256.png` İstasyon paketindekiyle değiştirildi (yalnızca iki
     yeni hücre: S10·K3 `#6F4E37`, S10·K4 `#F2B23A`; diğer 254 hücre birebir aynı — karşılaştırıldı).
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
@@ -1440,7 +1472,7 @@ yeni özellik inşa edilmeden önce düzeltilmelidir. *(30 Eyl 2026'da gerçek k
 | ~~`BurgerAssemblyStation`: sıra kuralı yok~~ | Zorunlu kategori sırası | §6.7.3 | ✅ Adım 6a (`30855e2`) |
 | ~~`BurgerRecipe.requiredIngredients`~~ (asset artık kullanılmıyor, Temizlik Borcu'nda) | Ekmek tek envanter öğesi, alt+üst iki adımda | §6.7.3 | ✅ Adım 6b (`7b17d4a`) |
 | ~~`ItemType` yalnızca `isBread` biliyor~~ | Kategori bilgisi | §6.7.3 | ✅ Adım 6a (`30855e2`) |
-| VoIP oda-bağımsız (`ReceiveVoiceClientRpc` hedefsiz broadcast; `GetOrCreateSpeakerPlayer` konuşmacı AudioSource'unu gerçek oyuncu pozisyonuna değil `VoIPController` transform'una parent ediyor) | Ses mekânsal olmalı (K4) | §10.4 | Faz 0 |
+| ~~VoIP oda-bağımsız~~ — seviye ve yön ses yolundan hesaplanıyor (`AcousticSpace`) | Ses mekânsal olmalı (K4) | §10.4 | ✅ 8 Eki 2026 (Steam'de seviye ayarı bekliyor) |
 | ~~`VoIPController.komiLowPassCutoffHz` (Komi'de low-pass)~~ — Faz 0: Komi hiçbir oyuncuyu duymaz (`1d4d1b2`) | Şef→Komi: **gibberish** (RMS ile sürülen maymun sesi), low-pass değil | §10.4 | Faz 0 kısmı ✅; gibberish **Faz 0.5'e ertelendi** (18 Eyl 2026) |
 | ~~Kopmada "DURDURULDU" arayüzü ve 5 dk zaman aşımı yok~~ | Duraklatma görünür; süre dolunca oturum kapanır, bölüm başarısız | §8.2 | ✅ `fed5b33` |
 | ~~`RoundEnded`'a geçiş mantığı yok~~ | Kazanma/kaybetme koşulları bağlanmalı | §3.4 | ✅ Adım 25 |
