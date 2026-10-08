@@ -1,0 +1,180 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: CNE_UI Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: CNE_UI
+  m_TableCollectionNameGuidString: 11d6608943d05c74f8759325904989d3
+  m_Entries:
+  - m_Id: 3157942272
+    m_Key: menu.create_lobby
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3304742912
+    m_Key: menu.browse_lobbies
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3313131520
+    m_Key: menu.how_to_play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3313131521
+    m_Key: menu.settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325824
+    m_Key: menu.quit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325825
+    m_Key: menu.version
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325826
+    m_Key: settings.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325827
+    m_Key: settings.section.sound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325828
+    m_Key: settings.section.chat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325829
+    m_Key: settings.section.controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325830
+    m_Key: settings.section.language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325831
+    m_Key: settings.master
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325832
+    m_Key: settings.music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325833
+    m_Key: settings.music_track
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325834
+    m_Key: settings.voice
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325835
+    m_Key: settings.mic
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325836
+    m_Key: settings.mic_test
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325837
+    m_Key: settings.mic_hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325838
+    m_Key: settings.mic_none
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325839
+    m_Key: settings.sensitivity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325840
+    m_Key: settings.fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325841
+    m_Key: settings.view
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325842
+    m_Key: settings.view.off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325843
+    m_Key: settings.view.stylized
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325844
+    m_Key: settings.view.toon
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325845
+    m_Key: settings.reset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325846
+    m_Key: settings.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325847
+    m_Key: common.on
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325848
+    m_Key: common.off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325849
+    m_Key: common.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325850
+    m_Key: common.ok
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325851
+    m_Key: common.cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325852
+    m_Key: common.yes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325853
+    m_Key: common.no
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325854
+    m_Key: jukebox.no_track
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325855
+    m_Key: esc.resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325856
+    m_Key: esc.back_to_lobby
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325857
+    m_Key: esc.running
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 5456770843882553422
+  references:
+    version: 2
+    RefIds:
+    - rid: 5456770843882553422
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1791492795842

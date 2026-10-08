@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-Shared
   m_GUID: 2069fa9d5b941f940aa9d8093bf76a1c
   m_SerializeEntries:
+  - m_GUID: 11d6608943d05c74f8759325904989d3
+    m_Address: Assets/CNE_UI/Localization/Tables/CNE_UI Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f4ba4ca443d7b24bb93cab5701ecfb1
     m_Address: Assets/Localization/UIStrings Shared Data.asset
     m_ReadOnly: 1

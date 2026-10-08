@@ -1,0 +1,40 @@
+﻿key,tr,en
+# Cook No Evil! arayuz metinleri. Ilk sutun anahtar; diger sutunlar dil kodu. Yeni dil = yeni sutun + CNE_Languages'a satir.,,
+menu.create_lobby,LOBİ OLUŞTUR,CREATE LOBBY
+menu.browse_lobbies,LOBİLERE GÖZAT,BROWSE LOBBIES
+menu.how_to_play,NASIL OYNANIR,HOW TO PLAY
+menu.settings,AYARLAR,SETTINGS
+menu.quit,ÇIKIŞ,QUIT
+menu.version,Sürüm {0},Version {0}
+settings.title,AYARLAR,SETTINGS
+settings.section.sound,SES,SOUND
+settings.section.chat,SOHBET,VOICE CHAT
+settings.section.controls,KONTROL VE GÖRÜNTÜ,CONTROLS & DISPLAY
+settings.section.language,DİL,LANGUAGE
+settings.master,Ana ses,Master volume
+settings.music,Müzik,Music
+settings.music_track,Müzik parçası,Music track
+settings.voice,Sesli sohbet,Voice chat
+settings.mic,Mikrofon,Microphone
+settings.mic_test,TEST,TEST
+settings.mic_hint,"Konuşun, ibre oynasın",Speak to move the needle
+settings.mic_none,Mikrofon bulunamadı,No microphone found
+settings.sensitivity,Fare hassasiyeti,Mouse sensitivity
+settings.fullscreen,Tam ekran,Fullscreen
+settings.view,Görünüm,Visual style
+settings.view.off,KAPALI,OFF
+settings.view.stylized,STİLİZE,STYLIZED
+settings.view.toon,CNE TOON,CNE TOON
+settings.reset,VARSAYILANLAR,DEFAULTS
+settings.close,KAPAT,CLOSE
+common.on,AÇIK,ON
+common.off,KAPALI,OFF
+common.back,GERİ,BACK
+common.ok,TAMAM,OK
+common.cancel,VAZGEÇ,CANCEL
+common.yes,EVET,YES
+common.no,HAYIR,NO
+jukebox.no_track,Parça yok,No track
+esc.resume,DEVAM,RESUME
+esc.back_to_lobby,LOBİYE DÖN,BACK TO LOBBY
+esc.running,"Oyun devam ediyor, ekip seni bekliyor.","The game keeps running, your crew is waiting."

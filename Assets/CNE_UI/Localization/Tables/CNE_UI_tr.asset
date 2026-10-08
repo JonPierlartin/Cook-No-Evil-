@@ -1,0 +1,175 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: CNE_UI_tr
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: tr
+  m_SharedData: {fileID: 11400000, guid: 11d6608943d05c74f8759325904989d3, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 3157942272
+    m_Localized: "LOB\u0130 OLU\u015ETUR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3304742912
+    m_Localized: "LOB\u0130LERE G\xD6ZAT"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3313131520
+    m_Localized: NASIL OYNANIR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3313131521
+    m_Localized: AYARLAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325824
+    m_Localized: "\xC7IKI\u015E"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325825
+    m_Localized: "S\xFCr\xFCm {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325826
+    m_Localized: AYARLAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325827
+    m_Localized: SES
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325828
+    m_Localized: SOHBET
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325829
+    m_Localized: "KONTROL VE G\xD6R\xDCNT\xDC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325830
+    m_Localized: "D\u0130L"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325831
+    m_Localized: Ana ses
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325832
+    m_Localized: "M\xFCzik"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325833
+    m_Localized: "M\xFCzik par\xE7as\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325834
+    m_Localized: Sesli sohbet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325835
+    m_Localized: Mikrofon
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325836
+    m_Localized: TEST
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325837
+    m_Localized: "Konu\u015Fun, ibre oynas\u0131n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325838
+    m_Localized: "Mikrofon bulunamad\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325839
+    m_Localized: Fare hassasiyeti
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325840
+    m_Localized: Tam ekran
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325841
+    m_Localized: "G\xF6r\xFCn\xFCm"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325842
+    m_Localized: KAPALI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325843
+    m_Localized: "ST\u0130L\u0130ZE"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325844
+    m_Localized: CNE TOON
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325845
+    m_Localized: VARSAYILANLAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325846
+    m_Localized: KAPAT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325847
+    m_Localized: "A\xC7IK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325848
+    m_Localized: KAPALI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325849
+    m_Localized: "GER\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325850
+    m_Localized: TAMAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325851
+    m_Localized: "VAZGE\xC7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325852
+    m_Localized: EVET
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325853
+    m_Localized: HAYIR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325854
+    m_Localized: "Par\xE7a yok"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325855
+    m_Localized: DEVAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325856
+    m_Localized: "LOB\u0130YE D\xD6N"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3317325857
+    m_Localized: Oyun devam ediyor, ekip seni bekliyor.
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []
