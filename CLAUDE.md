@@ -1233,6 +1233,14 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Tek kurulum komutu:** *CNE → Ana Menü → Kur* (`Assets/Editor/AnaMenuInstaller.cs`; yeniden çalıştırılabilir,
     pencere açmaz): menü örneği, bağlantılar, lobi panelinin bölünmesi, ekler, parça atıfları ve gece düzeneği.
     Salon yeniden kurulursa bu komut da yeniden çalıştırılır (ışıklar soket konumlarına oturur).
+  - **Kit hatası — ayarlar kartı boyu (9 Eki):** `CNESettingsPanel` boyu kendi `OnEnable`'ında ölçer; o anda alt
+    nesnelerin düzen grupları henüz etkin sayılmaz (`isActiveAndEnabled` yanlış), içerik 0 ölçülür, kart hep
+    `minCardHeight`'ta (520) kalır ve satırlar taşar. Sahne örneğindeki `SettingsCardLayoutRefresh` (proje kodu) ölçümü
+    `LateUpdate`'te yineler. Kit düzeltirse bileşen kaldırılır.
+  - **Oyun arayüzü açılışta kapatılır** (`LobbyUIController.Start`): `GameplayCanvas` sahnede açık kayıtlı, eskiden
+    opak örtü zemini gizliyordu; saydam ana menüde hotbar görünüyordu. Geliştirici düğmelerinin kabında düzen grubu
+    ölçüyü YÖNETMEZ (dilimli sprite'ın en küçük boyuna çöküyordu). Kitin TMP yazı tipi atlasları (`Fonts/* SDF.asset`)
+    Play'de değişir — commit edilmez.
   - Kitin `CNE_UI` metin tablosu ayrı (`Assets/CNE_UI/Localization/Tables`); `UIStrings`'e ve dil listesine dokunulmadı.
     Tek dil olduğu için DİL satırı gizli.
 - **Yerel karakter sahne kamerasını geri açar (6 Eki, `fe60e50`):** karakter doğarken kapattığı sahne kamerasını
