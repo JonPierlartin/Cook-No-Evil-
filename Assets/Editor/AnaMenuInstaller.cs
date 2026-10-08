@@ -155,6 +155,19 @@ public static class AnaMenuInstaller
         if (settingsPanel != null && settingsPanel.GetComponent<SettingsCardLayoutRefresh>() == null)
             settingsPanel.gameObject.AddComponent<SettingsCardLayoutRefresh>();
 
+        // Kit sürgü topuzunu 40×40 kurmuş, ama Slider çalışırken topuzu dikeyde kendi alanına gerer (çapa 0–1):
+        // boy = alan + 40 olur ve topuz uzun bir elips görünür. Sahne örneğinde boy, eni kadar olacak şekilde düzeltilir.
+        foreach (var slider in menu.GetComponentsInChildren<Slider>(true))
+        {
+            var handle = slider.handleRect;
+            if (handle == null || slider.direction == Slider.Direction.BottomToTop || slider.direction == Slider.Direction.TopToBottom)
+                continue;
+
+            float area = ((RectTransform)handle.parent).rect.height;
+            handle.sizeDelta = new Vector2(handle.sizeDelta.x, handle.sizeDelta.x - area);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(handle);
+        }
+
         // Ana menünün jukebox şeridi: parça adı + lisans atfı sığsın diye sahne örneğinde genişletilir.
         foreach (var strip in menu.GetComponentsInChildren<CNEJukeboxStrip>(true))
         {

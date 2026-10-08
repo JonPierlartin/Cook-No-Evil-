@@ -1206,8 +1206,14 @@ kaynak değildir** — kod gerçeği repodaki koddur. Döküm yalnızca kod dı�
   - **Köprüler (proje kodu, `Assets/Scripts/UI/`; asset'ler `Assets/Data/UI/`):** `GameSettingsUISource`
     (`CNESettingsSource` → `GameSettings` + `LookPreference`; sürgü aralıkları asset'te veri) ve `MusicPlayerUISource`
     (`CNEMusicSource` → `MusicPlayer`). Köprü `AudioListener`'a / PlayerPrefs'e doğrudan yazmaz.
-    **Bekleyen karar:** VARSAYILANLAR düğmesi bağlı değil (uyarı loglar) ve `Save` boş — `GameSettings`'te sıfırlama ve
-    kaydetme metodu yok; Ersel'e iki seçenek anlatıldı.
+    VARSAYILANLAR → `GameSettings.ResetToDefaults()`: fabrika değerleri `GameSettings.Default*` sabitleridir (tek yer;
+    ses seviyeleri + fare hassasiyeti; görünüm, tam ekran ve seçili parça sıfırlanmaz). `Save` boş: depo her
+    değişiklikte kendi yazar.
+  - **Kit hatası — sürgü topuzu (9 Eki):** topuz 40×40 kurulmuş ama `Slider` çalışırken topuzu dikeyde alanına gerer
+    (boy = alan + 40 → uzun elips). `AnaMenuInstaller` sahne örneğinde `sizeDelta.y = en − alan` yazar.
+  - **Menü performansı ölçüldü (9 Eki, ana editör, tek pencere):** ~5–7 ms/kare CPU, ~2,8 ms GPU, kart açıkken de;
+    kasma yeniden üretilemedi. Not: Play'e girişteki ilk saniyeler ve MCP `execute_code` çağrıları ~1,5 sn'lik
+    kareler üretir — ölçümde oyuna yazılmaz.
   - **Ana menü = `CNE_MainMenu` (kök, kendi Canvas'ı, sortingOrder −1):** `SampleScene`'in ilk ekranı; ayrı sahne yok.
     LOBİ OLUŞTUR / LOBİLERE GÖZAT, Inspector'da görünen kalıcı dinleyicilerle `LobbyBrowserUI.OpenCreateDialog` /
     `OpenList`'e bağlı; ÇIKIŞ kitin kendi kapatması; NASIL OYNANIR gizli. Mikrofon testi kaynağı atanmadı (satır gizli).

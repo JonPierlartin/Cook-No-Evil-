@@ -18,12 +18,19 @@ public static class GameSettings
     public const float MinMouseSensitivity = 0.2f;
     public const float MaxMouseSensitivity = 3f;
 
+    // Fabrika değerleri: hiç ayar yapılmamış oyunun açıldığı ve "Varsayılanlar"ın döndüğü değerler (tek yer).
+    public const float DefaultMasterVolume = 1f;
+    public const float DefaultMusicVolume = 0.5f;
+    public const float DefaultVoiceVolume = 1f;
+    public const float DefaultMicGain = 1f;
+    public const float DefaultMouseSensitivity = 1f;
+
     private static bool _loaded;
-    private static float _master = 1f;
-    private static float _music = 0.5f;
-    private static float _voice = 1f;
-    private static float _mic = 1f;
-    private static float _sensitivity = 1f;
+    private static float _master = DefaultMasterVolume;
+    private static float _music = DefaultMusicVolume;
+    private static float _voice = DefaultVoiceVolume;
+    private static float _mic = DefaultMicGain;
+    private static float _sensitivity = DefaultMouseSensitivity;
     private static int _musicTrack;
 
     public static event Action Changed;
@@ -78,6 +85,17 @@ public static class GameSettings
             PlayerPrefs.SetInt(MusicTrackKey, clamped);
             Changed?.Invoke();
         }
+    }
+
+    // Ses seviyelerini ve fare hassasiyetini fabrika değerine döndürür. Seçili müzik parçası bir seviye değil,
+    // tercihtir; ona dokunmaz.
+    public static void ResetToDefaults()
+    {
+        MasterVolume = DefaultMasterVolume;
+        MusicVolume = DefaultMusicVolume;
+        VoiceVolume = DefaultVoiceVolume;
+        MicGain = DefaultMicGain;
+        MouseSensitivity = DefaultMouseSensitivity;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

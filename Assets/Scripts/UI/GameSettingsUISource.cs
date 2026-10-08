@@ -74,14 +74,13 @@ public sealed class GameSettingsUISource : CNESettingsSource
         set => LookPreference.Selected = value;
     }
 
-    // BEKLEYEN KARAR (Ersel): GameSettings varsayılanlarını dışarı vermiyor ve sıfırlama yolu yok. Sayılar buraya
-    // kopyalanmaz (iki yerde durup ayrışmasınlar); GameSettings'e bir sıfırlama metodu eklenince buradan çağrılacak.
+    // Fabrika değerleri depodadır (GameSettings); burada sayı tutulmaz. Görünüm ve tam ekran sıfırlanmaz.
     public override void ResetToDefaults()
     {
-        Debug.LogWarning("[GameSettingsUISource] VARSAYILANLAR henüz bağlı değil: GameSettings'te sıfırlama yolu yok.");
+        GameSettings.ResetToDefaults();
     }
 
-    // GameSettings her değişiklikte kendi yazar; ayrıca diske yazdırma kararı bekliyor (bugünkü davranış korunur).
+    // GameSettings her değişiklikte kendi yazar; kapanışta ayrıca kaydetmeye gerek yok.
     public override void Save()
     {
     }
